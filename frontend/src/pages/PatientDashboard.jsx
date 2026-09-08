@@ -50,9 +50,17 @@ export default function PatientDashboard() {
     setTimelineOpen(true);
   };
 
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [selectedNotesApt, setSelectedNotesApt] = useState(null);
+
+  const openNotes = (apt) => {
+    setSelectedNotesApt(apt);
+    setNotesOpen(true);
+  };
+
   // Stats calculation
   const pendingCount = appointments.filter((a) => a.status === 'Pending').length;
-  const confirmedCount = appointments.filter((a) => a.status === 'Confirmed').length;
+  const confirmedCount = appointments.filter((a) => ['Confirmed', 'In Progress'].includes(a.status)).length;
   const completedCount = appointments.filter((a) => a.status === 'Completed').length;
 
   return (
@@ -91,7 +99,7 @@ export default function PatientDashboard() {
           </div>
           <div>
             <div className="stat-val">{confirmedCount}</div>
-            <div className="stat-label">Upcoming / Confirmed</div>
+            <div className="stat-label">Upcoming / Active</div>
           </div>
         </div>
 
@@ -166,6 +174,11 @@ export default function PatientDashboard() {
                       <div style={{ maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {apt.reason}
                       </div>
+                      {apt.declineReason && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--rose)', marginTop: '0.2rem' }}>
+                          Reason: {apt.declineReason}
+                        </div>
+                      )}
                     </td>
                     <td>
                       <span className={`badge badge-${apt.status}`}>
@@ -174,7 +187,16 @@ export default function PatientDashboard() {
                       </span>
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
+                      <div style={{ display: 'inline-flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                        {(apt.consultationNotes || (apt.documents && apt.documents.length > 0)) && (
+                          <button
+                            onClick={() => openNotes(apt)}
+                            className="btn btn-teal btn-sm"
+                            title="View Doctor's Notes & Documents"
+                          >
+                            <span>Medical Records</span>
+                          </button>
+                        )}
                         <button
                           onClick={() => openTimeline(apt)}
                           className="btn btn-secondary btn-sm"
@@ -216,6 +238,94 @@ export default function PatientDashboard() {
         onClose={() => setTimelineOpen(false)}
         appointment={selectedAppointment}
       />
+
+      {/* Patient Medical Notes Modal */}
+      {notesOpen && selectedNotesApt && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '560px' }}>
+            <div className="modal-header">
+              <h3>Doctor's Consultation Record</h3>
+              <button onClick={() => setNotesOpen(false)} className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+              <div style={{ background: 'var(--bg-muted)', padding: '0.85rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem' }}>
+                <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>
+                  {selectedNotesApt.doctor ? `Dr. ${selectedNotesApt.doctor.firstName} ${selectedNotesApt.doctor.lastName}` : 'Attending Physician'}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Consultation Date: {new Date(selectedNotesApt.date).toLocaleDateString()} ({selectedNotesApt.timeSlot})
+                </div>
+              </div>
+
+              {selectedNotesApt.consultationNotes ? (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label className="form-label" style={{ color: 'var(--primary)', fontWeight: 700 }}>
+                    Clinical Assessment & Prescription
+                  </label>
+                  <div style={{ whiteSpace: 'pre-wrap', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '1rem', lineHeight: '1.6', fontSize: '0.9rem' }}>
+                    {selectedNotesApt.consultationNotes}
+                  </div>
+                </div>
+              ) : (
+                <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', marginBottom: '1.5rem' }}>
+                  No written notes recorded for this consultation.
+                </p>
+              )}
+
+              {selectedNotesApt.documents && selectedNotesApt.documents.length > 0 && (
+                <div>
+                  <label className="form-label" style={{ fontWeight: 700 }}>
+                    Attached Lab & Diagnostic Reports ({selectedNotesApt.documents.length})
+                  </label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {selectedNotesApt.documents.map((doc, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0.6rem 0.85rem',
+                          borderRadius: 'var(--radius-md)',
+                          background: 'var(--bg-muted)',
+                          border: '1px solid var(--border)',
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{doc.filename}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
+                            {doc.type ? doc.type.replace('_', ' ') : 'Medical Document'}
+                          </div>
+                        </div>
+                        {doc.url && doc.url !== '#' && (
+                          <a
+                            href={doc.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-primary btn-sm"
+                            style={{ fontSize: '0.75rem' }}
+                          >
+                            View
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button type="button" onClick={() => setNotesOpen(false)} className="btn btn-secondary">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

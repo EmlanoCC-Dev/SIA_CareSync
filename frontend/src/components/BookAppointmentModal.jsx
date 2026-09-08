@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { X, Calendar, Clock, User, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, Calendar, Clock, User, AlertCircle, CheckCircle2, Sparkles } from 'lucide-react';
 
 const TIME_SLOTS = [
   '08:00 - 08:30 AM',
@@ -26,6 +26,11 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Dynamic slot management state
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [selectedSlotId, setSelectedSlotId] = useState(null);
+
   useEffect(() => {
     if (isOpen) {
       setError('');
@@ -41,6 +46,32 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
         .catch((err) => console.error('Error fetching doctors:', err));
     }
   }, [isOpen]);
+
+  // Fetch doctor's available slots dynamically when doctor and date change
+  useEffect(() => {
+    if (doctorId && date) {
+      setLoadingSlots(true);
+      api.getSlots({ doctor: doctorId, date, status: 'Available' })
+        .then((res) => {
+          if (res.success && res.data && res.data.length > 0) {
+            setAvailableSlots(res.data);
+            setSelectedSlotId(res.data[0]._id);
+            setTimeSlot(`${res.data[0].startTime} - ${res.data[0].endTime}`);
+          } else {
+            setAvailableSlots([]);
+            setSelectedSlotId(null);
+          }
+        })
+        .catch(() => {
+          setAvailableSlots([]);
+          setSelectedSlotId(null);
+        })
+        .finally(() => setLoadingSlots(false));
+    } else {
+      setAvailableSlots([]);
+      setSelectedSlotId(null);
+    }
+  }, [doctorId, date]);
 
   if (!isOpen) return null;
 
@@ -63,6 +94,7 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
         doctorId: doctorId || null,
         date,
         timeSlot,
+        slotId: selectedSlotId || null,
         reason,
       });
 
@@ -118,19 +150,80 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
               </select>
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Preferred Date</label>
-                <input
-                  type="date"
-                  min={today}
-                  className="form-input"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
-                />
-              </div>
+            <div className="form-group">
+              <label className="form-label">Preferred Date</label>
+              <input
+                type="date"
+                min={today}
+                className="form-input"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
+            </div>
 
+            {/* Dynamic Slot Selection */}
+            {date && doctorId && (
+              <div className="form-group">
+                {loadingSlots ? (
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', padding: '0.5rem 0' }}>
+                    Checking doctor's available slots...
+                  </div>
+                ) : availableSlots.length > 0 ? (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                      <label className="form-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <Sparkles size={14} color="var(--teal)" />
+                        <span>Available Consultation Slots ({availableSlots.length})</span>
+                      </label>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--emerald)', fontWeight: 600 }}>Live Real-time</span>
+                    </div>
+                    <div className="slot-grid">
+                      {availableSlots.map((slot) => {
+                        const isSelected = selectedSlotId === slot._id;
+                        return (
+                          <button
+                            key={slot._id}
+                            type="button"
+                            className={`slot-chip ${isSelected ? 'selected' : ''}`}
+                            onClick={() => {
+                              setSelectedSlotId(slot._id);
+                              setTimeSlot(`${slot.startTime} - ${slot.endTime}`);
+                            }}
+                          >
+                            <Clock size={13} style={{ marginBottom: '2px' }} />
+                            <span>{slot.startTime} - {slot.endTime}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                      <label className="form-label" style={{ margin: 0 }}>Select Preferred Time Window</label>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Flexible Booking</span>
+                    </div>
+                    <select
+                      className="form-select"
+                      value={timeSlot}
+                      onChange={(e) => {
+                        setTimeSlot(e.target.value);
+                        setSelectedSlotId(null);
+                      }}
+                    >
+                      {TIME_SLOTS.map((slot) => (
+                        <option key={slot} value={slot}>
+                          {slot}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {(!date || !doctorId) && (
               <div className="form-group">
                 <label className="form-label">Time Slot</label>
                 <select
@@ -145,7 +238,7 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
                   ))}
                 </select>
               </div>
-            </div>
+            )}
 
             <div className="form-group">
               <label className="form-label">Symptoms / Reason for Visit</label>

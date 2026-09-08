@@ -3,9 +3,6 @@
  * ──────────────────
  * Module 2: Appointment Module
  * Layer:    Presentation (Route Definitions)
- *
- * All routes require authentication.
- * Role-based authorization is handled per route.
  */
 
 const { Router } = require('express');
@@ -20,19 +17,31 @@ router.use(protect);
 // Patient books an appointment
 router.post('/', authorize('Patient'), appointmentController.create);
 
-// List appointments (role-aware: patients see own, staff/admin see all)
+// List appointments (role-aware: patients see own, doctors see assigned, staff/admin see all)
 router.get('/', appointmentController.list);
 
 // Get single appointment
 router.get('/:id', appointmentController.getById);
 
-// Staff/Admin approves
+// Staff/Admin approves pending appointment
 router.patch('/:id/approve', authorize('Staff', 'Admin'), appointmentController.approve);
 
-// Any authorized user cancels
+// Staff, Admin, or Doctor declines pending appointment (reason required)
+router.patch('/:id/decline', authorize('Staff', 'Admin', 'Doctor'), appointmentController.decline);
+
+// Patient or Doctor cancels confirmed appointment
 router.patch('/:id/cancel', appointmentController.cancel);
 
-// Doctor/Staff completes
+// Staff/Admin marks patient as No-show
+router.patch('/:id/no-show', authorize('Staff', 'Admin'), appointmentController.noShow);
+
+// Staff/Admin checks in patient on appointment day
+router.patch('/:id/check-in', authorize('Staff', 'Admin'), appointmentController.checkIn);
+
+// Doctor uploads consultation notes, lab results, X-rays
+router.patch('/:id/documents', authorize('Doctor'), appointmentController.uploadDocuments);
+
+// Doctor or Staff completes appointment
 router.patch('/:id/complete', authorize('Doctor', 'Staff', 'Admin'), appointmentController.complete);
 
 module.exports = router;

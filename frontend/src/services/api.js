@@ -68,9 +68,38 @@ export const api = {
   getAppointmentById: (id) => request(`/appointments/${id}`),
   createAppointment: (appointmentData) => request('/appointments', { method: 'POST', body: appointmentData }),
   approveAppointment: (id) => request(`/appointments/${id}/approve`, { method: 'PATCH' }),
+  declineAppointment: (id, reason) => request(`/appointments/${id}/decline`, { method: 'PATCH', body: { reason } }),
+  checkInAppointment: (id) => request(`/appointments/${id}/check-in`, { method: 'PATCH' }),
+  noShowAppointment: (id, reason) => request(`/appointments/${id}/no-show`, { method: 'PATCH', body: { reason } }),
   cancelAppointment: (id, reason) => request(`/appointments/${id}/cancel`, { method: 'PATCH', body: { reason } }),
+  uploadDocuments: (id, data) => request(`/appointments/${id}/documents`, { method: 'PATCH', body: data }),
   completeAppointment: (id) => request(`/appointments/${id}/complete`, { method: 'PATCH' }),
 
   // ── Audit Logs ──
   getAuditLogs: () => request('/audit-logs'),
+
+  // ── Slots ──
+  generateSlots: (data) => request('/slots/generate', { method: 'POST', body: data }),
+  getSlots: (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.doctor) query.append('doctor', params.doctor);
+    if (params.date) query.append('date', params.date);
+    if (params.status) query.append('status', params.status);
+    const queryString = query.toString();
+    return request(`/slots${queryString ? `?${queryString}` : ''}`);
+  },
+  updateSlotStatus: (id, status) => request(`/slots/${id}/status`, { method: 'PATCH', body: { status } }),
+
+  // ── Walk-ins ──
+  createWalkIn: (data) => request('/walkins', { method: 'POST', body: data }),
+  getWalkIns: (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.status) query.append('status', params.status);
+    if (params.date) query.append('date', params.date);
+    const queryString = query.toString();
+    return request(`/walkins${queryString ? `?${queryString}` : ''}`);
+  },
+  updateWalkInStatus: (id, status) => request(`/walkins/${id}/status`, { method: 'PATCH', body: { status } }),
+  assignSlotToWalkIn: (walkInId, slotId) => request(`/walkins/${walkInId}/assign`, { method: 'POST', body: { slotId } }),
+  getNowServing: () => request('/walkins/now-serving'),
 };

@@ -45,6 +45,34 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+
+    // ── Doctor-specific fields (only relevant when role === 'Doctor') ──
+    consultationDuration: {
+      type: Number,
+      default: 15, // minutes per appointment slot
+      min: 5,
+      max: 120,
+    },
+    workingHours: [
+      {
+        day: {
+          type: Number, // 0 = Sunday, 1 = Monday, ... 6 = Saturday
+          required: true,
+          min: 0,
+          max: 6,
+        },
+        start: {
+          type: String, // "09:00"
+          required: true,
+          trim: true,
+        },
+        end: {
+          type: String, // "17:00"
+          required: true,
+          trim: true,
+        },
+      },
+    ],
   },
   {
     timestamps: true, // createdAt, updatedAt

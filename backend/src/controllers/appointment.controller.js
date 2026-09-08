@@ -3,9 +3,6 @@
  * ──────────────────────
  * Module 2: Appointment Module
  * Layer:    Presentation
- *
- * Thin HTTP layer — parses request, delegates to service,
- * formats response. No business logic here.
  */
 
 const appointmentService = require('../services/appointment.service');
@@ -16,12 +13,13 @@ const appointmentService = require('../services/appointment.service');
  */
 async function create(req, res, next) {
   try {
-    const { doctorId, date, timeSlot, reason } = req.body;
+    const { doctorId, date, timeSlot, slotId, reason } = req.body;
     const appointment = await appointmentService.create({
       patientId: req.user.id,
       doctorId,
       date,
       timeSlot,
+      slotId,
       reason,
     });
     res.status(201).json({ success: true, data: appointment });
@@ -44,13 +42,71 @@ async function approve(req, res, next) {
 }
 
 /**
+ * PATCH /api/appointments/:id/decline
+ * Decline a pending appointment (staff, admin, or doctor).
+ */
+async function decline(req, res, next) {
+  try {
+    const { reason } = req.body;
+    const appointment = await appointmentService.decline(req.params.id, req.user.id, reason);
+    res.json({ success: true, data: appointment });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
  * PATCH /api/appointments/:id/cancel
- * Cancel an appointment (any authorized user).
+ * Cancel an appointment (patient or doctor).
  */
 async function cancel(req, res, next) {
   try {
     const { reason } = req.body;
     const appointment = await appointmentService.cancel(req.params.id, req.user.id, reason);
+    res.json({ success: true, data: appointment });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * PATCH /api/appointments/:id/no-show
+ * Mark patient as no-show (staff/admin).
+ */
+async function noShow(req, res, next) {
+  try {
+    const { reason } = req.body;
+    const appointment = await appointmentService.noShow(req.params.id, req.user.id, reason);
+    res.json({ success: true, data: appointment });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * PATCH /api/appointments/:id/check-in
+ * Check in patient for consultation (staff/admin).
+ */
+async function checkIn(req, res, next) {
+  try {
+    const appointment = await appointmentService.checkIn(req.params.id, req.user.id);
+    res.json({ success: true, data: appointment });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * PATCH /api/appointments/:id/documents
+ * Upload consultation notes and lab/X-ray documents (doctor).
+ */
+async function uploadDocuments(req, res, next) {
+  try {
+    const { consultationNotes, documents } = req.body;
+    const appointment = await appointmentService.uploadDocuments(req.params.id, req.user.id, {
+      consultationNotes,
+      documents,
+    });
     res.json({ success: true, data: appointment });
   } catch (err) {
     next(err);
@@ -85,13 +141,15 @@ async function getById(req, res, next) {
 
 /**
  * GET /api/appointments
- * List appointments — patients see their own; staff/admin see all.
+ * List appointments — patients see their own; doctors see assigned; staff/admin see all.
  */
 async function list(req, res, next) {
   try {
     let appointments;
     if (req.user.role === 'Patient') {
       appointments = await appointmentService.listByPatient(req.user.id);
+    } else if (req.user.role === 'Doctor') {
+      appointments = await appointmentService.listByDoctor(req.user.id);
     } else {
       appointments = await appointmentService.listAll({
         status: req.query.status,
@@ -104,4 +162,15 @@ async function list(req, res, next) {
   }
 }
 
-module.exports = { create, approve, cancel, complete, getById, list };
+module.exports = {
+  create,
+  approve,
+  decline,
+  cancel,
+  noShow,
+  checkIn,
+  uploadDocuments,
+  complete,
+  getById,
+  list,
+};

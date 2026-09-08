@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import LoginPage from './pages/LoginPage';
@@ -7,11 +7,25 @@ import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
 import StaffDashboard from './pages/StaffDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import ClinicDisplayScreen from './pages/ClinicDisplayScreen';
 import { Activity } from 'lucide-react';
 
 export default function App() {
   const { user, loading } = useAuth();
   const [authView, setAuthView] = useState('login'); // 'login' | 'register'
+  const [hash, setHash] = useState(window.location.hash);
+
+  // Listen for hash changes so the display route works
+  useEffect(() => {
+    const onHashChange = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  // ★ Public display screen — no auth required
+  if (hash === '#/display') {
+    return <ClinicDisplayScreen />;
+  }
 
   if (loading) {
     return (
@@ -54,3 +68,4 @@ export default function App() {
     </div>
   );
 }
+

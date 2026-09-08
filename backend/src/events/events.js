@@ -13,8 +13,18 @@ const EVENTS = {
   // ── Module 2: Appointment ──────────────────────────────
   APPOINTMENT_BOOKED: 'appointment.booked',
   APPOINTMENT_APPROVED: 'appointment.approved',
+  APPOINTMENT_DECLINED: 'appointment.declined',
   APPOINTMENT_CANCELLED: 'appointment.cancelled',
+  APPOINTMENT_NO_SHOW: 'appointment.noShow',
+  APPOINTMENT_CHECKED_IN: 'appointment.checkedIn',
   APPOINTMENT_COMPLETED: 'appointment.completed',
+
+  // ── Slot lifecycle ─────────────────────────────────────
+  SLOT_FREED: 'slot.freed',
+
+  // ── Walk-in Queue ──────────────────────────────────────
+  WALKIN_ADDED: 'walkIn.added',
+  WALKIN_SLOT_ASSIGNED: 'walkIn.slotAssigned',
 
   // ── Module 5: Review & Approval Workflow ───────────────
   REVISION_REQUESTED: 'appointment.revisionRequested',

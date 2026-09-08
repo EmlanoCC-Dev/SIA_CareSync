@@ -1,0 +1,20 @@
+/**
+ * Walk-In Routes
+ * ──────────────
+ */
+
+const { Router } = require('express');
+const walkInController = require('../controllers/walkIn.controller');
+const { protect, authorize } = require('../middleware/auth');
+
+const router = Router();
+
+// ★ Public UNAUTHENTICATED endpoint for physical clinic display screen!
+router.get('/now-serving', walkInController.getNowServing);
+
+// All other walk-in operations require Staff or Admin
+router.use(protect);
+router.post('/', authorize('Staff', 'Admin'), walkInController.create);
+router.get('/', authorize('Staff', 'Admin', 'Doctor'), walkInController.list);
+
+module.exports = router;
