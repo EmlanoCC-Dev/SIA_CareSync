@@ -12,21 +12,47 @@ const userService = require('../services/user.service');
 
 /**
  * POST /api/users/register
+ * Public registration is restricted to Patient role.
  */
 async function register(req, res, next) {
   try {
-    const { firstName, lastName, email, password, role, contactNumber } = req.body;
+    const { firstName, lastName, email, password, contactNumber } = req.body;
     const result = await userService.register({
       firstName,
       lastName,
       email,
       password,
-      role,
+      role: 'Patient', // Public registration is strictly for Patients
       contactNumber,
     });
     res.status(201).json({
       success: true,
       data: result,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/users
+ * Admin-created users (e.g. Doctor, Staff).
+ */
+async function createUser(req, res, next) {
+  try {
+    const { firstName, lastName, email, password, role, contactNumber, consultationDuration } = req.body;
+    const result = await userService.register({
+      firstName,
+      lastName,
+      email,
+      password,
+      role: role || 'Staff',
+      contactNumber,
+      consultationDuration: consultationDuration ? Number(consultationDuration) : 15,
+    });
+    res.status(201).json({
+      success: true,
+      data: result.user,
     });
   } catch (err) {
     next(err);
@@ -98,5 +124,5 @@ async function listUsers(req, res, next) {
   }
 }
 
-module.exports = { register, login, getMe, getDoctors, listUsers };
+module.exports = { register, login, getMe, getDoctors, listUsers, createUser };
 

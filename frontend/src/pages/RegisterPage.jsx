@@ -120,33 +120,16 @@ export default function RegisterPage({ onSwitchToLogin }) {
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Account Role</label>
-              <select
-                name="role"
-                className="form-select"
-                value={formData.role}
-                onChange={handleChange}
-              >
-                {ROLES.map((role) => (
-                  <option key={role} value={role}>
-                    {role}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Contact Number</label>
-              <input
-                type="tel"
-                name="contactNumber"
-                className="form-input"
-                placeholder="+1 (555) 000-0000"
-                value={formData.contactNumber}
-                onChange={handleChange}
-              />
-            </div>
+          <div className="form-group">
+            <label className="form-label">Contact Number</label>
+            <input
+              type="tel"
+              name="contactNumber"
+              className="form-input"
+              placeholder="+1 (555) 000-0000"
+              value={formData.contactNumber}
+              onChange={handleChange}
+            />
           </div>
 
           <button

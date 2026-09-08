@@ -19,6 +19,7 @@ router.post('/login', userController.login);
 router.get('/me', protect, userController.getMe);
 router.get('/doctors', protect, userController.getDoctors);
 router.get('/', protect, authorize('Admin'), userController.listUsers);
+router.post('/', protect, authorize('Admin'), userController.createUser);
 
 module.exports = router;
 

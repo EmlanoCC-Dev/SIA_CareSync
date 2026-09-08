@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import AuditLogViewer from '../components/AuditLogViewer';
 import StatusTimelineModal from '../components/StatusTimelineModal';
-import { ShieldCheck, Users, Calendar, ShieldAlert, CheckCircle2, History, RefreshCw, XCircle } from 'lucide-react';
+import AddUserModal from '../components/AddUserModal';
+import { ShieldCheck, Users, Calendar, ShieldAlert, CheckCircle2, History, RefreshCw, UserPlus, Filter, Search } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('audit'); // 'audit' | 'appointments' | 'users'
@@ -11,6 +12,11 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
+
+  // User Directory filters & modal state
+  const [userRoleFilter, setUserRoleFilter] = useState('');
+  const [userSearch, setUserSearch] = useState('');
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -40,6 +46,17 @@ export default function AdminDashboard() {
     setSelectedAppointment(apt);
     setTimelineOpen(true);
   };
+
+  // Filter users by role and search query
+  const filteredUsers = users.filter((u) => {
+    const matchesRole = !userRoleFilter || u.role === userRoleFilter;
+    const q = userSearch.toLowerCase().trim();
+    const fullName = `${u.firstName} ${u.lastName}`.toLowerCase();
+    const email = (u.email || '').toLowerCase();
+    const contact = (u.contactNumber || '').toLowerCase();
+    const matchesSearch = !q || fullName.includes(q) || email.includes(q) || contact.includes(q);
+    return matchesRole && matchesSearch;
+  });
 
   return (
     <div className="main-content">
@@ -177,10 +194,58 @@ export default function AdminDashboard() {
       {/* Tab 3: User Directory */}
       {activeTab === 'users' && (
         <div className="card">
-          <div className="card-header">
-            <h3>User Directory & Role Governance</h3>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{users.length} Users</span>
+          <div className="card-header" style={{ flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
+            <div>
+              <h3 style={{ margin: 0 }}>User Directory & Role Governance</h3>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                Showing {filteredUsers.length} of {users.length} registered users
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              {/* Role Filter */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <Filter size={15} color="var(--text-muted)" />
+                <select
+                  className="form-select"
+                  style={{ width: 'auto', padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}
+                  value={userRoleFilter}
+                  onChange={(e) => setUserRoleFilter(e.target.value)}
+                >
+                  <option value="">All Account Types</option>
+                  <option value="Patient">Patient</option>
+                  <option value="Doctor">Doctor</option>
+                  <option value="Staff">Staff</option>
+                  <option value="Admin">Admin</option>
+                </select>
+              </div>
+
+              {/* Search User input */}
+              <div style={{ position: 'relative' }}>
+                <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '0.65rem', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ paddingLeft: '2rem', paddingRight: '0.75rem', paddingBlock: '0.35rem', fontSize: '0.85rem', width: '200px' }}
+                  placeholder="Search by name, email..."
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                />
+              </div>
+
+              {/* Add Doctor / Staff Button */}
+              <button
+                type="button"
+                onClick={() => setIsAddUserModalOpen(true)}
+                className="btn btn-primary btn-sm"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.8rem' }}
+              >
+                <UserPlus size={15} />
+                <span>Add Doctor / Staff</span>
+              </button>
+            </div>
           </div>
+
           <div className="table-container">
             <table>
               <thead>
@@ -193,24 +258,39 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((u) => (
-                  <tr key={u._id}>
-                    <td>
-                      <strong>{u.firstName} {u.lastName}</strong>
+                {filteredUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
+                      No users match the selected role or search criteria.
                     </td>
-                    <td>{u.email}</td>
-                    <td>
-                      <span className={`role-badge role-${u.role}`}>{u.role}</span>
-                    </td>
-                    <td>{u.contactNumber || '—'}</td>
-                    <td>{new Date(u.createdAt).toLocaleDateString()}</td>
                   </tr>
-                ))}
+                ) : (
+                  filteredUsers.map((u) => (
+                    <tr key={u._id}>
+                      <td>
+                        <strong>{u.firstName} {u.lastName}</strong>
+                      </td>
+                      <td>{u.email}</td>
+                      <td>
+                        <span className={`role-badge role-${u.role}`}>{u.role}</span>
+                      </td>
+                      <td>{u.contactNumber || '—'}</td>
+                      <td>{new Date(u.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
       )}
+
+      {/* Add Doctor / Staff User Modal */}
+      <AddUserModal
+        isOpen={isAddUserModalOpen}
+        onClose={() => setIsAddUserModalOpen(false)}
+        onUserAdded={loadData}
+      />
 
       <StatusTimelineModal
         isOpen={timelineOpen}

@@ -58,6 +58,7 @@ export const api = {
   getMe: () => request('/users/me'),
   getDoctors: () => request('/users/doctors'),
   getUsers: (role) => request(`/users${role ? `?role=${role}` : ''}`),
+  createUser: (userData) => request('/users', { method: 'POST', body: userData }),
 
   // ── Appointments ──
   getAppointments: (params = {}) => {
