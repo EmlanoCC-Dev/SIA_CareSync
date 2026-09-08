@@ -1075,3 +1075,103 @@ tr:hover td {
   .stats-grid { grid-template-columns: 1fr; }
   .navbar-inner { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
 }
+
+/* ── Slot Chips & Grid ───────────────────────────────── */
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.35rem 0.2rem;
+}
+
+@media (max-width: 480px) {
+  .slot-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.slot-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0.55rem 0.5rem;
+  border-radius: var(--radius-md, 8px);
+  border: 1.5px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  user-select: none;
+}
+
+.slot-chip:hover:not(.disabled):not(:disabled) {
+  border-color: var(--primary);
+  background: rgba(14, 165, 233, 0.05);
+  transform: translateY(-1px);
+}
+
+.slot-chip.selected {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+}
+
+.slot-chip.selected .slot-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
+.slot-chip.disabled,
+.slot-chip:disabled {
+  opacity: 0.45;
+  background: var(--bg-muted, #f1f5f9);
+  border-color: var(--border, #e2e8f0);
+  color: var(--text-muted, #94a3b8);
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.slot-chip.taken {
+  background: rgba(241, 245, 249, 0.8);
+  border-color: #e2e8f0;
+}
+
+.slot-chip.passed {
+  background: rgba(248, 250, 252, 0.7);
+  border-color: #e2e8f0;
+}
+
+.slot-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  margin-top: 2px;
+}
+
+.slot-badge-taken {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.slot-badge-passed {
+  background: rgba(100, 116, 139, 0.12);
+  color: #64748b;
+}
+
+.slot-badge-avail {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+

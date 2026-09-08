@@ -20,6 +20,35 @@ export default function AssignSlotModal({ isOpen, onClose, walkIn, onAssigned })
   const dropdownRef = useRef(null);
   const searchInputRef = useRef(null);
 
+  const [systemTimeStatus, setSystemTimeStatus] = useState(null);
+
+  const isSlotPassed = (dateStr, timeStr) => {
+    if (!dateStr || !timeStr) return false;
+    const now = systemTimeStatus?.currentTime ? new Date(systemTimeStatus.currentTime) : new Date();
+
+    const nowYear = now.getFullYear();
+    const nowMonth = String(now.getMonth() + 1).padStart(2, '0');
+    const nowDay = String(now.getDate()).padStart(2, '0');
+    const nowDateKey = `${nowYear}-${nowMonth}-${nowDay}`;
+
+    const targetDateKey = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+
+    if (targetDateKey < nowDateKey) return true;
+    if (targetDateKey > nowDateKey) return false;
+
+    const parts = timeStr.split('-');
+    const startTime = parts[0].trim();
+    const match = startTime.match(/(\d{1,2}):(\d{2})/);
+    if (!match) return false;
+
+    const hours = parseInt(match[1], 10);
+    const minutes = parseInt(match[2], 10);
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const slotMinutes = hours * 60 + minutes;
+
+    return nowMinutes >= slotMinutes;
+  };
+
   // Close dropdown on click outside
   useEffect(() => {
     function handleClickOutside(event) {
@@ -31,7 +60,7 @@ export default function AssignSlotModal({ isOpen, onClose, walkIn, onAssigned })
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch doctors on modal open
+  // Fetch doctors and system time on modal open
   useEffect(() => {
     if (isOpen) {
       setError('');
@@ -39,6 +68,11 @@ export default function AssignSlotModal({ isOpen, onClose, walkIn, onAssigned })
       setSelectedSlotId('');
       setIsDoctorDropdownOpen(false);
       fetchDoctors();
+      api.getSystemTime()
+        .then((res) => {
+          if (res.success && res.data) setSystemTimeStatus(res.data);
+        })
+        .catch(() => {});
     }
   }, [isOpen]);
 
@@ -83,15 +117,25 @@ export default function AssignSlotModal({ isOpen, onClose, walkIn, onAssigned })
     setLoadingSlots(true);
     setError('');
     try {
-      const res = await api.getSlots({
-        doctor: docId,
-        date: selectedDate,
-        status: 'Available',
-      });
+      const [res, timeRes] = await Promise.all([
+        api.getSlots({ doctor: docId, date: selectedDate }),
+        api.getSystemTime().catch(() => null),
+      ]);
+      if (timeRes && timeRes.success) {
+        setSystemTimeStatus(timeRes.data);
+      }
       if (res.success && res.data) {
         setSlots(res.data);
-        if (res.data.length > 0) {
-          setSelectedSlotId(res.data[0]._id);
+        // Find first available and future slot
+        const currentTime = timeRes?.data || systemTimeStatus;
+        const firstAvailable = res.data.find((s) => {
+          const taken = s.status !== 'Available';
+          const passed = isSlotPassed(selectedDate, s.startTime);
+          return !taken && !passed;
+        });
+
+        if (firstAvailable) {
+          setSelectedSlotId(firstAvailable._id);
         } else {
           setSelectedSlotId('');
         }
@@ -101,7 +145,7 @@ export default function AssignSlotModal({ isOpen, onClose, walkIn, onAssigned })
       }
     } catch (err) {
       console.error('Failed to load slots:', err);
-      setError('Failed to load available slots for this doctor');
+      setError('Failed to load slots for this doctor');
       setSlots([]);
     } finally {
       setLoadingSlots(false);
@@ -371,7 +415,9 @@ export default function AssignSlotModal({ isOpen, onClose, walkIn, onAssigned })
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                 <label className="form-label" style={{ fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   <Clock size={15} color="var(--primary)" />
-                  <span>Available Time Slot ({slots.length} available)</span>
+                  <span>
+                    Available Time Slot ({slots.filter(s => s.status === 'Available' && !isSlotPassed(date, s.startTime)).length} of {slots.length} available)
+                  </span>
                 </label>
                 {selectedDoctor && slots.length === 0 && !loadingSlots && (
                   <button
@@ -429,26 +475,48 @@ export default function AssignSlotModal({ isOpen, onClose, walkIn, onAssigned })
                 >
                   {slots.map((slot) => {
                     const isSelected = slot._id === selectedSlotId;
+                    const isTaken = slot.status !== 'Available';
+                    const isPassed = isSlotPassed(date, slot.startTime);
+                    const isClickable = !isTaken && !isPassed;
+
+                    let chipClass = 'slot-chip';
+                    if (isSelected) chipClass += ' selected';
+                    if (!isClickable) {
+                      chipClass += ' disabled';
+                      if (isTaken) chipClass += ' taken';
+                      if (isPassed) chipClass += ' passed';
+                    }
+
                     return (
                       <button
                         key={slot._id}
                         type="button"
-                        onClick={() => setSelectedSlotId(slot._id)}
-                        className={`slot-chip ${isSelected ? 'selected' : ''}`}
+                        disabled={!isClickable}
+                        onClick={() => {
+                          if (isClickable) setSelectedSlotId(slot._id);
+                        }}
+                        className={chipClass}
+                        title={
+                          isTaken
+                            ? 'Slot already reserved/booked'
+                            : isPassed
+                            ? 'This time slot has already passed'
+                            : `Assign ${slot.startTime} - ${slot.endTime}`
+                        }
                         style={{
-                          padding: '0.5rem 0.6rem',
+                          padding: '0.45rem 0.5rem',
                           borderRadius: '6px',
-                          border: isSelected ? '2px solid var(--primary)' : '1px solid var(--border-color, #e5e7eb)',
-                          background: isSelected ? 'var(--primary)' : 'var(--bg-main, #f9fafb)',
-                          color: isSelected ? '#fff' : 'inherit',
-                          fontSize: '0.8rem',
-                          fontWeight: isSelected ? 600 : 500,
-                          cursor: 'pointer',
-                          textAlign: 'center',
-                          transition: 'all 0.15s ease',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '0.15rem',
+                          fontSize: '0.78rem',
                         }}
                       >
-                        {slot.startTime} - {slot.endTime}
+                        <span>{slot.startTime} - {slot.endTime}</span>
+                        {isTaken && <span className="slot-badge slot-badge-taken">Booked</span>}
+                        {isPassed && !isTaken && <span className="slot-badge slot-badge-passed">Passed</span>}
+                        {isClickable && !isSelected && <span className="slot-badge slot-badge-avail">Available</span>}
                       </button>
                     );
                   })}
