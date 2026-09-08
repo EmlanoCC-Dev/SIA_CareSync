@@ -1,7 +1,17 @@
 # Walkthrough: Patient Categorized File Upload System
 
-## Overview of Changes
-Implemented categorized medical file uploads organized by patient folder and document type.
+## Packages & Dependencies to Install
+
+### Backend (`backend/`)
+```bash
+cd backend
+npm install multer
+```
+
+- `multer`: Middleware for handling `multipart/form-data` and disk storage for uploaded medical documents.
+
+### Frontend (`frontend/`)
+No new packages required (uses native `FormData` and existing `lucide-react` icons).
 
 ### 1. Upload Storage & Directory Structure
 Files are dynamically stored in:
