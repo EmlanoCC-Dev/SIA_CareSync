@@ -14,16 +14,18 @@ const Appointment = require('../models/Appointment');
 const Slot = require('../models/Slot');
 const emitter = require('../events/emitter');
 const EVENTS = require('../events/events');
+const { getNow, isClinicOpen } = require('../config/systemTime');
 
 /**
  * Get the next sequential queue number for today.
  * Resets daily — queue numbers start at 1 each day.
  */
 async function _getNextQueueNumber() {
-  const todayStart = new Date();
+  const now = getNow();
+  const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
 
-  const todayEnd = new Date();
+  const todayEnd = new Date(now);
   todayEnd.setHours(23, 59, 59, 999);
 
   const lastWalkIn = await WalkIn.findOne({
@@ -36,13 +38,23 @@ async function _getNextQueueNumber() {
 /**
  * Add a walk-in patient to the holding list.
  * Staff enters name + contact number; system assigns queue number.
+ * Enforces clinic operating hours (8:30 AM - 5:00 PM).
  *
  * @param {Object} params
  * @param {string} params.name
  * @param {string} params.contactNumber
+ * @param {boolean} [params.overrideHours=false]
  * @returns {Object} WalkIn document
  */
-async function addToHoldingList({ name, contactNumber }) {
+async function addToHoldingList({ name, contactNumber, overrideHours = false }) {
+  if (!overrideHours && !isClinicOpen()) {
+    const err = new Error(
+      'Walk-in registration is currently closed. Operating hours are from 8:30 AM to 5:00 PM.'
+    );
+    err.statusCode = 400;
+    throw err;
+  }
+
   const queueNumber = await _getNextQueueNumber();
 
   const walkIn = await WalkIn.create({
@@ -74,10 +86,14 @@ async function getHoldingList() {
  * Get all walk-ins for today (any status), for staff management.
  */
 async function getTodayWalkIns() {
-  const todayStart = new Date();
+  const now = getNow();
+  const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
 
-  return WalkIn.find({ createdAt: { $gte: todayStart } })
+  const todayEnd = new Date(now);
+  todayEnd.setHours(23, 59, 59, 999);
+
+  return WalkIn.find({ createdAt: { $gte: todayStart, $lte: todayEnd } })
     .sort({ queueNumber: 1 })
     .populate('assignedSlot')
     .populate('appointment');
@@ -159,14 +175,18 @@ async function assignSlotToNextWalkIn(slot) {
  * @param {number} [upcomingCount=5] - How many upcoming entries to show
  */
 async function getNowServing(upcomingCount = 5) {
-  const todayStart = new Date();
+  const now = getNow();
+  const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
+
+  const todayEnd = new Date(now);
+  todayEnd.setHours(23, 59, 59, 999);
 
   const [currentlyServing, upcoming] = await Promise.all([
     // Currently being served (In Progress)
     WalkIn.find({
       status: 'In Progress',
-      createdAt: { $gte: todayStart },
+      createdAt: { $gte: todayStart, $lte: todayEnd },
     })
       .sort({ queueNumber: 1 })
       .limit(1),
@@ -174,7 +194,7 @@ async function getNowServing(upcomingCount = 5) {
     // Next in line (Waiting or Slot Assigned)
     WalkIn.find({
       status: { $in: ['Waiting', 'Slot Assigned', 'Checked In'] },
-      createdAt: { $gte: todayStart },
+      createdAt: { $gte: todayStart, $lte: todayEnd },
     })
       .sort({ queueNumber: 1 })
       .limit(upcomingCount),
@@ -183,7 +203,8 @@ async function getNowServing(upcomingCount = 5) {
   return {
     nowServing: currentlyServing[0] || null,
     upcoming,
-    updatedAt: new Date().toISOString(),
+    updatedAt: now.toISOString(),
+    isOpen: isClinicOpen(now),
   };
 }
 

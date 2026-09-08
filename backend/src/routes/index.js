@@ -22,6 +22,7 @@ const appointmentRoutes = require('./appointment.routes');
 const auditLogRoutes = require('./auditLog.routes');
 const walkInRoutes = require('./walkIn.routes');
 const slotRoutes = require('./slot.routes');
+const systemRoutes = require('./system.routes');
 
 const router = Router();
 
@@ -30,5 +31,6 @@ router.use('/appointments', appointmentRoutes);
 router.use('/audit-logs', auditLogRoutes);
 router.use('/walkins', walkInRoutes);
 router.use('/slots', slotRoutes);
+router.use('/system', systemRoutes);
 
 module.exports = router;
