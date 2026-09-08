@@ -82,7 +82,8 @@ export const api = {
   generateSlots: (data) => request('/slots/generate', { method: 'POST', body: data }),
   getSlots: (params = {}) => {
     const query = new URLSearchParams();
-    if (params.doctor) query.append('doctor', params.doctor);
+    const docId = params.doctor || params.doctorId;
+    if (docId) query.append('doctorId', docId);
     if (params.date) query.append('date', params.date);
     if (params.status) query.append('status', params.status);
     const queryString = query.toString();

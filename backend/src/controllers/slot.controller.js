@@ -8,27 +8,27 @@ const slotService = require('../services/slot.service');
 
 /**
  * GET /api/slots
- * Query available or all slots for a doctor & date.
- * Query params: doctorId (required), date (required), status ('Available' or all)
+ * Query available or all slots for a doctor & date, or across all doctors.
+ * Query params: doctorId (optional), date (optional, defaults to today), status ('Available' or all)
  */
 async function getSlots(req, res, next) {
   try {
-    const { doctorId, date, status } = req.query;
-    if (!doctorId || !date) {
-      return res.status(400).json({
-        success: false,
-        message: 'Both doctorId and date query parameters are required',
-      });
-    }
+    const doctorId = req.query.doctorId || req.query.doctor;
+    const { date, status } = req.query;
+    const resolvedDate = date || new Date().toISOString().split('T')[0];
 
     let slots;
-    if (status && status !== 'Available') {
-      slots = await slotService.getAllSlots(doctorId, date);
+    if (doctorId) {
+      if (status && status === 'Available') {
+        slots = await slotService.getAvailableSlots(doctorId, resolvedDate);
+      } else {
+        slots = await slotService.getAllSlots(doctorId, resolvedDate);
+      }
     } else {
-      slots = await slotService.getAvailableSlots(doctorId, date);
+      slots = await slotService.getAllSlotsForDate(resolvedDate, status || null);
     }
 
-    res.json({ success: true, data: slots });
+    res.json({ success: true, count: slots.length, data: slots });
   } catch (err) {
     next(err);
   }
@@ -52,14 +52,23 @@ async function getById(req, res, next) {
  */
 async function generate(req, res, next) {
   try {
-    const { doctorId, date } = req.body;
-    if (!doctorId || !date) {
+    const { doctorId, doctor, date, startTime, endTime, duration } = req.body;
+    const targetDoctorId = doctorId || doctor;
+    const resolvedDate = date || new Date().toISOString().split('T')[0];
+
+    if (!targetDoctorId) {
       return res.status(400).json({
         success: false,
-        message: 'Both doctorId and date are required',
+        message: 'Doctor ID is required to generate slots',
       });
     }
-    const slots = await slotService.generateSlotsForDoctor(doctorId, date);
+    const slots = await slotService.generateSlotsForDoctor(
+      targetDoctorId,
+      resolvedDate,
+      duration ? Number(duration) : null,
+      startTime || null,
+      endTime || null
+    );
     res.status(201).json({ success: true, count: slots.length, data: slots });
   } catch (err) {
     next(err);

@@ -46,9 +46,12 @@ function _normalizeDate(date) {
  *
  * @param {string} doctorId
  * @param {Date|string} date
+ * @param {number} [customDuration]
+ * @param {string} [customStart]
+ * @param {string} [customEnd]
  * @returns {Array} Created (or existing) Slot documents
  */
-async function generateSlotsForDoctor(doctorId, date) {
+async function generateSlotsForDoctor(doctorId, date, customDuration = null, customStart = null, customEnd = null) {
   const doctor = await User.findById(doctorId);
   if (!doctor || doctor.role !== 'Doctor') {
     const err = new Error('Doctor not found');
@@ -59,16 +62,25 @@ async function generateSlotsForDoctor(doctorId, date) {
   const normalizedDate = _normalizeDate(date);
   const dayOfWeek = normalizedDate.getUTCDay(); // 0 = Sun, 1 = Mon …
 
-  // Find the working hours block for this day of the week
-  const schedule = (doctor.workingHours || []).find((wh) => wh.day === dayOfWeek);
-  if (!schedule) {
-    // Doctor doesn't work on this day — return empty
-    return [];
-  }
+  let startMinutes;
+  let endMinutes;
+  const duration = customDuration || doctor.consultationDuration || 15;
 
-  const duration = doctor.consultationDuration || 15;
-  const startMinutes = _parseTime(schedule.start);
-  const endMinutes = _parseTime(schedule.end);
+  if (customStart && customEnd) {
+    startMinutes = _parseTime(customStart);
+    endMinutes = _parseTime(customEnd);
+  } else {
+    // Find the working hours block for this day of the week
+    const schedule = (doctor.workingHours || []).find((wh) => wh.day === dayOfWeek);
+    if (schedule) {
+      startMinutes = _parseTime(schedule.start);
+      endMinutes = _parseTime(schedule.end);
+    } else {
+      // Default working hours (09:00 to 17:00) if no custom schedule is set
+      startMinutes = _parseTime('09:00');
+      endMinutes = _parseTime('17:00');
+    }
+  }
 
   // Build slot boundaries
   const slotDefs = [];
@@ -79,30 +91,32 @@ async function generateSlotsForDoctor(doctorId, date) {
     });
   }
 
-  if (slotDefs.length === 0) return [];
-
-  // Bulk upsert: only create slots that don't already exist
-  const ops = slotDefs.map((s) => ({
-    updateOne: {
-      filter: { doctor: doctorId, date: normalizedDate, startTime: s.startTime },
-      update: {
-        $setOnInsert: {
-          doctor: doctorId,
-          date: normalizedDate,
-          startTime: s.startTime,
-          endTime: s.endTime,
-          status: 'Available',
-          appointment: null,
+  if (slotDefs.length > 0) {
+    // Bulk upsert: only create slots that don't already exist
+    const ops = slotDefs.map((s) => ({
+      updateOne: {
+        filter: { doctor: doctorId, date: normalizedDate, startTime: s.startTime },
+        update: {
+          $setOnInsert: {
+            doctor: doctorId,
+            date: normalizedDate,
+            startTime: s.startTime,
+            endTime: s.endTime,
+            status: 'Available',
+            appointment: null,
+          },
         },
+        upsert: true,
       },
-      upsert: true,
-    },
-  }));
+    }));
 
-  await Slot.bulkWrite(ops);
+    await Slot.bulkWrite(ops);
+  }
 
   // Return all slots for this doctor+date
-  return Slot.find({ doctor: doctorId, date: normalizedDate }).sort({ startTime: 1 });
+  return Slot.find({ doctor: doctorId, date: normalizedDate })
+    .populate('doctor', 'firstName lastName email contactNumber')
+    .sort({ startTime: 1 });
 }
 
 /**
@@ -127,7 +141,9 @@ async function getAvailableSlots(doctorId, date) {
     doctor: doctorId,
     date: normalizedDate,
     status: 'Available',
-  }).sort({ startTime: 1 });
+  })
+    .populate('doctor', 'firstName lastName email contactNumber')
+    .sort({ startTime: 1 });
 }
 
 /**
@@ -148,7 +164,38 @@ async function getAllSlots(doctorId, date) {
   return Slot.find({
     doctor: doctorId,
     date: normalizedDate,
-  }).sort({ startTime: 1 });
+  })
+    .populate('doctor', 'firstName lastName email contactNumber')
+    .sort({ startTime: 1 });
+}
+
+/**
+ * Get all slots for all doctors on a date (or filtered by status).
+ * Auto-generates default slots for any doctors missing slots on that date.
+ */
+async function getAllSlotsForDate(date, status = null) {
+  const normalizedDate = _normalizeDate(date);
+  const doctors = await User.find({ role: 'Doctor' });
+
+  // Auto-generate for each doctor if none exist yet
+  for (const doc of doctors) {
+    const existingCount = await Slot.countDocuments({
+      doctor: doc._id,
+      date: normalizedDate,
+    });
+    if (existingCount === 0) {
+      await generateSlotsForDoctor(doc._id, date);
+    }
+  }
+
+  const query = { date: normalizedDate };
+  if (status) {
+    query.status = status;
+  }
+
+  return Slot.find(query)
+    .populate('doctor', 'firstName lastName email contactNumber')
+    .sort({ startTime: 1 });
 }
 
 /**
@@ -293,6 +340,7 @@ module.exports = {
   generateSlotsForDoctor,
   getAvailableSlots,
   getAllSlots,
+  getAllSlotsForDate,
   getById,
   reserveSlot,
   confirmSlot,

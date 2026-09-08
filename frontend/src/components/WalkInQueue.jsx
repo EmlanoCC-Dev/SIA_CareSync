@@ -173,7 +173,7 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
                           <option value="">Select Slot</option>
                           {slots.map(s => (
                             <option key={s._id} value={s._id}>
-                              {s.startTime} - {s.doctor ? `Dr. ${s.doctor.lastName}` : ''}
+                              {s.startTime} - {s.endTime} {s.doctor ? `(Dr. ${s.doctor.firstName ? s.doctor.firstName + ' ' : ''}${s.doctor.lastName || ''})` : ''}
                             </option>
                           ))}
                         </select>
