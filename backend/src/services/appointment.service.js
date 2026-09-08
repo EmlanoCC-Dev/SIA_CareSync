@@ -15,6 +15,60 @@ const WalkIn = require('../models/WalkIn');
 const slotService = require('./slot.service');
 const emitter = require('../events/emitter');
 const EVENTS = require('../events/events');
+const { isDateTimePassed } = require('../utils/timeHelper');
+const { getNow } = require('../config/systemTime');
+
+/**
+ * Automatically update missed / passed appointments to 'No-show'.
+ * Transitions any Pending or Confirmed appointments whose scheduled time has passed.
+ */
+async function autoMarkNoShows() {
+  try {
+    const pendingOrConfirmed = await Appointment.find({
+      status: { $in: ['Pending', 'Confirmed'] },
+    }).populate('slot');
+
+    const now = getNow();
+    const updated = [];
+
+    for (const app of pendingOrConfirmed) {
+      const slotTime = app.slot ? `${app.slot.startTime}-${app.slot.endTime}` : app.timeSlot;
+      const slotDate = app.slot ? app.slot.date : app.date;
+
+      // Check if appointment end time has passed
+      if (isDateTimePassed(slotDate, slotTime, 'end')) {
+        const previousStatus = app.status;
+        app.status = 'No-show';
+        app.statusHistory.push({
+          status: 'No-show',
+          changedBy: app.doctor || app.patient,
+          changedAt: now,
+          remarks: 'Automatically marked No-show (appointment time passed)',
+        });
+
+        await app.save();
+
+        if (app.walkIn) {
+          await WalkIn.findByIdAndUpdate(app.walkIn, { status: 'Left' });
+        }
+
+        emitter.emit(EVENTS.APPOINTMENT_NO_SHOW, {
+          appointment: app,
+          previousStatus,
+          autoMarked: true,
+          targetModel: 'Appointment',
+        });
+
+        updated.push(app._id);
+      }
+    }
+
+    return updated;
+  } catch (err) {
+    console.error('Error running autoMarkNoShows:', err);
+    return [];
+  }
+}
 
 /**
  * Book a new appointment (patient action).
@@ -35,6 +89,13 @@ async function create({ patientId, doctorId, date, timeSlot, slotId, reason }) {
     resolvedDoctorId = slot.doctor._id || slot.doctor;
     resolvedDate = slot.date;
     resolvedTimeSlot = `${slot.startTime}-${slot.endTime}`;
+  }
+
+  // Validate that the requested date and time has not already passed
+  if (isDateTimePassed(resolvedDate, resolvedTimeSlot, 'start')) {
+    const err = new Error('Cannot book an appointment for a time slot that has already passed');
+    err.statusCode = 400;
+    throw err;
   }
 
   const appointment = await Appointment.create({
@@ -423,6 +484,8 @@ async function complete(appointmentId, userId) {
  * Get a single appointment by ID.
  */
 async function getById(appointmentId) {
+  await autoMarkNoShows();
+
   const appointment = await Appointment.findById(appointmentId)
     .populate('patient', 'firstName lastName email contactNumber')
     .populate('doctor', 'firstName lastName email contactNumber consultationDuration')
@@ -441,6 +504,8 @@ async function getById(appointmentId) {
  * List appointments for a specific patient.
  */
 async function listByPatient(patientId) {
+  await autoMarkNoShows();
+
   return Appointment.find({ patient: patientId })
     .sort({ date: -1, createdAt: -1 })
     .populate('doctor', 'firstName lastName')
@@ -451,6 +516,8 @@ async function listByPatient(patientId) {
  * List appointments for a specific doctor.
  */
 async function listByDoctor(doctorId) {
+  await autoMarkNoShows();
+
   return Appointment.find({ doctor: doctorId })
     .sort({ date: -1, createdAt: -1 })
     .populate('patient', 'firstName lastName email contactNumber')
@@ -462,6 +529,8 @@ async function listByDoctor(doctorId) {
  * List all appointments (staff/admin view), with optional status filter.
  */
 async function listAll(filters = {}) {
+  await autoMarkNoShows();
+
   const query = {};
   if (filters.status) query.status = filters.status;
   if (filters.date) query.date = { $gte: new Date(filters.date) };
@@ -489,4 +558,5 @@ module.exports = {
   listByPatient,
   listByDoctor,
   listAll,
+  autoMarkNoShows,
 };

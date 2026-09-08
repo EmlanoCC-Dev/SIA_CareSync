@@ -13,6 +13,7 @@ const Slot = require('../models/Slot');
 const User = require('../models/User');
 const emitter = require('../events/emitter');
 const EVENTS = require('../events/events');
+const { isDateTimePassed } = require('../utils/timeHelper');
 
 /**
  * Parse a time string "HH:MM" into total minutes since midnight.
@@ -137,13 +138,16 @@ async function getAvailableSlots(doctorId, date) {
     await generateSlotsForDoctor(doctorId, date);
   }
 
-  return Slot.find({
+  const slots = await Slot.find({
     doctor: doctorId,
     date: normalizedDate,
     status: 'Available',
   })
     .populate('doctor', 'firstName lastName email contactNumber')
     .sort({ startTime: 1 });
+
+  // Filter out any slots whose start time has already passed
+  return slots.filter((slot) => !isDateTimePassed(slot.date, slot.startTime, 'start'));
 }
 
 /**
@@ -193,9 +197,15 @@ async function getAllSlotsForDate(date, status = null) {
     query.status = status;
   }
 
-  return Slot.find(query)
+  const slots = await Slot.find(query)
     .populate('doctor', 'firstName lastName email contactNumber')
     .sort({ startTime: 1 });
+
+  if (status === 'Available') {
+    return slots.filter((slot) => !isDateTimePassed(slot.date, slot.startTime, 'start'));
+  }
+
+  return slots;
 }
 
 /**
@@ -227,6 +237,11 @@ async function reserveSlot(slotId, appointmentId) {
   if (slot.status !== 'Available') {
     const err = new Error(`Slot is not available (current status: "${slot.status}")`);
     err.statusCode = 409;
+    throw err;
+  }
+  if (isDateTimePassed(slot.date, slot.startTime, 'start')) {
+    const err = new Error('Cannot reserve a time slot that has already passed');
+    err.statusCode = 400;
     throw err;
   }
 
