@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import AddWalkInModal from './AddWalkInModal';
-import { Users, Plus, RefreshCw, CheckCircle2, UserCheck, AlertTriangle } from 'lucide-react';
+import AssignSlotModal from './AssignSlotModal';
+import { Users, Plus, RefreshCw, UserCheck, AlertTriangle, CalendarCheck } from 'lucide-react';
 
 export default function WalkInQueue({ isStaff = true, doctorId = null }) {
   const [walkIns, setWalkIns] = useState([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // For assigning slot
-  const [slots, setSlots] = useState([]);
-  const [assigningSlotFor, setAssigningSlotFor] = useState(null);
-  const [selectedSlot, setSelectedSlot] = useState('');
+  // Modals
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [selectedWalkInForAssignment, setSelectedWalkInForAssignment] = useState(null);
 
   useEffect(() => {
     fetchWalkIns();
@@ -22,13 +22,10 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
     setLoading(true);
     try {
       const date = new Date().toISOString().split('T')[0];
-      // Note: Backend gets walkins sorted by createdAt, we might not have a doctor filter yet unless implemented on backend.
-      // But typically walk-ins without slots are global.
       const res = await api.getWalkIns({ status: statusFilter || undefined, date });
       if (res.success && res.data) {
         let filtered = Array.isArray(res.data) ? res.data : [];
         if (doctorId && statusFilter !== 'Waiting') {
-          // simple client side filter if it's assigned to this doctor
           filtered = filtered.filter(w => !w.assignedSlot || w.assignedSlot.doctor === doctorId);
         }
         setWalkIns(filtered);
@@ -42,16 +39,9 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
     }
   };
 
-  const loadSlotsForAssignment = async () => {
-    try {
-      const date = new Date().toISOString().split('T')[0];
-      const res = await api.getSlots({ date, status: 'Available' });
-      if (res.success && res.data) {
-        setSlots(res.data);
-      }
-    } catch (err) {
-      console.error('Failed to load available slots:', err);
-    }
+  const handleOpenAssignModal = (walkIn) => {
+    setSelectedWalkInForAssignment(walkIn);
+    setIsAssignModalOpen(true);
   };
 
   const handleUpdateStatus = async (id, status) => {
@@ -60,18 +50,6 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
       fetchWalkIns();
     } catch (err) {
       alert(err.message || 'Failed to update status');
-    }
-  };
-
-  const handleAssignSlot = async (walkInId) => {
-    if (!selectedSlot) return;
-    try {
-      await api.assignSlotToWalkIn(walkInId, selectedSlot);
-      setAssigningSlotFor(null);
-      setSelectedSlot('');
-      fetchWalkIns();
-    } catch (err) {
-      alert(err.message || 'Failed to assign slot');
     }
   };
 
@@ -102,7 +80,7 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
             <RefreshCw size={16} className={loading ? 'spin' : ''} />
           </button>
           {isStaff && (
-            <button onClick={() => setIsModalOpen(true)} className="btn btn-primary">
+            <button onClick={() => setIsAddModalOpen(true)} className="btn btn-primary">
               <Plus size={16} />
               <span>Add Walk-In</span>
             </button>
@@ -151,84 +129,64 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
                   <td>
                     {walkIn.assignedSlot ? (
                       <div>
-                        <div>{walkIn.assignedSlot.startTime} - {walkIn.assignedSlot.endTime}</div>
+                        <strong>{walkIn.assignedSlot.startTime} - {walkIn.assignedSlot.endTime}</strong>
                         {walkIn.assignedSlot.doctor && (
                           <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>
-                            Dr. {walkIn.assignedSlot.doctor.lastName || walkIn.assignedSlot.doctor}
+                            Dr. {walkIn.assignedSlot.doctor.firstName ? `${walkIn.assignedSlot.doctor.firstName} ` : ''}{walkIn.assignedSlot.doctor.lastName || walkIn.assignedSlot.doctor}
                           </div>
                         )}
                       </div>
                     ) : (
-                      <span style={{ color: 'var(--amber)' }}>Unassigned</span>
+                      <span style={{ color: 'var(--amber)', fontSize: '0.85rem', fontWeight: 500 }}>Unassigned</span>
                     )}
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    {assigningSlotFor === walkIn._id ? (
-                      <div style={{ display: 'inline-flex', gap: '0.5rem', alignItems: 'center' }}>
-                        <select 
-                          className="form-select form-select-sm" 
-                          value={selectedSlot}
-                          onChange={(e) => setSelectedSlot(e.target.value)}
+                    <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
+                      {isStaff && walkIn.status === 'Waiting' && (
+                        <button 
+                          className="btn btn-primary btn-sm"
+                          onClick={() => handleOpenAssignModal(walkIn)}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
                         >
-                          <option value="">Select Slot</option>
-                          {slots.map(s => (
-                            <option key={s._id} value={s._id}>
-                              {s.startTime} - {s.endTime} {s.doctor ? `(Dr. ${s.doctor.firstName ? s.doctor.firstName + ' ' : ''}${s.doctor.lastName || ''})` : ''}
-                            </option>
-                          ))}
-                        </select>
-                        <button className="btn btn-primary btn-sm" onClick={() => handleAssignSlot(walkIn._id)}>Assign</button>
-                        <button className="btn btn-secondary btn-sm" onClick={() => setAssigningSlotFor(null)}>Cancel</button>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
-                        {isStaff && walkIn.status === 'Waiting' && (
-                          <button 
-                            className="btn btn-primary btn-sm"
-                            onClick={() => {
-                              loadSlotsForAssignment();
-                              setAssigningSlotFor(walkIn._id);
-                            }}
-                          >
-                            Assign Slot
-                          </button>
-                        )}
-                        {isStaff && walkIn.status === 'Slot Assigned' && (
-                          <button 
-                            className="btn btn-success btn-sm"
-                            onClick={() => handleUpdateStatus(walkIn._id, 'Checked In')}
-                            title="Check In"
-                          >
-                            <UserCheck size={14} /> Check In
-                          </button>
-                        )}
-                        {doctorId && walkIn.status === 'Checked In' && (
-                          <button 
-                            className="btn btn-teal btn-sm"
-                            onClick={() => handleUpdateStatus(walkIn._id, 'In Progress')}
-                          >
-                            Start Session
-                          </button>
-                        )}
-                        {doctorId && walkIn.status === 'In Progress' && (
-                          <button 
-                            className="btn btn-success btn-sm"
-                            onClick={() => handleUpdateStatus(walkIn._id, 'Completed')}
-                          >
-                            Complete
-                          </button>
-                        )}
-                        {isStaff && ['Waiting', 'Slot Assigned', 'Checked In'].includes(walkIn.status) && (
-                          <button 
-                            className="btn btn-danger btn-sm"
-                            onClick={() => handleUpdateStatus(walkIn._id, 'Left')}
-                            title="Patient Left"
-                          >
-                            <AlertTriangle size={14} /> Left
-                          </button>
-                        )}
-                      </div>
-                    )}
+                          <CalendarCheck size={14} />
+                          <span>Assign Slot</span>
+                        </button>
+                      )}
+                      {isStaff && walkIn.status === 'Slot Assigned' && (
+                        <button 
+                          className="btn btn-success btn-sm"
+                          onClick={() => handleUpdateStatus(walkIn._id, 'Checked In')}
+                          title="Check In Patient"
+                        >
+                          <UserCheck size={14} /> Check In
+                        </button>
+                      )}
+                      {doctorId && walkIn.status === 'Checked In' && (
+                        <button 
+                          className="btn btn-teal btn-sm"
+                          onClick={() => handleUpdateStatus(walkIn._id, 'In Progress')}
+                        >
+                          Start Session
+                        </button>
+                      )}
+                      {doctorId && walkIn.status === 'In Progress' && (
+                        <button 
+                          className="btn btn-success btn-sm"
+                          onClick={() => handleUpdateStatus(walkIn._id, 'Completed')}
+                        >
+                          Complete
+                        </button>
+                      )}
+                      {isStaff && ['Waiting', 'Slot Assigned', 'Checked In'].includes(walkIn.status) && (
+                        <button 
+                          className="btn btn-danger btn-sm"
+                          onClick={() => handleUpdateStatus(walkIn._id, 'Left')}
+                          title="Patient Left"
+                        >
+                          <AlertTriangle size={14} /> Left
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))
@@ -237,10 +195,22 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
         </table>
       </div>
 
+      {/* Modal for Adding Walk-In */}
       <AddWalkInModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
         onAdded={fetchWalkIns}
+      />
+
+      {/* Modal for Assigning Slot with Searchable Doctor & Time Slots */}
+      <AssignSlotModal
+        isOpen={isAssignModalOpen}
+        onClose={() => {
+          setIsAssignModalOpen(false);
+          setSelectedWalkInForAssignment(null);
+        }}
+        walkIn={selectedWalkInForAssignment}
+        onAssigned={fetchWalkIns}
       />
     </div>
   );
