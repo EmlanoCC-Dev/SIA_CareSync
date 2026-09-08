@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { X, UserPlus } from 'lucide-react';
+import { X, UserPlus, AlertCircle, Clock } from 'lucide-react';
 
 export default function AddWalkInModal({ isOpen, onClose, onAdded }) {
   const [formData, setFormData] = useState({
@@ -8,19 +8,33 @@ export default function AddWalkInModal({ isOpen, onClose, onAdded }) {
     contactNumber: ''
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [timeStatus, setTimeStatus] = useState(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setError(null);
+      api.getSystemTime()
+        .then(res => {
+          if (res.success) setTimeStatus(res.data);
+        })
+        .catch(() => {});
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     try {
       await api.createWalkIn(formData);
       onAdded();
       onClose();
       setFormData({ name: '', contactNumber: '' });
     } catch (err) {
-      alert(err.message || 'Failed to add walk-in');
+      setError(err.message || 'Failed to add walk-in');
     } finally {
       setLoading(false);
     }
@@ -28,13 +42,59 @@ export default function AddWalkInModal({ isOpen, onClose, onAdded }) {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '400px' }}>
+      <div className="modal-content" style={{ maxWidth: '420px' }}>
         <div className="modal-header">
           <h3>Add Walk-In Patient</h3>
           <button className="btn-icon" onClick={onClose}>
             <X size={20} />
           </button>
         </div>
+
+        {/* Operating Hours Info */}
+        {timeStatus && !timeStatus.isOpen && (
+          <div
+            style={{
+              margin: '0.75rem 1.25rem 0 1.25rem',
+              padding: '0.65rem 0.85rem',
+              borderRadius: '8px',
+              background: 'rgba(239,68,68,0.1)',
+              border: '1px solid rgba(239,68,68,0.25)',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.5rem',
+              fontSize: '0.82rem',
+            }}
+          >
+            <Clock size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+            <div>
+              <strong>Walk-in queue is currently closed.</strong>
+              <div style={{ fontSize: '0.75rem', opacity: 0.9, marginTop: '2px' }}>
+                Walk-ins are only accepted from 8:30 AM to 5:00 PM.
+              </div>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div
+            style={{
+              margin: '0.75rem 1.25rem 0 1.25rem',
+              padding: '0.65rem 0.85rem',
+              borderRadius: '8px',
+              background: 'rgba(239,68,68,0.15)',
+              border: '1px solid rgba(239,68,68,0.3)',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.85rem',
+            }}
+          >
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+            <span>{error}</span>
+          </div>
+        )}
         
         <form onSubmit={handleSubmit}>
           <div className="modal-body">

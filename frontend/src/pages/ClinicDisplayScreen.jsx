@@ -19,12 +19,25 @@ export default function ClinicDisplayScreen() {
   const [online, setOnline] = useState(true);
   const [pulse, setPulse] = useState(false);
 
+  const [systemStatus, setSystemStatus] = useState({ isOpen: true, isCustom: false });
+
   const fetchNowServing = useCallback(async () => {
     try {
-      const res = await api.getNowServing();
-      if (res.success && res.data) {
-        setData(res.data);
+      const [queueRes, timeRes] = await Promise.all([
+        api.getNowServing(),
+        api.getSystemTime().catch(() => null),
+      ]);
+      if (queueRes.success && queueRes.data) {
+        setData(queueRes.data);
         setOnline(true);
+      }
+      if (timeRes && timeRes.success && timeRes.data) {
+        setSystemStatus({
+          isOpen: timeRes.data.isOpen,
+          isCustom: timeRes.data.isCustom,
+          operatingHours: timeRes.data.operatingHours,
+        });
+        setClock(new Date(timeRes.data.currentTime));
       }
     } catch {
       setOnline(false);
@@ -38,9 +51,11 @@ export default function ClinicDisplayScreen() {
     return () => clearInterval(interval);
   }, [fetchNowServing]);
 
-  // Live clock
+  // Live clock tick
   useEffect(() => {
-    const timer = setInterval(() => setClock(new Date()), 1000);
+    const timer = setInterval(() => {
+      setClock(prev => new Date(prev.getTime() + 1000));
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -76,8 +91,37 @@ export default function ClinicDisplayScreen() {
           <div className="cd-clock">
             <Clock size={18} />
             <span>{formatTime(clock)}</span>
+            {systemStatus.isCustom && (
+              <span style={{ fontSize: '0.65rem', background: 'rgba(59,130,246,0.3)', color: '#93c5fd', padding: '0.1rem 0.35rem', borderRadius: '4px', marginLeft: '0.25rem' }}>
+                Simulated
+              </span>
+            )}
           </div>
           <div className="cd-date">{formatDate(clock)}</div>
+          <div
+            style={{
+              padding: '0.25rem 0.6rem',
+              borderRadius: '999px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              background: systemStatus.isOpen ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.2)',
+              color: systemStatus.isOpen ? '#34d399' : '#f87171',
+              border: `1px solid ${systemStatus.isOpen ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.4)'}`,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+            }}
+          >
+            <span
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: systemStatus.isOpen ? '#10b981' : '#ef4444',
+              }}
+            />
+            <span>{systemStatus.isOpen ? 'Queue Open' : 'Queue Closed (8:30 AM - 5:00 PM)'}</span>
+          </div>
           <div className={`cd-status-indicator ${online ? 'cd-online' : 'cd-offline'}`}>
             {online ? <Wifi size={14} /> : <WifiOff size={14} />}
             <span>{online ? 'Live' : 'Offline'}</span>

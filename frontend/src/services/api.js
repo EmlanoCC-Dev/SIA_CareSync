@@ -108,4 +108,8 @@ export const api = {
   updateWalkInStatus: (id, status) => request(`/walkins/${id}/status`, { method: 'PATCH', body: { status } }),
   assignSlotToWalkIn: (walkInId, slotId) => request(`/walkins/${walkInId}/assign`, { method: 'POST', body: { slotId } }),
   getNowServing: () => request('/walkins/now-serving'),
+
+  // ── System Time & Settings ──
+  getSystemTime: () => request('/system/time'),
+  setSystemTime: (data) => request('/system/time', { method: 'POST', body: data }),
 };
