@@ -114,6 +114,55 @@ async function uploadDocuments(req, res, next) {
 }
 
 /**
+ * POST /api/appointments/:id/files
+ * Upload physical document file for patient appointment (Doctor/Staff).
+ */
+async function uploadFile(req, res, next) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file was uploaded.',
+      });
+    }
+
+    const { type, title } = req.body;
+    const fileUrl = `${req.uploadRelativePath}/${req.file.filename}`;
+    const filename = title && title.trim() ? title.trim() : req.file.originalname;
+
+    const result = await appointmentService.attachFile(req.params.id, req.user.id, {
+      filename,
+      url: fileUrl,
+      type: type || 'general',
+    });
+
+    res.status(201).json({
+      success: true,
+      data: result.document,
+      appointment: result.appointment,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * DELETE /api/appointments/:id/documents/:docId
+ * Remove an attached document.
+ */
+async function deleteDocument(req, res, next) {
+  try {
+    const appointment = await appointmentService.removeDocument(
+      req.params.id,
+      req.params.docId
+    );
+    res.json({ success: true, data: appointment });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
  * PATCH /api/appointments/:id/complete
  * Mark an appointment as completed (doctor/staff).
  */
@@ -170,6 +219,8 @@ module.exports = {
   noShow,
   checkIn,
   uploadDocuments,
+  uploadFile,
+  deleteDocument,
   complete,
   getById,
   list,

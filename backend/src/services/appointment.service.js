@@ -307,14 +307,7 @@ async function uploadDocuments(appointmentId, userId, { consultationNotes, docum
   }
 
   if (documents && Array.isArray(documents)) {
-    for (const doc of documents) {
-      appointment.documents.push({
-        filename: doc.filename,
-        url: doc.url || '#',
-        type: doc.type || 'consultation_notes',
-        uploadedAt: new Date(),
-      });
-    }
+    appointment.documents = documents;
   }
 
   await appointment.save();
@@ -325,6 +318,58 @@ async function uploadDocuments(appointmentId, userId, { consultationNotes, docum
     targetModel: 'Appointment',
   });
 
+  return appointment;
+}
+
+/**
+ * Attach a newly uploaded physical file to an appointment.
+ */
+async function attachFile(appointmentId, userId, { filename, url, type }) {
+  const appointment = await Appointment.findById(appointmentId);
+  if (!appointment) {
+    const err = new Error('Appointment not found');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const newDoc = {
+    filename,
+    url,
+    type: type || 'general',
+    uploadedAt: new Date(),
+  };
+
+  appointment.documents.push(newDoc);
+  await appointment.save();
+
+  emitter.emit(EVENTS.DOCUMENT_UPLOADED, {
+    appointment,
+    performedBy: userId,
+    targetModel: 'Appointment',
+  });
+
+  return {
+    appointment,
+    document: appointment.documents[appointment.documents.length - 1],
+  };
+}
+
+/**
+ * Remove an attached document from an appointment.
+ */
+async function removeDocument(appointmentId, docId) {
+  const appointment = await Appointment.findById(appointmentId);
+  if (!appointment) {
+    const err = new Error('Appointment not found');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  appointment.documents = appointment.documents.filter(
+    (doc) => doc._id.toString() !== docId.toString()
+  );
+
+  await appointment.save();
   return appointment;
 }
 
@@ -437,6 +482,8 @@ module.exports = {
   noShow,
   checkIn,
   uploadDocuments,
+  attachFile,
+  removeDocument,
   complete,
   getById,
   listByPatient,

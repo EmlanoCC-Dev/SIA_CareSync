@@ -1,13 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
-import { X, FileText, Plus, Trash2, CheckCircle2, Save, User, Calendar, Clock, AlertCircle } from 'lucide-react';
+import { X, FileText, Plus, Trash2, CheckCircle2, Save, User, Calendar, Clock, AlertCircle, Upload, ExternalLink, Paperclip } from 'lucide-react';
 
 export default function ConsultationModal({ isOpen, onClose, appointment, onSuccess }) {
   const [consultationNotes, setConsultationNotes] = useState('');
   const [documents, setDocuments] = useState([]);
-  const [newDocFilename, setNewDocFilename] = useState('');
-  const [newDocType, setNewDocType] = useState('lab_result');
-  const [newDocUrl, setNewDocUrl] = useState('');
+  
+  // File Upload State
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [docTitle, setDocTitle] = useState('');
+  const [docType, setDocType] = useState('lab_result');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -18,30 +23,70 @@ export default function ConsultationModal({ isOpen, onClose, appointment, onSucc
       setDocuments(appointment.documents ? [...appointment.documents] : []);
       setError('');
       setSaveSuccess(false);
+      setSelectedFile(null);
+      setDocTitle('');
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   }, [appointment, isOpen]);
 
   if (!isOpen || !appointment) return null;
 
-  const handleAddDocument = (e) => {
-    e.preventDefault();
-    if (!newDocFilename.trim()) return;
-
-    setDocuments([
-      ...documents,
-      {
-        filename: newDocFilename.trim(),
-        type: newDocType,
-        url: newDocUrl.trim() || '#',
-        uploadedAt: new Date().toISOString(),
-      },
-    ]);
-    setNewDocFilename('');
-    setNewDocUrl('');
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      if (!docTitle) {
+        setDocTitle(file.name);
+      }
+    }
   };
 
-  const handleRemoveDocument = (index) => {
-    setDocuments(documents.filter((_, i) => i !== index));
+  const handleUploadFile = async (e) => {
+    e.preventDefault();
+    if (!selectedFile) {
+      setError('Please select a file to upload.');
+      return;
+    }
+
+    setUploading(true);
+    setError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('type', docType);
+      if (docTitle.trim()) {
+        formData.append('title', docTitle.trim());
+      }
+
+      const res = await api.uploadAppointmentFile(appointment._id, formData);
+      if (res.success && res.data) {
+        setDocuments(prev => [...prev, res.data]);
+        setSelectedFile(null);
+        setDocTitle('');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    } catch (err) {
+      console.error('File upload failed:', err);
+      setError(err.message || 'Failed to upload document file');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveDocument = async (doc, index) => {
+    if (!window.confirm(`Delete document "${doc.filename}"?`)) return;
+
+    if (doc._id) {
+      try {
+        await api.deleteAppointmentDocument(appointment._id, doc._id);
+        setDocuments(prev => prev.filter((_, i) => i !== index));
+      } catch (err) {
+        setError(err.message || 'Failed to delete document');
+      }
+    } else {
+      setDocuments(prev => prev.filter((_, i) => i !== index));
+    }
   };
 
   const handleSaveNotes = async () => {
@@ -87,13 +132,24 @@ export default function ConsultationModal({ isOpen, onClose, appointment, onSucc
     }
   };
 
+  const getDocTypeBadge = (type) => {
+    const map = {
+      lab_result: { label: 'Lab Result', color: 'var(--primary)' },
+      radiology: { label: 'Radiology / X-Ray', color: '#8b5cf6' },
+      prescription: { label: 'Prescription', color: '#10b981' },
+      referral: { label: 'Referral Letter', color: '#f59e0b' },
+      general: { label: 'General Document', color: '#6b7280' },
+    };
+    return map[type] || { label: type ? type.replace(/_/g, ' ') : 'Document', color: '#6b7280' };
+  };
+
   return (
     <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '640px' }}>
+      <div className="modal-content" style={{ maxWidth: '680px', width: '90%' }}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <FileText size={20} color="var(--primary)" />
-            <h3>Consultation Notes & Medical Records</h3>
+            <h3 style={{ margin: 0 }}>Consultation Notes & Medical Records</h3>
           </div>
           <button onClick={onClose} className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
             <X size={18} />
@@ -109,19 +165,19 @@ export default function ConsultationModal({ isOpen, onClose, appointment, onSucc
           )}
 
           {saveSuccess && (
-            <div className="alert" style={{ background: 'var(--emerald-light)', color: 'var(--emerald)', border: '1px solid #a7f3d0', marginBottom: '1rem' }}>
+            <div className="alert" style={{ background: 'var(--emerald-light, rgba(16, 185, 129, 0.1))', color: 'var(--emerald, #10b981)', border: '1px solid #a7f3d0', marginBottom: '1rem' }}>
               <CheckCircle2 size={16} />
               <span>Consultation notes saved successfully!</span>
             </div>
           )}
 
           {/* Patient Details Snapshot */}
-          <div style={{ background: 'var(--bg-muted)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem' }}>
+          <div style={{ background: 'var(--bg-muted, rgba(0,0,0,0.03))', padding: '1rem', borderRadius: 'var(--radius-md, 8px)', marginBottom: '1.25rem', border: '1px solid var(--border-color, #e5e7eb)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <User size={16} color="var(--text-muted)" />
                 <strong>
-                  {appointment.patient?.firstName} {appointment.patient?.lastName}
+                  {appointment.patient ? `${appointment.patient.firstName} ${appointment.patient.lastName}` : (appointment.walkIn ? `${appointment.walkIn.name} (Walk-In)` : 'Patient')}
                 </strong>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
@@ -138,11 +194,14 @@ export default function ConsultationModal({ isOpen, onClose, appointment, onSucc
           </div>
 
           {/* Consultation Notes */}
-          <div className="form-group">
-            <label className="form-label">Clinical Notes & Diagnosis</label>
+          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+            <label className="form-label" style={{ fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>
+              Clinical Notes & Diagnosis
+            </label>
             <textarea
               rows={5}
               className="form-textarea"
+              style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color, #e5e7eb)' }}
               placeholder="Enter patient diagnosis, clinical observations, prescribed medications, and follow-up instructions..."
               value={consultationNotes}
               onChange={(e) => setConsultationNotes(e.target.value)}
@@ -151,86 +210,150 @@ export default function ConsultationModal({ isOpen, onClose, appointment, onSucc
 
           {/* Medical Documents & Attachments */}
           <div style={{ marginTop: '1.5rem' }}>
-            <label className="form-label">Attached Documents & Lab Reports ({documents.length})</label>
+            <label className="form-label" style={{ fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
+              Attached Documents & Lab Reports ({documents.length})
+            </label>
 
             {documents.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
-                {documents.map((doc, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '0.6rem 0.85rem',
-                      borderRadius: 'var(--radius-md)',
-                      background: 'var(--bg-surface)',
-                      border: '1px solid var(--border)',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                      <FileText size={16} color="var(--primary)" />
-                      <div>
-                        <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{doc.filename}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
-                          {doc.type ? doc.type.replace('_', ' ') : 'General Document'}
+                {documents.map((doc, idx) => {
+                  const typeBadge = getDocTypeBadge(doc.type);
+                  return (
+                    <div
+                      key={doc._id || idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: 'var(--radius-md, 6px)',
+                        background: 'var(--bg-surface, #fff)',
+                        border: '1px solid var(--border-color, #e5e7eb)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{ padding: '0.4rem', borderRadius: '4px', background: `${typeBadge.color}15` }}>
+                          <FileText size={18} color={typeBadge.color} />
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{doc.filename}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
+                            <span 
+                              style={{ 
+                                fontSize: '0.7rem', 
+                                padding: '0.1rem 0.4rem', 
+                                borderRadius: '4px', 
+                                background: `${typeBadge.color}20`, 
+                                color: typeBadge.color,
+                                fontWeight: 500 
+                              }}
+                            >
+                              {typeBadge.label}
+                            </span>
+                            {doc.uploadedAt && (
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                {new Date(doc.uploadedAt).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        {doc.url && doc.url !== '#' && (
+                          <a
+                            href={doc.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-secondary btn-sm"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
+                          >
+                            <ExternalLink size={13} />
+                            <span>View</span>
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveDocument(doc, idx)}
+                          className="btn btn-danger btn-sm"
+                          style={{ padding: '0.3rem 0.5rem' }}
+                          title="Remove document"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveDocument(idx)}
-                      className="btn btn-danger btn-sm"
-                      style={{ padding: '0.25rem 0.5rem' }}
-                      title="Remove document"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
-            {/* Add Document Section */}
-            <div style={{ background: 'var(--bg-muted)', padding: '0.85rem', borderRadius: 'var(--radius-md)' }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-muted)' }}>
-                Add New Document / Lab Report
+            {/* Upload New Document Form */}
+            <div style={{ background: 'var(--bg-muted, rgba(0,0,0,0.03))', padding: '1rem', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--border-color, #e5e7eb)' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.75rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <Paperclip size={15} />
+                <span>Upload & Categorize Medical File</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr auto', gap: '0.5rem' }}>
-                <input
-                  type="text"
-                  className="form-input"
-                  style={{ padding: '0.35rem 0.6rem', fontSize: '0.85rem' }}
-                  placeholder="Document title (e.g. Chest X-Ray.pdf)"
-                  value={newDocFilename}
-                  onChange={(e) => setNewDocFilename(e.target.value)}
-                />
-                <select
-                  className="form-select"
-                  style={{ padding: '0.35rem 0.6rem', fontSize: '0.85rem' }}
-                  value={newDocType}
-                  onChange={(e) => setNewDocType(e.target.value)}
-                >
-                  <option value="lab_result">Lab Result</option>
-                  <option value="radiology">Radiology / X-Ray</option>
-                  <option value="prescription">Prescription</option>
-                  <option value="referral">Referral Letter</option>
-                </select>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.6rem', marginBottom: '0.75rem' }}>
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Document File</label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="form-input"
+                    style={{ padding: '0.35rem 0.5rem', fontSize: '0.8rem' }}
+                    onChange={handleFileChange}
+                    accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt,.csv"
+                  />
+                </div>
+
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Category / Folder</label>
+                  <select
+                    className="form-select"
+                    style={{ padding: '0.45rem 0.6rem', fontSize: '0.85rem' }}
+                    value={docType}
+                    onChange={(e) => setDocType(e.target.value)}
+                  >
+                    <option value="lab_result">Lab Result (lab_results/)</option>
+                    <option value="radiology">Radiology / X-Ray (radiology/)</option>
+                    <option value="prescription">Prescription (prescriptions/)</option>
+                    <option value="referral">Referral Letter (referral_letters/)</option>
+                    <option value="general">General Medical History (general/)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Display Title (Optional)</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    style={{ padding: '0.45rem 0.6rem', fontSize: '0.85rem' }}
+                    placeholder="e.g. Blood Test CBC.pdf"
+                    value={docTitle}
+                    onChange={(e) => setDocTitle(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <button
                   type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={handleAddDocument}
-                  disabled={!newDocFilename.trim()}
+                  className="btn btn-primary btn-sm"
+                  onClick={handleUploadFile}
+                  disabled={!selectedFile || uploading}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
                 >
-                  <Plus size={14} />
-                  <span>Add</span>
+                  <Upload size={14} />
+                  <span>{uploading ? 'Uploading to Patient Folder...' : 'Upload & Attach'}</span>
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #e5e7eb)' }}>
           <button type="button" onClick={onClose} className="btn btn-secondary">
             Close
           </button>
@@ -241,6 +364,7 @@ export default function ConsultationModal({ isOpen, onClose, appointment, onSucc
               onClick={handleSaveNotes}
               disabled={loading}
               className="btn btn-secondary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
             >
               <Save size={16} />
               <span>{loading ? 'Saving...' : 'Save Notes'}</span>
@@ -250,6 +374,7 @@ export default function ConsultationModal({ isOpen, onClose, appointment, onSucc
               onClick={handleCompleteConsultation}
               disabled={loading}
               className="btn btn-teal"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
             >
               <CheckCircle2 size={16} />
               <span>{loading ? 'Finalizing...' : 'Complete Consultation'}</span>

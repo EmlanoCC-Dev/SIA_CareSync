@@ -20,8 +20,10 @@ export function setStoredToken(token) {
 
 async function request(endpoint, options = {}) {
   const token = getStoredToken();
+  const isFormData = options.body instanceof FormData;
+
   const headers = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
@@ -31,7 +33,7 @@ async function request(endpoint, options = {}) {
     headers,
   };
 
-  if (config.body && typeof config.body === 'object') {
+  if (config.body && typeof config.body === 'object' && !isFormData) {
     config.body = JSON.stringify(config.body);
   }
 
@@ -73,6 +75,8 @@ export const api = {
   noShowAppointment: (id, reason) => request(`/appointments/${id}/no-show`, { method: 'PATCH', body: { reason } }),
   cancelAppointment: (id, reason) => request(`/appointments/${id}/cancel`, { method: 'PATCH', body: { reason } }),
   uploadDocuments: (id, data) => request(`/appointments/${id}/documents`, { method: 'PATCH', body: data }),
+  uploadAppointmentFile: (id, formData) => request(`/appointments/${id}/upload`, { method: 'POST', body: formData }),
+  deleteAppointmentDocument: (id, docId) => request(`/appointments/${id}/documents/${docId}`, { method: 'DELETE' }),
   completeAppointment: (id) => request(`/appointments/${id}/complete`, { method: 'PATCH' }),
 
   // ── Audit Logs ──

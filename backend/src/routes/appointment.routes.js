@@ -8,6 +8,7 @@
 const { Router } = require('express');
 const appointmentController = require('../controllers/appointment.controller');
 const { protect, authorize } = require('../middleware/auth');
+const { upload } = require('../middleware/upload');
 
 const router = Router();
 
@@ -38,8 +39,14 @@ router.patch('/:id/no-show', authorize('Staff', 'Admin'), appointmentController.
 // Staff/Admin checks in patient on appointment day
 router.patch('/:id/check-in', authorize('Staff', 'Admin'), appointmentController.checkIn);
 
-// Doctor uploads consultation notes, lab results, X-rays
-router.patch('/:id/documents', authorize('Doctor'), appointmentController.uploadDocuments);
+// Doctor uploads consultation notes
+router.patch('/:id/documents', authorize('Doctor', 'Staff', 'Admin'), appointmentController.uploadDocuments);
+
+// Doctor or Staff uploads physical medical document file
+router.post('/:id/upload', authorize('Doctor', 'Staff', 'Admin'), upload.single('file'), appointmentController.uploadFile);
+
+// Delete an attached document
+router.delete('/:id/documents/:docId', authorize('Doctor', 'Staff', 'Admin'), appointmentController.deleteDocument);
 
 // Doctor or Staff completes appointment
 router.patch('/:id/complete', authorize('Doctor', 'Staff', 'Admin'), appointmentController.complete);

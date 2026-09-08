@@ -22,6 +22,8 @@ dist/
 build/
 */dist/
 */build/
+uploads/
+backend/uploads/
 
 # Logs
 logs/

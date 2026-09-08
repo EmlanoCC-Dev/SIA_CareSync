@@ -13,12 +13,15 @@ const { registerAllHandlers } = require('./src/events/handlers/notification.hand
 const { registerAuditHandlers } = require('./src/events/handlers/auditLog.handler');
 const routes = require('./src/routes');
 const { errorHandler } = require('./src/middleware/errorHandler');
-
+const path = require('path');
 const app = express();
 
 // ── Middleware ────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
+
+// ── Static Files (Uploaded Documents) ────────────────────
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ── Routes (Presentation Layer) ──────────────────────────
 app.use('/api', routes);
