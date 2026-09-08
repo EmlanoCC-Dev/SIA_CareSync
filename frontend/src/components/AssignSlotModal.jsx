@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
-import { X, Search, Clock, Calendar, User, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
+import { X, Search, Clock, Calendar, User, CheckCircle2, AlertCircle, Sparkles, ChevronDown, Check } from 'lucide-react';
 
 export default function AssignSlotModal({ isOpen, onClose, walkIn, onAssigned }) {
   const [doctors, setDoctors] = useState([]);
   const [doctorSearch, setDoctorSearch] = useState('');
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
+  const [isDoctorDropdownOpen, setIsDoctorDropdownOpen] = useState(false);
   
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [slots, setSlots] = useState([]);
@@ -16,15 +17,39 @@ export default function AssignSlotModal({ isOpen, onClose, walkIn, onAssigned })
   const [assigning, setAssigning] = useState(false);
   const [error, setError] = useState('');
 
+  const dropdownRef = useRef(null);
+  const searchInputRef = useRef(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDoctorDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // Fetch doctors on modal open
   useEffect(() => {
     if (isOpen) {
       setError('');
       setDoctorSearch('');
       setSelectedSlotId('');
+      setIsDoctorDropdownOpen(false);
       fetchDoctors();
     }
   }, [isOpen]);
+
+  // Focus search input when dropdown opens
+  useEffect(() => {
+    if (isDoctorDropdownOpen && searchInputRef.current) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 50);
+    }
+  }, [isDoctorDropdownOpen]);
 
   // Fetch slots whenever selected doctor or date changes
   useEffect(() => {
@@ -130,7 +155,7 @@ export default function AssignSlotModal({ isOpen, onClose, walkIn, onAssigned })
 
   if (!isOpen || !walkIn) return null;
 
-  // Filter doctors by search term (firstName, lastName, email)
+  // Filter doctors by search term
   const filteredDoctors = doctors.filter((doc) => {
     const q = doctorSearch.toLowerCase().trim();
     if (!q) return true;
@@ -143,7 +168,7 @@ export default function AssignSlotModal({ isOpen, onClose, walkIn, onAssigned })
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '640px', width: '92%' }}>
+      <div className="modal-content" style={{ maxWidth: '600px', width: '92%' }}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Clock size={20} color="var(--primary)" />
@@ -189,80 +214,141 @@ export default function AssignSlotModal({ isOpen, onClose, walkIn, onAssigned })
               </div>
             </div>
 
-            {/* Doctor Selection with Search */}
-            <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+            {/* Searchable Doctor Dropdown */}
+            <div className="form-group" style={{ marginBottom: '1.25rem', position: 'relative' }} ref={dropdownRef}>
               <label className="form-label" style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.4rem' }}>
                 <User size={15} color="var(--primary)" />
                 <span>Attending Doctor</span>
               </label>
 
-              {/* Search input for doctors */}
-              <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
-                <Search
-                  size={15}
+              {/* Dropdown Trigger */}
+              <div
+                onClick={() => setIsDoctorDropdownOpen(!isDoctorDropdownOpen)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.6rem 0.85rem',
+                  border: isDoctorDropdownOpen ? '1px solid var(--primary)' : '1px solid var(--border-color, #e5e7eb)',
+                  borderRadius: '6px',
+                  background: 'var(--bg-surface, #fff)',
+                  cursor: 'pointer',
+                  boxShadow: isDoctorDropdownOpen ? '0 0 0 2px rgba(59, 130, 246, 0.15)' : 'none',
+                  transition: 'border-color 0.15s ease',
+                }}
+              >
+                {selectedDoctor ? (
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                      Dr. {selectedDoctor.firstName} {selectedDoctor.lastName}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      {selectedDoctor.email || 'Physician'}
+                    </div>
+                  </div>
+                ) : (
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Select Doctor...</span>
+                )}
+                <ChevronDown
+                  size={16}
                   color="var(--text-muted)"
-                  style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }}
-                />
-                <input
-                  type="text"
-                  className="form-input"
-                  style={{ paddingLeft: '2.25rem', fontSize: '0.85rem' }}
-                  placeholder="Search doctor by name or email..."
-                  value={doctorSearch}
-                  onChange={(e) => setDoctorSearch(e.target.value)}
+                  style={{
+                    transform: isDoctorDropdownOpen ? 'rotate(180deg)' : 'rotate(0)',
+                    transition: 'transform 0.2s ease',
+                  }}
                 />
               </div>
 
-              {/* Filtered Doctor Cards / List */}
-              <div
-                style={{
-                  maxHeight: '140px',
-                  overflowY: 'auto',
-                  border: '1px solid var(--border-color, #e5e7eb)',
-                  borderRadius: '6px',
-                  background: 'var(--bg-surface, #fff)',
-                }}
-              >
-                {loadingDoctors ? (
-                  <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                    Loading doctors...
+              {/* Floating Dropdown Popover */}
+              {isDoctorDropdownOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    marginTop: '4px',
+                    background: 'var(--bg-surface, #fff)',
+                    border: '1px solid var(--border-color, #e5e7eb)',
+                    borderRadius: '8px',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                    zIndex: 50,
+                    padding: '0.5rem',
+                  }}
+                >
+                  {/* Search Box inside dropdown */}
+                  <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
+                    <Search
+                      size={14}
+                      color="var(--text-muted)"
+                      style={{ position: 'absolute', left: '0.65rem', top: '50%', transform: 'translateY(-50%)' }}
+                    />
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      className="form-input"
+                      style={{ paddingLeft: '2rem', paddingRight: '0.6rem', fontSize: '0.825rem' }}
+                      placeholder="Type doctor name or email..."
+                      value={doctorSearch}
+                      onChange={(e) => setDoctorSearch(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
                   </div>
-                ) : filteredDoctors.length === 0 ? (
-                  <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                    No doctors matching "{doctorSearch}"
-                  </div>
-                ) : (
-                  filteredDoctors.map((doc) => {
-                    const isSelected = doc._id === selectedDoctorId;
-                    return (
-                      <div
-                        key={doc._id}
-                        onClick={() => setSelectedDoctorId(doc._id)}
-                        style={{
-                          padding: '0.5rem 0.75rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          cursor: 'pointer',
-                          background: isSelected ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
-                          borderBottom: '1px solid var(--border-color, #f3f4f6)',
-                          transition: 'background 0.15s ease',
-                        }}
-                      >
-                        <div>
-                          <div style={{ fontWeight: isSelected ? 600 : 500, fontSize: '0.875rem', color: isSelected ? 'var(--primary)' : 'inherit' }}>
-                            Dr. {doc.firstName} {doc.lastName}
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            {doc.email || 'Physician'}
-                          </div>
-                        </div>
-                        {isSelected && <CheckCircle2 size={16} color="var(--primary)" />}
+
+                  {/* Doctor Option List */}
+                  <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
+                    {loadingDoctors ? (
+                      <div style={{ padding: '0.75rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                        Loading doctors...
                       </div>
-                    );
-                  })
-                )}
-              </div>
+                    ) : filteredDoctors.length === 0 ? (
+                      <div style={{ padding: '0.75rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                        No doctor found matching "{doctorSearch}"
+                      </div>
+                    ) : (
+                      filteredDoctors.map((doc) => {
+                        const isSelected = doc._id === selectedDoctorId;
+                        return (
+                          <div
+                            key={doc._id}
+                            onClick={() => {
+                              setSelectedDoctorId(doc._id);
+                              setIsDoctorDropdownOpen(false);
+                            }}
+                            style={{
+                              padding: '0.5rem 0.65rem',
+                              borderRadius: '6px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              cursor: 'pointer',
+                              background: isSelected ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                              marginBottom: '2px',
+                              transition: 'background 0.15s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isSelected) e.currentTarget.style.background = 'var(--bg-muted, #f3f4f6)';
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isSelected) e.currentTarget.style.background = 'transparent';
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontWeight: isSelected ? 600 : 500, fontSize: '0.85rem', color: isSelected ? 'var(--primary)' : 'inherit' }}>
+                                Dr. {doc.firstName} {doc.lastName}
+                              </div>
+                              <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>
+                                {doc.email || 'Physician'}
+                              </div>
+                            </div>
+                            {isSelected && <Check size={16} color="var(--primary)" />}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Date Selection */}
