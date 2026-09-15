@@ -108,7 +108,7 @@ export default function StaffDashboard() {
   const completedCount = appointments.filter((a) => a.status === 'Completed').length;
 
   return (
-    <div className="main-content">
+    <div className="main-content dashboard-page staff-dashboard">
       {/* Welcome Banner */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
@@ -169,7 +169,7 @@ export default function StaffDashboard() {
       </div>
 
       {/* Navigation Tabs */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+      <div className="dashboard-tabs" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
         <button
           className={`btn ${activeTab === 'appointments' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setActiveTab('appointments')}

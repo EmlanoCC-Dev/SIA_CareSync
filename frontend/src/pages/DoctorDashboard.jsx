@@ -108,14 +108,14 @@ export default function DoctorDashboard() {
   const completedCount = appointments.filter((a) => a.status === 'Completed').length;
 
   return (
-    <div className="main-content">
+    <div className="main-content dashboard-page doctor-dashboard">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>
-            Dr. {user.firstName} {user.lastName}'s Practice Portal 🩺
+            Doctor Dashboard
           </h1>
           <p style={{ color: 'var(--text-muted)' }}>
-            Review your patient queue, consultation logs, clinical notes, and time slots.
+            Review, approve, and manage appointment requests across all hospital departments.
           </p>
         </div>
         <button onClick={fetchAppointments} className="btn btn-secondary">
@@ -157,7 +157,7 @@ export default function DoctorDashboard() {
       </div>
 
       {/* Navigation Tabs */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+      <div className="dashboard-tabs" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
         <button
           className={`btn ${activeTab === 'appointments' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setActiveTab('appointments')}

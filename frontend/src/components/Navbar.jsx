@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import SystemTimeModal from './SystemTimeModal';
-import { Activity, LogOut, User as UserIcon, Tv, Clock } from 'lucide-react';
+import { LogOut, Tv, Clock } from 'lucide-react';
+import logoSource from '../assets/landing-logo.png';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -28,12 +29,8 @@ export default function Navbar() {
     <header className="navbar">
       <div className="navbar-inner">
         <div className="brand">
-          <div className="brand-icon">
-            <Activity size={22} />
-          </div>
-          <div>
-            <span>CareSync</span>
-          </div>
+          <span className="nav-brand-mark"><img src={logoSource} alt="" /></span>
+          <span><b>CARE</b><em>SYNC</em></span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>

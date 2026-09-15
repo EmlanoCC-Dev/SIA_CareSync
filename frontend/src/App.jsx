@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import LandingPage from './pages/LandingPage';
 import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
 import StaffDashboard from './pages/StaffDashboard';
@@ -12,7 +13,7 @@ import { Activity } from 'lucide-react';
 
 export default function App() {
   const { user, loading } = useAuth();
-  const [authView, setAuthView] = useState('login'); // 'login' | 'register'
+  const [authView, setAuthView] = useState('landing'); // 'landing' | 'login' | 'register'
   const [hash, setHash] = useState(window.location.hash);
 
   // Listen for hash changes so the display route works
@@ -44,7 +45,10 @@ export default function App() {
     if (authView === 'register') {
       return <RegisterPage onSwitchToLogin={() => setAuthView('login')} />;
     }
-    return <LoginPage onSwitchToRegister={() => setAuthView('register')} />;
+    if (authView === 'login') {
+      return <LoginPage onSwitchToRegister={() => setAuthView('register')} />;
+    }
+    return <LandingPage onLogin={() => setAuthView('login')} onRegister={() => setAuthView('register')} />;
   }
 
   const renderDashboard = () => {

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Activity, Lock, Mail, AlertCircle, ArrowRight } from 'lucide-react';
+import logoSource from '../assets/landing-logo.png';
 
 export default function LoginPage({ onSwitchToRegister }) {
   const { login } = useAuth();
@@ -9,97 +10,33 @@ export default function LoginPage({ onSwitchToRegister }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setError('');
     setLoading(true);
-
-    try {
-      await login(email, password);
-    } catch (err) {
-      setError(err.message || 'Invalid email or password');
-    } finally {
-      setLoading(false);
-    }
+    try { await login(email, password); }
+    catch (err) { setError(err.message || 'Invalid email or password'); }
+    finally { setLoading(false); }
   };
 
   return (
-    <div className="auth-wrapper">
-      <div className="auth-card">
-        <div className="auth-header">
-          <div
-            className="brand-icon"
-            style={{ width: '48px', height: '48px', margin: '0 auto 1rem', borderRadius: '12px' }}
-          >
-            <Activity size={28} />
-          </div>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>Welcome Back</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-            Sign in to access your CareSync portal
-          </p>
+    <div className="auth-wrapper auth-figma auth-login" data-node-id="64:8">
+      <section className="auth-form-panel">
+        <div className="auth-mini-brand"><span><img src={logoSource} alt="" /></span><b>CARESYNC</b></div>
+        <div className="auth-card">
+          <div className="auth-header"><h2>Sign In</h2><p>Sign In With Email &amp; Password</p></div>
+          {error && <div className="alert alert-error"><AlertCircle size={16} /><span>{error}</span></div>}
+          <form onSubmit={handleSubmit}>
+            <label className="sr-only" htmlFor="login-email">Email Address</label>
+            <input id="login-email" type="email" className="form-input" placeholder="Enter E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <label className="sr-only" htmlFor="login-password">Password</label>
+            <input id="login-password" type="password" className="form-input" placeholder="Enter Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <button type="button" className="auth-forgot">Forget Password?</button>
+            <button type="submit" disabled={loading} className="auth-submit">{loading ? 'Signing in...' : 'SIGN IN'}</button>
+          </form>
         </div>
-
-        {error && (
-          <div className="alert alert-error">
-            <AlertCircle size={16} />
-            <span>{error}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">Email Address</label>
-            <input
-              type="email"
-              className="form-input"
-              placeholder="e.g. user@caresync.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-input"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn btn-primary"
-            style={{ width: '100%', marginTop: '0.5rem', padding: '0.75rem' }}
-          >
-            <span>{loading ? 'Signing in...' : 'Sign In'}</span>
-            <ArrowRight size={16} />
-          </button>
-        </form>
-
-        <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          Don't have an account?{' '}
-          <button
-            type="button"
-            onClick={onSwitchToRegister}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--primary)',
-              fontWeight: 700,
-              cursor: 'pointer',
-              textDecoration: 'underline',
-            }}
-          >
-            Register here
-          </button>
-        </div>
-      </div>
+      </section>
+      <aside className="auth-welcome-panel"><div><h2>Hello!</h2><p>Sign Up now and enjoy our site</p><button type="button" onClick={onSwitchToRegister}>SIGN UP</button></div></aside>
     </div>
   );
 }

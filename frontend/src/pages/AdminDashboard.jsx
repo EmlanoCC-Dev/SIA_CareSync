@@ -6,7 +6,7 @@ import AddUserModal from '../components/AddUserModal';
 import { ShieldCheck, Users, Calendar, ShieldAlert, CheckCircle2, History, RefreshCw, UserPlus, Filter, Search } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('audit'); // 'audit' | 'appointments' | 'users'
+  const [activeTab, setActiveTab] = useState('appointments'); // 'audit' | 'appointments' | 'users'
   const [appointments, setAppointments] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -59,7 +59,7 @@ export default function AdminDashboard() {
   });
 
   return (
-    <div className="main-content">
+    <div className="main-content dashboard-page admin-dashboard">
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
@@ -110,7 +110,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Navigation Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+      <div className="dashboard-tabs" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
         <button
           onClick={() => setActiveTab('audit')}
           className={`btn btn-sm ${activeTab === 'audit' ? 'btn-primary' : 'btn-secondary'}`}
