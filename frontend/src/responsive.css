@@ -36,7 +36,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid #38bdf8; outline-offs
 .auth-figma .auth-welcome-panel h2 { font-size: clamp(32px, 4vw, 56px); }
 .auth-figma .auth-welcome-panel button, .auth-submit { min-width: min(220px, 100%); min-height: 52px; padding: 12px 28px; font-size: 18px; border-radius: 18px; }
 .auth-forgot { font-size: 16px; }
-.auth-mini-brand { top: 32px; left: 32px; }
+.auth-mini-brand { top: 32px; left: 32px; border: 0; padding: 0; background: transparent; font: inherit; cursor: pointer; border-radius: 12px; }
+.auth-mini-brand:hover { opacity: .78; }
 .auth-register .auth-mini-brand { right: 32px; }
 
 .app-container:has(.dashboard-page) > .navbar { width: var(--sidebar-width); flex-basis: var(--sidebar-width); padding: 28px 18px; }

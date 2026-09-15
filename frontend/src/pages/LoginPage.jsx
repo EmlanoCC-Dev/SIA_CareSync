@@ -3,7 +3,7 @@ import { AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import logoSource from '../assets/landing-logo.png';
 
-export default function LoginPage({ onSwitchToRegister }) {
+export default function LoginPage({ onSwitchToRegister, onBackToLanding }) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,7 +22,7 @@ export default function LoginPage({ onSwitchToRegister }) {
   return (
     <div className="auth-wrapper auth-figma auth-login" data-node-id="64:8">
       <section className="auth-form-panel">
-        <div className="auth-mini-brand"><span><img src={logoSource} alt="" /></span><b>CARESYNC</b></div>
+        <button type="button" className="auth-mini-brand" onClick={onBackToLanding} aria-label="Back to CareSync home"><span><img src={logoSource} alt="" /></span><b>CARESYNC</b></button>
         <div className="auth-card">
           <div className="auth-header"><h2>Sign In</h2><p>Sign In With Email &amp; Password</p></div>
           {error && <div className="alert alert-error"><AlertCircle size={16} /><span>{error}</span></div>}

@@ -43,10 +43,10 @@ export default function App() {
 
   if (!user) {
     if (authView === 'register') {
-      return <RegisterPage onSwitchToLogin={() => setAuthView('login')} />;
+      return <RegisterPage onSwitchToLogin={() => setAuthView('login')} onBackToLanding={() => setAuthView('landing')} />;
     }
     if (authView === 'login') {
-      return <LoginPage onSwitchToRegister={() => setAuthView('register')} />;
+      return <LoginPage onSwitchToRegister={() => setAuthView('register')} onBackToLanding={() => setAuthView('landing')} />;
     }
     return <LandingPage onLogin={() => setAuthView('login')} onRegister={() => setAuthView('register')} />;
   }
