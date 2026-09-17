@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   CalendarCheck, Clock3, Database, Globe2, Home, MessageCircle,
   Mail, MapPin, Phone, ShieldCheck, Stethoscope, UserRound, Users,
@@ -17,17 +17,34 @@ function Brand() {
 }
 
 export default function LandingPage({ onLogin, onRegister }) {
+  const [navHidden, setNavHidden] = useState(false);
+  const lastScrollY = useRef(window.scrollY);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY < 16) setNavHidden(false);
+      else if (Math.abs(currentScrollY - lastScrollY.current) > 6) setNavHidden(currentScrollY > lastScrollY.current);
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <div className="landing-page" data-node-id="1:7">
       <header className="landing-header">
         <a href="#home" className="landing-logo-link"><Brand /></a>
-        <nav className="landing-nav" aria-label="Main navigation">
-          <a href="#home" aria-label="Home"><Home /></a>
-          <a href="#about" aria-label="About"><Users /></a>
-          <a href="#services" aria-label="Services"><Stethoscope /></a>
-          <a href="#queue" aria-label="Queue"><CalendarCheck /></a>
-          <button type="button" onClick={onLogin} aria-label="Profile"><UserRound /></button>
-        </nav>
+        <div className="landing-nav-dock">
+          <nav className={`landing-nav${navHidden ? ' landing-nav-hidden' : ''}`} aria-label="Main navigation">
+            <a href="#home" aria-label="Home"><Home /><span>Home</span></a>
+            <a href="#about" aria-label="About"><Users /><span>About</span></a>
+            <a href="#services" aria-label="Services"><Stethoscope /><span>Services</span></a>
+            <a href="#queue" aria-label="Queue"><CalendarCheck /><span>Queue</span></a>
+            <button type="button" onClick={onLogin} aria-label="Profile"><UserRound /><span>Profile</span></button>
+          </nav>
+        </div>
         <div className="landing-auth-actions">
           <button type="button" className="landing-button landing-button-light" onClick={onRegister}>Sign Up</button>
           <button type="button" className="landing-button landing-button-dark" onClick={onLogin}>Log In</button>

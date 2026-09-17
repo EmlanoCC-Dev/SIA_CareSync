@@ -117,7 +117,12 @@ async function create({ patientId, doctorId, date, timeSlot, slotId, reason }) {
 
   // Reserve slot if linked
   if (slotId) {
-    await slotService.reserveSlot(slotId, appointment._id);
+    try {
+      await slotService.reserveSlot(slotId, appointment._id);
+    } catch (err) {
+      await Appointment.deleteOne({ _id: appointment._id });
+      throw err;
+    }
   }
 
   // ★ Event-Driven: emit booking event

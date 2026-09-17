@@ -35,6 +35,10 @@ export default function Navbar() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           {/* System Time & Clinic Operating Status */}
+          {systemTimeStatus && <time dateTime={systemTimeStatus.currentTime} style={{ fontSize: '0.85rem' }}>
+            {new Date(systemTimeStatus.currentTime).toLocaleDateString([], { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+            {systemTimeStatus.isCustom ? ' (Simulated)' : ''}
+          </time>}
           <button
             type="button"
             onClick={() => setIsTimeModalOpen(true)}

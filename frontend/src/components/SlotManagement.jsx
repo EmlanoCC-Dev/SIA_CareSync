@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { Clock, Plus, Trash2, CheckCircle2, User, RefreshCw, Sparkles, Filter } from 'lucide-react';
+import { Clock, Plus, Trash2, CheckCircle2, User, RefreshCw, Sparkles, Filter, ChevronDown } from 'lucide-react';
 
 export default function SlotManagement({ doctorId = null }) {
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   
-  const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
+  const [dateFilter, setDateFilter] = useState('');
+  const [currentDate, setCurrentDate] = useState('');
   const [selectedDoctor, setSelectedDoctor] = useState(doctorId || '');
+  const [doctorSearch, setDoctorSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [expandedDoctors, setExpandedDoctors] = useState({});
   
   // Custom Generate Form State
   const [showGenerateForm, setShowGenerateForm] = useState(false);
@@ -30,6 +33,8 @@ export default function SlotManagement({ doctorId = null }) {
 
   useEffect(() => {
     fetchSlots();
+    const timer = setInterval(fetchSlots, 10000);
+    return () => clearInterval(timer);
   }, [dateFilter, selectedDoctor, statusFilter, doctorId]);
 
   const fetchDoctors = async () => {
@@ -43,6 +48,10 @@ export default function SlotManagement({ doctorId = null }) {
     }
   };
 
+  useEffect(() => {
+    if (currentDate) setGenData(previous => ({ ...previous, date: currentDate }));
+  }, [currentDate]);
+
   const fetchSlots = async () => {
     setLoading(true);
     try {
@@ -54,6 +63,7 @@ export default function SlotManagement({ doctorId = null }) {
       });
       if (res.success && res.data) {
         setSlots(res.data);
+        setCurrentDate(res.date);
       } else {
         setSlots([]);
       }
@@ -63,6 +73,13 @@ export default function SlotManagement({ doctorId = null }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDoctorSearch = (value) => {
+    setDoctorSearch(value);
+    if (!value) return setSelectedDoctor('');
+    const match = doctors.find((doctor) => `Dr. ${doctor.firstName} ${doctor.lastName}`.toLowerCase() === value.toLowerCase());
+    if (match) setSelectedDoctor(match._id);
   };
 
   const handleCustomGenerate = async (e) => {
@@ -100,7 +117,7 @@ export default function SlotManagement({ doctorId = null }) {
       if (targetDoc) {
         await api.generateSlots({
           doctor: targetDoc,
-          date: dateFilter,
+          date: dateFilter || currentDate,
           startTime: '09:00',
           endTime: '17:00',
           duration: 15
@@ -110,7 +127,7 @@ export default function SlotManagement({ doctorId = null }) {
         for (const doc of doctors) {
           await api.generateSlots({
             doctor: doc._id,
-            date: dateFilter,
+            date: dateFilter || currentDate,
             startTime: '09:00',
             endTime: '17:00',
             duration: 15
@@ -140,6 +157,52 @@ export default function SlotManagement({ doctorId = null }) {
   const availableSlots = slots.filter(s => s.status === 'Available').length;
   const reservedSlots = slots.filter(s => s.status.startsWith('Reserved') || s.status === 'In Progress').length;
   const otherSlots = totalSlots - availableSlots - reservedSlots;
+  const slotGroups = doctorId ? [{ id: doctorId, label: '', slots }] : Object.values(slots.reduce((groups, slot) => {
+    const id = slot.doctor?._id || slot.doctor || 'unassigned';
+    const label = slot.doctor?.firstName
+      ? `Dr. ${slot.doctor.firstName} ${slot.doctor.lastName}`
+      : 'Unassigned';
+    groups[id] ||= { id, label, slots: [] };
+    groups[id].slots.push(slot);
+    return groups;
+  }, {})).sort((a, b) => a.label.localeCompare(b.label));
+
+  const renderSlotRow = (slot) => (
+    <tr key={slot._id}>
+      <td><strong>{slot.startTime} - {slot.endTime}</strong></td>
+      <td>
+        <span className={`badge badge-${slot.status.replace(/\s+/g, '-')}`}>
+          <span className="status-dot"></span>
+          {slot.status}
+        </span>
+      </td>
+      <td>
+        {slot.status === 'Available' ? (
+          <span style={{ fontSize: '0.8rem', color: 'var(--success, #10b981)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <CheckCircle2 size={14} /> Open for Walk-ins &amp; Bookings
+          </span>
+        ) : (
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{slot.status}</span>
+        )}
+      </td>
+      <td style={{ textAlign: 'right' }}>
+        <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
+          {slot.status === 'Available' && (
+            <button className="btn btn-danger btn-sm" onClick={() => handleUpdateStatus(slot._id, 'Cancelled')} title="Block / Cancel Slot">
+              <Trash2 size={14} />
+            </button>
+          )}
+          {slot.status === 'Cancelled' && (
+            <button className="btn btn-success btn-sm" onClick={() => handleUpdateStatus(slot._id, 'Available')} title="Make Available for Walk-Ins">
+              <CheckCircle2 size={14} />
+            </button>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+
+  const toggleDoctor = (id) => setExpandedDoctors((current) => ({ ...current, [id]: !current[id] }));
 
   return (
     <div className="card">
@@ -154,17 +217,19 @@ export default function SlotManagement({ doctorId = null }) {
           {!doctorId && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <User size={16} color="var(--text-muted)" />
-              <select
-                className="form-select"
+              <input
+                type="search"
+                list="slot-doctor-options"
+                className="form-input"
                 style={{ width: 'auto', padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}
-                value={selectedDoctor}
-                onChange={(e) => setSelectedDoctor(e.target.value)}
-              >
-                <option value="">All Doctors ({doctors.length})</option>
-                {doctors.map(d => (
-                  <option key={d._id} value={d._id}>Dr. {d.firstName} {d.lastName}</option>
-                ))}
-              </select>
+                value={doctorSearch}
+                onChange={(e) => handleDoctorSearch(e.target.value)}
+                placeholder={`Search ${doctors.length} doctors`}
+                aria-label="Search doctors"
+              />
+              <datalist id="slot-doctor-options">
+                {doctors.map((doctor) => <option key={doctor._id} value={`Dr. ${doctor.firstName} ${doctor.lastName}`} />)}
+              </datalist>
             </div>
           )}
 
@@ -192,12 +257,14 @@ export default function SlotManagement({ doctorId = null }) {
             type="date" 
             className="form-input" 
             style={{ width: 'auto', padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}
-            value={dateFilter}
+            value={dateFilter || currentDate}
             onChange={(e) => {
               setDateFilter(e.target.value);
               setGenData(prev => ({ ...prev, date: e.target.value }));
             }}
           />
+
+          <button type="button" className="btn btn-secondary" onClick={() => setDateFilter('')}>Today</button>
 
           <button onClick={fetchSlots} className="btn btn-secondary" title="Refresh">
             <RefreshCw size={16} className={loading ? 'spin' : ''} />
@@ -326,7 +393,6 @@ export default function SlotManagement({ doctorId = null }) {
           <thead>
             <tr>
               <th>Time Window</th>
-              {!doctorId && <th>Doctor</th>}
               <th>Status</th>
               <th>Availability</th>
               <th style={{ textAlign: 'right' }}>Actions</th>
@@ -335,61 +401,25 @@ export default function SlotManagement({ doctorId = null }) {
           <tbody>
             {slots.length === 0 ? (
               <tr>
-                <td colSpan={!doctorId ? 5 : 4} style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
+                <td colSpan={4} style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
                   {loading ? 'Loading slots...' : 'No slots found for this date.'}
                 </td>
               </tr>
             ) : (
-              slots.map((slot) => (
-                <tr key={slot._id}>
-                  <td>
-                    <strong>{slot.startTime} - {slot.endTime}</strong>
-                  </td>
+              slotGroups.map((group) => (
+                <React.Fragment key={group.id}>
                   {!doctorId && (
-                    <td>
-                      {slot.doctor ? `Dr. ${slot.doctor.firstName} ${slot.doctor.lastName}` : 'Unassigned'}
-                    </td>
+                    <tr className="slot-doctor-group">
+                      <td colSpan={4}>
+                        <button type="button" className="slot-doctor-toggle" onClick={() => toggleDoctor(group.id)} aria-expanded={!!expandedDoctors[group.id]}>
+                          <span className="slot-doctor-name"><User size={16} /><strong>{group.label}</strong></span>
+                          <span className="slot-doctor-count">{group.slots.length} slots <ChevronDown className={expandedDoctors[group.id] ? 'is-expanded' : ''} size={18} /></span>
+                        </button>
+                      </td>
+                    </tr>
                   )}
-                  <td>
-                    <span className={`badge badge-${slot.status.replace(/\s+/g, '-')}`}>
-                      <span className="status-dot"></span>
-                      {slot.status}
-                    </span>
-                  </td>
-                  <td>
-                    {slot.status === 'Available' ? (
-                      <span style={{ fontSize: '0.8rem', color: 'var(--success, #10b981)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <CheckCircle2 size={14} /> Open for Walk-ins & Bookings
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                        {slot.status}
-                      </span>
-                    )}
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                     <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
-                       {slot.status === 'Available' && (
-                         <button 
-                           className="btn btn-danger btn-sm"
-                           onClick={() => handleUpdateStatus(slot._id, 'Cancelled')}
-                           title="Block / Cancel Slot"
-                         >
-                           <Trash2 size={14} />
-                         </button>
-                       )}
-                       {slot.status === 'Cancelled' && (
-                         <button 
-                           className="btn btn-success btn-sm"
-                           onClick={() => handleUpdateStatus(slot._id, 'Available')}
-                           title="Make Available for Walk-Ins"
-                         >
-                           <CheckCircle2 size={14} />
-                         </button>
-                       )}
-                     </div>
-                  </td>
-                </tr>
+                  {(doctorId || expandedDoctors[group.id]) && group.slots.map(renderSlotRow)}
+                </React.Fragment>
               ))
             )}
           </tbody>

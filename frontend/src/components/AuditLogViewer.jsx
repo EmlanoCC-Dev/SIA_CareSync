@@ -2,6 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { ShieldAlert, RefreshCw, Clock, User, FileText, ChevronDown, ChevronRight, CheckCircle2, Code2, Tag, Calendar, AlertCircle } from 'lucide-react';
 
+const ACTION_LABELS = {
+  APPOINTMENT_BOOKED: 'Appointment booked',
+  APPOINTMENT_APPROVED: 'Appointment approved',
+  APPOINTMENT_DECLINED: 'Appointment declined',
+  APPOINTMENT_CANCELLED: 'Appointment cancelled',
+  APPOINTMENT_NO_SHOW: 'Appointment marked as no-show',
+  APPOINTMENT_CHECKED_IN: 'Appointment checked in',
+  APPOINTMENT_COMPLETED: 'Appointment completed',
+  SLOT_FREED: 'Schedule slot reopened',
+  WALKIN_ADDED: 'Walk-in patient added',
+  WALKIN_SLOT_ASSIGNED: 'Walk-in slot assigned',
+  REVISION_REQUESTED: 'Revision requested',
+  PATIENT_CHECKED_IN: 'Patient checked in',
+  DOCUMENT_UPLOADED: 'Document uploaded',
+  DOCUMENT_VERIFIED: 'Document verified',
+  COMMENT_ADDED: 'Comment added',
+};
+
+const formatLabel = (value = '') => value
+  .replace(/([a-z])([A-Z])/g, '$1 $2')
+  .replace(/[_-]+/g, ' ')
+  .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
 export default function AuditLogViewer() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +83,7 @@ export default function AuditLogViewer() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Status:</span>
               <span className={`badge badge-${apt.status.replace(/\s+/g, '-')}`} style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem' }}>
-                {apt.status}
+                {formatLabel(apt.status)}
               </span>
             </div>
           )}
@@ -125,7 +148,7 @@ export default function AuditLogViewer() {
             }}
           >
             <Code2 size={11} />
-            <span>{isJsonOpen ? 'Hide Raw JSON' : 'View Raw Payload'}</span>
+            <span>{isJsonOpen ? 'Hide technical details' : 'View technical details'}</span>
             {isJsonOpen ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
           </button>
 
@@ -210,11 +233,11 @@ export default function AuditLogViewer() {
                           display: 'inline-block',
                         }}
                       >
-                        {log.action}
+                        {ACTION_LABELS[log.action] || formatLabel(log.action)}
                       </span>
                     </td>
                     <td>
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{log.targetModel}</div>
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{formatLabel(log.targetModel)}</div>
                       {log.targetId && (
                         <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>
                           #{log.targetId.substring(log.targetId.length - 6)}

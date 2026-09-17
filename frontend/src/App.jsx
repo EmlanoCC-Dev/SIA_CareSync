@@ -16,12 +16,20 @@ export default function App() {
   const [authView, setAuthView] = useState('landing'); // 'landing' | 'login' | 'register'
   const [hash, setHash] = useState(window.location.hash);
 
+
   // Listen for hash changes so the display route works
   useEffect(() => {
     const onHashChange = () => setHash(window.location.hash);
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
+
+  useEffect(() => {
+    if (authView === 'landing') return;
+    const onKeyDown = (event) => event.key === 'Escape' && setAuthView('landing');
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [authView]);
 
   // ★ Public display screen — no auth required
   if (hash === '#/display') {
@@ -42,13 +50,27 @@ export default function App() {
   }
 
   if (!user) {
-    if (authView === 'register') {
-      return <RegisterPage onSwitchToLogin={() => setAuthView('login')} onBackToLanding={() => setAuthView('landing')} />;
-    }
-    if (authView === 'login') {
-      return <LoginPage onSwitchToRegister={() => setAuthView('register')} onBackToLanding={() => setAuthView('landing')} />;
-    }
-    return <LandingPage onLogin={() => setAuthView('login')} onRegister={() => setAuthView('register')} />;
+    return <>
+      <LandingPage onLogin={() => setAuthView('login')} onRegister={() => setAuthView('register')} />
+      {authView !== 'landing' && (
+        <div className="auth-modal-backdrop" role="dialog" aria-modal="true" aria-label={authView === 'login' ? 'Sign in' : 'Create account'} onMouseDown={(event) => event.target === event.currentTarget && setAuthView('landing')}>
+          <button type="button" className="auth-modal-close" onClick={() => setAuthView('landing')} aria-label="Close">&times;</button>
+          <div className={`auth-wrapper auth-figma auth-slider ${authView === 'register' ? 'auth-register' : 'auth-login'}`}>
+            <div className="auth-moving-form">
+              <div hidden={authView !== 'login'}><LoginPage formOnly onBackToLanding={() => setAuthView('landing')} /></div>
+              <div hidden={authView !== 'register'}><RegisterPage formOnly onBackToLanding={() => setAuthView('landing')} /></div>
+            </div>
+            <aside className="auth-welcome-panel">
+              <div>
+                <h2>{authView === 'register' ? <>Welcome To<br />CareSync</> : 'Hello!'}</h2>
+                <p>{authView === 'register' ? 'Sign In With Email & Password' : 'Sign Up now and enjoy our site'}</p>
+                <button type="button" onClick={() => setAuthView(authView === 'register' ? 'login' : 'register')}>{authView === 'register' ? 'SIGN IN' : 'SIGN UP'}</button>
+              </div>
+            </aside>
+          </div>
+        </div>
+      )}
+    </>;
   }
 
   const renderDashboard = () => {

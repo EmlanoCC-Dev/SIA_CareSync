@@ -245,10 +245,17 @@ async function reserveSlot(slotId, appointmentId) {
     throw err;
   }
 
-  slot.status = 'Reserved-Tentative';
-  slot.appointment = appointmentId;
-  await slot.save();
-  return slot;
+  const reserved = await Slot.findOneAndUpdate(
+    { _id: slotId, status: 'Available', appointment: null },
+    { $set: { status: 'Reserved-Tentative', appointment: appointmentId } },
+    { new: true }
+  );
+  if (!reserved) {
+    const err = new Error('This slot has already been taken');
+    err.statusCode = 409;
+    throw err;
+  }
+  return reserved;
 }
 
 /**

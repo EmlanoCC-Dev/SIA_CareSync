@@ -3,7 +3,7 @@ import { AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import logoSource from '../assets/landing-logo.png';
 
-export default function RegisterPage({ onSwitchToLogin, onBackToLanding }) {
+export default function RegisterPage({ onSwitchToLogin, onBackToLanding, formOnly = false }) {
   const { register } = useAuth();
   const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', password: '', role: 'Patient', contactNumber: '' });
   const [error, setError] = useState('');
@@ -19,9 +19,7 @@ export default function RegisterPage({ onSwitchToLogin, onBackToLanding }) {
     finally { setLoading(false); }
   };
 
-  return (
-    <div className="auth-wrapper auth-figma auth-register" data-node-id="66:38">
-      <aside className="auth-welcome-panel"><div><h2>Welcome To<br />CareSync</h2><p>Sign In With Email &amp; Password</p><button type="button" onClick={onSwitchToLogin}>SIGN IN</button></div></aside>
+  const formPanel = (
       <section className="auth-form-panel">
         <button type="button" className="auth-mini-brand" onClick={onBackToLanding} aria-label="Back to CareSync home"><span><img src={logoSource} alt="" /></span><b>CARESYNC</b></button>
         <div className="auth-card">
@@ -39,6 +37,14 @@ export default function RegisterPage({ onSwitchToLogin, onBackToLanding }) {
           </form>
         </div>
       </section>
+  );
+
+  if (formOnly) return formPanel;
+
+  return (
+    <div className="auth-wrapper auth-figma auth-register" data-node-id="66:38">
+      <aside className="auth-welcome-panel"><div><h2>Welcome To<br />CareSync</h2><p>Sign In With Email &amp; Password</p><button type="button" onClick={onSwitchToLogin}>SIGN IN</button></div></aside>
+      {formPanel}
     </div>
   );
 }

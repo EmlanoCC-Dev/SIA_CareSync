@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../services/api';
 import { X, Clock, Calendar, CheckCircle2, RotateCcw, AlertCircle, Sun, Moon, Sparkles } from 'lucide-react';
 
@@ -100,20 +101,20 @@ export default function SystemTimeModal({ isOpen, onClose, onTimeChanged }) {
     second: '2-digit',
   });
 
-  return (
-    <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '480px', width: '92%' }}>
+  return createPortal(
+    <div className="modal-overlay system-time-overlay" role="dialog" aria-modal="true" aria-labelledby="system-time-title">
+      <div className="modal-content system-time-modal" style={{ maxWidth: '480px', width: '92%' }}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Clock size={20} color="var(--primary)" />
-            <h3 style={{ margin: 0 }}>System Time & Operating Hours</h3>
+            <h3 id="system-time-title" style={{ margin: 0 }}>System Time & Operating Hours</h3>
           </div>
-          <button onClick={onClose} className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
+          <button onClick={onClose} aria-label="Close system time settings" className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
             <X size={18} />
           </button>
         </div>
 
-        <div className="modal-body" style={{ maxHeight: '75vh', overflowY: 'auto' }}>
+        <div className="modal-body">
           {error && (
             <div className="alert alert-error" style={{ marginBottom: '1rem' }}>
               <AlertCircle size={16} />
@@ -245,18 +246,6 @@ export default function SystemTimeModal({ isOpen, onClose, onTimeChanged }) {
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-              {status.isCustom && (
-                <button
-                  type="button"
-                  onClick={handleResetToReal}
-                  disabled={loading}
-                  className="btn btn-secondary btn-sm"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                >
-                  <RotateCcw size={13} />
-                  <span>Reset to Real Clock</span>
-                </button>
-              )}
               <button
                 type="submit"
                 disabled={loading}
@@ -271,11 +260,15 @@ export default function SystemTimeModal({ isOpen, onClose, onTimeChanged }) {
         </div>
 
         <div className="modal-footer" style={{ borderTop: '1px solid var(--border-color, #e5e7eb)', paddingTop: '0.75rem' }}>
-          <button type="button" onClick={onClose} className="btn btn-secondary" style={{ width: '100%' }}>
+          <button type="button" onClick={handleResetToReal} disabled={loading} className="btn btn-secondary">
+            <RotateCcw size={16} /> Reset to Real Time
+          </button>
+          <button type="button" onClick={onClose} className="btn btn-secondary">
             Close
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

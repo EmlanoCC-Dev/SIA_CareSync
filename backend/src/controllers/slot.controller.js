@@ -5,6 +5,8 @@
  */
 
 const slotService = require('../services/slot.service');
+const { getNow } = require('../config/systemTime');
+const { formatDateKey, isDateTimePassed } = require('../utils/timeHelper');
 
 /**
  * GET /api/slots
@@ -15,7 +17,7 @@ async function getSlots(req, res, next) {
   try {
     const doctorId = req.query.doctorId || req.query.doctor;
     const { date, status } = req.query;
-    const resolvedDate = date || new Date().toISOString().split('T')[0];
+    const resolvedDate = date || formatDateKey(getNow());
 
     let slots;
     if (doctorId) {
@@ -28,7 +30,8 @@ async function getSlots(req, res, next) {
       slots = await slotService.getAllSlotsForDate(resolvedDate, status || null);
     }
 
-    res.json({ success: true, count: slots.length, data: slots });
+    slots = slots.filter(slot => !isDateTimePassed(slot.date, slot.startTime, 'start') && (!status || slot.status === status));
+    res.json({ success: true, date: resolvedDate, count: slots.length, data: slots });
   } catch (err) {
     next(err);
   }
@@ -54,7 +57,7 @@ async function generate(req, res, next) {
   try {
     const { doctorId, doctor, date, startTime, endTime, duration } = req.body;
     const targetDoctorId = doctorId || doctor;
-    const resolvedDate = date || new Date().toISOString().split('T')[0];
+    const resolvedDate = date || formatDateKey(getNow());
 
     if (!targetDoctorId) {
       return res.status(400).json({
