@@ -16,5 +16,6 @@ router.get('/now-serving', walkInController.getNowServing);
 router.use(protect);
 router.post('/', authorize('Staff', 'Admin'), walkInController.create);
 router.get('/', authorize('Staff', 'Admin', 'Doctor'), walkInController.list);
+router.post('/:id/assign', authorize('Staff', 'Admin'), walkInController.assignSlot);
 
 module.exports = router;

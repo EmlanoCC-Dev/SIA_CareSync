@@ -59,4 +59,15 @@ async function getNowServing(req, res, next) {
   }
 }
 
-module.exports = { create, list, getNowServing };
+async function assignSlot(req, res, next) {
+  try {
+    const { slotId } = req.body;
+    if (!slotId) return res.status(400).json({ success: false, message: 'Slot ID is required' });
+    const walkIn = await walkInService.assignSlotToWalkIn(req.params.id, slotId, req.user._id);
+    res.json({ success: true, data: walkIn });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { create, list, getNowServing, assignSlot };

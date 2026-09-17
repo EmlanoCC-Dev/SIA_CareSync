@@ -15,6 +15,7 @@ const Slot = require('../models/Slot');
 const emitter = require('../events/emitter');
 const EVENTS = require('../events/events');
 const { getNow, isClinicOpen } = require('../config/systemTime');
+const { isDateTimePassed } = require('../utils/timeHelper');
 
 /**
  * Get the next sequential queue number for today.
@@ -169,6 +170,88 @@ async function assignSlotToNextWalkIn(slot) {
 }
 
 /**
+ * Manually assign a selected available slot to a selected waiting walk-in.
+ * Claims both records conditionally so concurrent requests cannot assign either twice.
+ */
+async function assignSlotToWalkIn(walkInId, slotId, changedBy) {
+  const slot = await Slot.findById(slotId);
+  if (!slot) {
+    const err = new Error('Selected slot not found');
+    err.statusCode = 404;
+    throw err;
+  }
+  if (isDateTimePassed(slot.date, slot.startTime, 'start')) {
+    const err = new Error('Cannot assign a time slot that has already passed');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const walkIn = await WalkIn.findOneAndUpdate(
+    { _id: walkInId, status: 'Waiting', assignedSlot: null, appointment: null },
+    { $set: { status: 'Slot Assigned' } },
+    { new: true }
+  );
+  if (!walkIn) {
+    const exists = await WalkIn.exists({ _id: walkInId });
+    const err = new Error(exists ? 'Walk-in patient has already been assigned' : 'Walk-in patient not found');
+    err.statusCode = exists ? 409 : 404;
+    throw err;
+  }
+
+  const claimedSlot = await Slot.findOneAndUpdate(
+    { _id: slotId, status: 'Available', appointment: null },
+    { $set: { status: 'Reserved-Confirmed' } },
+    { new: true }
+  );
+  if (!claimedSlot) {
+    await WalkIn.updateOne({ _id: walkInId, status: 'Slot Assigned', assignedSlot: null }, { $set: { status: 'Waiting' } });
+    const err = new Error('Selected slot is no longer available');
+    err.statusCode = 409;
+    throw err;
+  }
+
+  let appointment;
+  try {
+    appointment = await Appointment.create({
+      walkIn: walkIn._id,
+      doctor: claimedSlot.doctor,
+      slot: claimedSlot._id,
+      date: claimedSlot.date,
+      timeSlot: `${claimedSlot.startTime}-${claimedSlot.endTime}`,
+      reason: 'Walk-in consultation',
+      status: 'Confirmed',
+      statusHistory: [{
+        status: 'Confirmed',
+        changedBy,
+        remarks: `Manually assigned from walk-in queue (Queue #${walkIn.queueNumber})`,
+      }],
+    });
+
+    await Promise.all([
+      Slot.updateOne({ _id: claimedSlot._id }, { $set: { appointment: appointment._id } }),
+      WalkIn.updateOne({ _id: walkIn._id }, { $set: { assignedSlot: claimedSlot._id, appointment: appointment._id } }),
+    ]);
+  } catch (err) {
+    if (appointment) await Appointment.deleteOne({ _id: appointment._id });
+    await Promise.all([
+      Slot.updateOne({ _id: claimedSlot._id, status: 'Reserved-Confirmed' }, { $set: { status: 'Available', appointment: null } }),
+      WalkIn.updateOne({ _id: walkIn._id, status: 'Slot Assigned' }, { $set: { status: 'Waiting', assignedSlot: null, appointment: null } }),
+    ]);
+    throw err;
+  }
+
+  const assignedWalkIn = await getById(walkIn._id);
+  emitter.emit(EVENTS.WALKIN_SLOT_ASSIGNED, {
+    walkIn: assignedWalkIn,
+    slot: claimedSlot,
+    appointment,
+    performedBy: changedBy,
+    targetModel: 'WalkIn',
+  });
+  return assignedWalkIn;
+}
+
+/**
  * Get "Now Serving" data for the public display.
  * Returns the current in-progress entry and the next N waiting entries.
  *
@@ -228,6 +311,7 @@ module.exports = {
   getHoldingList,
   getTodayWalkIns,
   assignSlotToNextWalkIn,
+  assignSlotToWalkIn,
   getNowServing,
   getById,
 };
