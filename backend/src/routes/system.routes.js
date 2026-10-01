@@ -4,8 +4,10 @@
  */
 
 const { Router } = require('express');
-const { getNow, setCustomTime, isClinicOpen, getOperatingStatus } = require('../config/systemTime');
+const { setCustomTime, getOperatingStatus } = require('../config/systemTime');
 const { autoMarkNoShows } = require('../services/appointment.service');
+const { authorize } = require('../middleware/auth');
+const { parseDateOnly } = require('../utils/timeHelper');
 
 const router = Router();
 
@@ -14,7 +16,6 @@ const router = Router();
  * Returns current system time and clinic open/closed status.
  */
 router.get('/time', async (_req, res) => {
-  await autoMarkNoShows();
   res.json({
     success: true,
     data: getOperatingStatus(),
@@ -26,21 +27,23 @@ router.get('/time', async (_req, res) => {
  * Set custom time or reset to actual clock.
  * Body: { time: "2026-09-08T08:30:00" } or { reset: true }
  */
-router.post('/time', async (req, res) => {
-  const { time, reset } = req.body;
-  if (reset) {
-    setCustomTime(null);
-  } else if (time) {
-    setCustomTime(time);
-  }
-
-  await autoMarkNoShows();
-
-  res.json({
-    success: true,
-    message: reset ? 'Reset to actual real-time clock' : 'Custom system time updated',
-    data: getOperatingStatus(),
-  });
+router.post('/time', authorize('Admin'), async (req, res, next) => {
+  try {
+    const { time, reset } = req.body || {};
+    const validReset = reset === true && time === undefined;
+    const validTime = reset === undefined && typeof time === 'string' &&
+      /^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d(:[0-5]\d(\.\d{1,3})?)?(Z|[+-]([01]\d|2[0-3]):[0-5]\d)?$/.test(time) &&
+      Number.isFinite(new Date(time).getTime());
+    if (!validReset && !validTime) {
+      throw Object.assign(new Error('Provide a valid ISO date/time or { reset: true }'), { statusCode: 400 });
+    }
+    if (validTime) parseDateOnly(time.slice(0, 10));
+    setCustomTime(validReset ? null : time);
+    await autoMarkNoShows();
+    res.json({ success: true,
+      message: validReset ? 'Reset to actual real-time clock' : 'Custom system time updated',
+      data: getOperatingStatus() });
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

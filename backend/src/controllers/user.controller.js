@@ -97,7 +97,7 @@ async function getMe(req, res, next) {
  */
 async function getDoctors(req, res, next) {
   try {
-    const doctors = await userService.getDoctors();
+    const doctors = await userService.getDoctors(req.user);
     res.json({
       success: true,
       data: doctors,

@@ -7,7 +7,7 @@
 
 const { Router } = require('express');
 const userController = require('../controllers/user.controller');
-const { protect, authorize } = require('../middleware/auth');
+const { authorize } = require('../middleware/auth');
 
 const router = Router();
 
@@ -16,13 +16,12 @@ router.post('/register', userController.register);
 router.post('/login', userController.login);
 
 // Protected routes
-router.get('/me', protect, userController.getMe);
-router.get('/doctors', protect, userController.getDoctors);
-router.get('/', protect, authorize('Admin'), userController.listUsers);
-router.post('/', protect, authorize('Admin'), userController.createUser);
-
-router.get('/:id/schedule', protect, authorize('Staff', 'Admin', 'Doctor'), userController.schedule);
-router.patch('/:id/schedule', protect, authorize('Staff', 'Admin', 'Doctor'), userController.schedule);
+router.get('/me', userController.getMe);
+router.get('/doctors', userController.getDoctors);
+router.get('/', authorize('Admin'), userController.listUsers);
+router.post('/', authorize('Admin'), userController.createUser);
+router.get('/:id/schedule', authorize('Staff', 'Admin', 'Doctor'), userController.schedule);
+router.patch('/:id/schedule', authorize('Staff', 'Admin', 'Doctor'), userController.schedule);
 
 module.exports = router;
 

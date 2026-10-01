@@ -21,6 +21,10 @@ const EVENTS = require('../events/events');
  * @returns {Object} { user, token }
  */
 async function register(userData) {
+  if (!userData || typeof userData.email !== 'string' || !userData.email.trim() ||
+      typeof userData.password !== 'string' || userData.password.length < 6) {
+    throw Object.assign(new Error('Provide an email and a password of at least six characters'), { statusCode: 400 });
+  }
   // Check for duplicate email
   const existing = await User.findOne({ email: userData.email });
   if (existing) {
@@ -46,6 +50,9 @@ async function register(userData) {
  * @returns {Object} { user, token }
  */
 async function login(email, password) {
+  if (typeof email !== 'string' || !email.trim() || typeof password !== 'string' || !password) {
+    throw Object.assign(new Error('Email and password must be non-empty text'), { statusCode: 400 });
+  }
   const user = await User.findOne({ email }).select('+password');
   if (!user) {
     const err = new Error('Invalid credentials');
@@ -83,8 +90,9 @@ async function getById(userId) {
 /**
  * Get all doctors.
  */
-async function getDoctors() {
-  return User.find({ role: 'Doctor' }).select('firstName lastName email contactNumber');
+async function getDoctors(actor) {
+  return User.find({ role: 'Doctor' }).select(actor?.role === 'Patient'
+    ? 'firstName lastName' : 'firstName lastName email contactNumber');
 }
 
 /**

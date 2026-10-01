@@ -6,6 +6,10 @@
  */
 
 const appointmentService = require('../services/appointment.service');
+const fs = require('node:fs/promises');
+const path = require('node:path');
+const mongoose = require('mongoose');
+const { UPLOAD_ROOT } = require('../middleware/upload');
 
 /**
  * POST /api/appointments
@@ -162,6 +166,35 @@ async function deleteDocument(req, res, next) {
   }
 }
 
+async function downloadDocument(req, res, next) {
+  try {
+    if (!mongoose.isObjectIdOrHexString(req.params.docId)) {
+      throw Object.assign(new Error('Invalid document ID'), { statusCode: 400 });
+    }
+    const document = req.appointment.documents.find(doc => String(doc._id) === req.params.docId);
+    if (!document || typeof document.url !== 'string' || !document.url.startsWith('/uploads/')) {
+      throw Object.assign(new Error('Uploaded document not found'), { statusCode: 404 });
+    }
+    const candidate = path.resolve(UPLOAD_ROOT, document.url.slice('/uploads/'.length));
+    const inside = (root, file) => {
+      const relative = path.relative(root, file);
+      return relative && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
+    };
+    if (!inside(UPLOAD_ROOT, candidate)) throw Object.assign(new Error('Invalid document path'), { statusCode: 403 });
+    const root = await fs.realpath(UPLOAD_ROOT);
+    const file = await fs.realpath(candidate);
+    if (!inside(root, file)) throw Object.assign(new Error('Invalid document path'), { statusCode: 403 });
+    res.download(file, path.basename(document.filename), {
+      headers: { 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' },
+    }, err => { if (err) next(err); });
+  } catch (err) {
+    if (err.code === 'ENOENT' || err.code === 'ENOTDIR') {
+      err = Object.assign(new Error('Uploaded document not found'), { statusCode: 404 });
+    }
+    next(err);
+  }
+}
+
 /**
  * PATCH /api/appointments/:id/complete
  * Mark an appointment as completed (doctor/staff).
@@ -219,6 +252,7 @@ async function assignSlot(req, res, next) {
 }
 
 module.exports = {
+  downloadDocument,
   assignSlot,
   create,
   approve,

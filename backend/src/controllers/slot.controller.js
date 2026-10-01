@@ -7,6 +7,14 @@
 const slotService = require('../services/slot.service');
 const { getNow } = require('../config/systemTime');
 const { formatDateKey, isDateTimePassed } = require('../utils/timeHelper');
+const { recordId } = require('../middleware/auth');
+
+function visibleSlot(slot, user) {
+  if (['Staff', 'Admin'].includes(user.role)) return slot;
+  return { _id: slot._id, doctor: { _id: slot.doctor?._id || slot.doctor,
+    firstName: slot.doctor?.firstName, lastName: slot.doctor?.lastName },
+    date: slot.date, startTime: slot.startTime, endTime: slot.endTime, status: slot.status };
+}
 
 /**
  * GET /api/slots
@@ -15,7 +23,12 @@ const { formatDateKey, isDateTimePassed } = require('../utils/timeHelper');
  */
 async function getSlots(req, res, next) {
   try {
-    const doctorId = req.query.doctorId || req.query.doctor;
+    let doctorId = req.query.doctorId || req.query.doctor;
+    if (req.user.role === 'Doctor') {
+      const ownId = recordId(req.user._id || req.user.id);
+      if (doctorId && doctorId !== ownId) throw Object.assign(new Error('You can only view your own slots'), { statusCode: 403 });
+      doctorId = ownId;
+    }
     const { date, status } = req.query;
     const resolvedDate = date || formatDateKey(getNow());
 
@@ -31,7 +44,7 @@ async function getSlots(req, res, next) {
     }
 
     slots = slots.filter(slot => !isDateTimePassed(slot.date, slot.startTime, 'start') && (!status || slot.status === status));
-    res.json({ success: true, date: resolvedDate, count: slots.length, data: slots });
+    res.json({ success: true, date: resolvedDate, count: slots.length, data: slots.map(slot => visibleSlot(slot, req.user)) });
   } catch (err) {
     next(err);
   }
@@ -43,7 +56,10 @@ async function getSlots(req, res, next) {
 async function getById(req, res, next) {
   try {
     const slot = await slotService.getById(req.params.id);
-    res.json({ success: true, data: slot });
+    if (req.user.role === 'Doctor' && recordId(slot.doctor) !== recordId(req.user._id || req.user.id)) {
+      throw Object.assign(new Error('You can only view your own slots'), { statusCode: 403 });
+    }
+    res.json({ success: true, data: visibleSlot(slot, req.user) });
   } catch (err) {
     next(err);
   }
@@ -75,7 +91,7 @@ async function generate(req, res, next) {
       startTime || null,
       endTime || null
     );
-    res.status(201).json({ success: true, count: slots.length, data: slots });
+    res.status(201).json({ success: true, count: slots.length, data: slots.map(slot => visibleSlot(slot, req.user)) });
   } catch (err) {
     next(err);
   }
@@ -84,7 +100,7 @@ async function generate(req, res, next) {
 async function updateStatus(req, res, next) {
   try {
     const slot = await slotService.updateStatus(req.params.id, req.body.status, req.user);
-    res.json({ success: true, data: slot });
+    res.json({ success: true, data: visibleSlot(slot, req.user) });
   } catch (err) { next(err); }
 }
 

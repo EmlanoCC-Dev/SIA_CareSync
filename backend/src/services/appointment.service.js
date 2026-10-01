@@ -376,13 +376,16 @@ async function uploadDocuments(appointmentId, userId, { consultationNotes, docum
     throw err;
   }
 
-  if (consultationNotes !== undefined) {
-    appointment.consultationNotes = consultationNotes;
+  if (consultationNotes !== undefined && typeof consultationNotes !== 'string') {
+    throw Object.assign(new Error('Consultation notes must be text'), { statusCode: 400 });
   }
-
-  if (documents && Array.isArray(documents)) {
-    appointment.documents = documents;
+  // File references must come from the upload endpoint, never a caller-supplied URL.
+  if (documents !== undefined && (!Array.isArray(documents) || documents.length !== appointment.documents.length ||
+      documents.some(doc => !doc || !appointment.documents.some(saved => String(saved._id) === String(doc._id) &&
+        saved.url === doc.url && saved.filename === doc.filename && saved.type === doc.type)))) {
+    throw Object.assign(new Error('Use the file upload/delete endpoints to change documents'), { statusCode: 400 });
   }
+  if (consultationNotes !== undefined) appointment.consultationNotes = consultationNotes;
 
   await appointment.save();
 

@@ -284,8 +284,8 @@ async function getNowServing(upcomingCount = 5) {
   ]);
 
   return {
-    nowServing: currentlyServing[0] || null,
-    upcoming,
+    nowServing: currentlyServing[0] ? { queueNumber: currentlyServing[0].queueNumber, status: currentlyServing[0].status } : null,
+    upcoming: upcoming.map(entry => ({ queueNumber: entry.queueNumber, status: entry.status })),
     updatedAt: now.toISOString(),
     isOpen: isClinicOpen(now),
   };

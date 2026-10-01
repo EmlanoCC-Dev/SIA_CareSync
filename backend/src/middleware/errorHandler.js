@@ -6,6 +6,7 @@
  */
 
 function errorHandler(err, _req, res, _next) {
+  if (res.headersSent) return _next(err);
   const statusCode = err.statusCode || (['CastError', 'ValidationError'].includes(err.name) ? 400 : 500);
   const message = err.message || 'Internal Server Error';
 

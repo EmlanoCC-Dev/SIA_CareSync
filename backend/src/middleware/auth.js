@@ -10,6 +10,32 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const env = require('../config/env');
+const mongoose = require('mongoose');
+const Appointment = require('../models/Appointment');
+
+const ROLES = ['Patient', 'Doctor', 'Staff', 'Admin'];
+const recordId = value => String(value?._id || value || '');
+
+function assertAppointmentAccess(appointment, user) {
+  const allowed = user && (['Staff', 'Admin'].includes(user.role) ||
+    (user.role === 'Patient' && recordId(appointment.patient) === recordId(user._id || user.id)) ||
+    (user.role === 'Doctor' && recordId(appointment.doctor) === recordId(user._id || user.id)));
+  if (!allowed) throw Object.assign(new Error('You do not have permission to access this appointment'), { statusCode: 403 });
+}
+
+// Runs before every individual appointment operation, including file upload/download.
+async function appointmentAccess(req, res, next) {
+  try {
+    if (!mongoose.isObjectIdOrHexString(req.params.id)) {
+      throw Object.assign(new Error('Invalid appointment ID'), { statusCode: 400 });
+    }
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) throw Object.assign(new Error('Appointment not found'), { statusCode: 404 });
+    assertAppointmentAccess(appointment, req.user);
+    req.appointment = appointment;
+    next();
+  } catch (err) { next(err); }
+}
 
 /**
  * Verify JWT from Authorization header.
@@ -31,11 +57,12 @@ async function protect(req, res, next) {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, env.JWT_SECRET);
+    const decoded = jwt.verify(token, env.JWT_SECRET, { algorithms: ['HS256'] });
+    if (!mongoose.isObjectIdOrHexString(decoded.id)) throw new Error('Invalid token subject');
 
     // Attach user to request
     const user = await User.findById(decoded.id);
-    if (!user) {
+    if (!user || !ROLES.includes(user.role)) {
       return res.status(401).json({
         success: false,
         message: 'User belonging to this token no longer exists',
@@ -68,4 +95,4 @@ function authorize(...roles) {
   };
 }
 
-module.exports = { protect, authorize };
+module.exports = { protect, authorize, appointmentAccess, assertAppointmentAccess, recordId };

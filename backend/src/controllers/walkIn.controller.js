@@ -5,6 +5,7 @@
  */
 
 const walkInService = require('../services/walkIn.service');
+const { recordId } = require('../middleware/auth');
 
 /**
  * POST /api/walk-ins
@@ -39,6 +40,10 @@ async function list(req, res, next) {
       walkIns = await walkInService.getHoldingList();
     } else {
       walkIns = await walkInService.getTodayWalkIns();
+    }
+    if (req.user.role === 'Doctor') {
+      const doctorId = recordId(req.user._id || req.user.id);
+      walkIns = walkIns.filter(entry => recordId(entry.appointment?.doctor || entry.assignedSlot?.doctor) === doctorId);
     }
     res.json({ success: true, data: walkIns });
   } catch (err) {

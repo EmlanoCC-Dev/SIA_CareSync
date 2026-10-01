@@ -9,11 +9,11 @@
 
 const { Router } = require('express');
 const auditLogController = require('../controllers/auditLog.controller');
-const { protect, authorize } = require('../middleware/auth');
+const { authorize } = require('../middleware/auth');
 
 const router = Router();
 
 // Only admins can view audit logs
-router.get('/', protect, authorize('Admin'), auditLogController.list);
+router.get('/', authorize('Admin'), auditLogController.list);
 
 module.exports = router;

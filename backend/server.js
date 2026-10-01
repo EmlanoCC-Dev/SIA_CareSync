@@ -13,7 +13,6 @@ const { registerAllHandlers } = require('./src/events/handlers/notification.hand
 const { registerAuditHandlers } = require('./src/events/handlers/auditLog.handler');
 const routes = require('./src/routes');
 const { errorHandler } = require('./src/middleware/errorHandler');
-const path = require('path');
 const app = express();
 
 // ── Middleware ────────────────────────────────────────────
@@ -21,7 +20,8 @@ app.use(cors());
 app.use(express.json());
 
 // ── Static Files (Uploaded Documents) ────────────────────
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Medical files are returned only through authorized appointment downloads.
+app.use('/uploads', (_req, res) => res.status(404).json({ success: false, message: 'Use the authenticated appointment download endpoint' }));
 
 // ── Routes (Presentation Layer) ──────────────────────────
 app.use('/api', routes);
@@ -51,7 +51,9 @@ async function start() {
   });
 }
 
-start().catch((err) => {
+if (require.main === module) start().catch((err) => {
   console.error('❌  Failed to start server:', err);
   process.exit(1);
 });
+
+module.exports = app;
