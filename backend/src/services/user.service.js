@@ -11,6 +11,9 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const env = require('../config/env');
+const { validateTimeWindow } = require('../utils/timeHelper');
+const emitter = require('../events/emitter');
+const EVENTS = require('../events/events');
 
 /**
  * Register a new user.
@@ -101,5 +104,40 @@ function _signToken(userId) {
   });
 }
 
-module.exports = { register, login, getById, getDoctors, listUsers };
+async function getSchedule(doctorId, actor) {
+  if (actor.role === 'Doctor' && String(actor._id || actor.id) !== String(doctorId)) {
+    throw Object.assign(new Error('You can only manage your own schedule'), { statusCode: 403 });
+  }
+  const doctor = await getById(doctorId);
+  if (doctor.role !== 'Doctor') throw Object.assign(new Error('Doctor not found'), { statusCode: 404 });
+  return doctor;
+}
+
+async function updateSchedule(doctorId, actor, { workingHours, consultationDuration }) {
+  const duration = consultationDuration;
+  if (!Number.isInteger(duration) || duration < 5 || duration > 120 || !Array.isArray(workingHours) || workingHours.length > 7) {
+    throw Object.assign(new Error('Provide up to seven working days and a whole duration of 5–120 minutes'), { statusCode: 400 });
+  }
+  const days = new Set();
+  const hours = workingHours.map(entry => {
+    if (!entry || !Number.isInteger(entry.day) || entry.day < 0 || entry.day > 6 || days.has(entry.day)) {
+      throw Object.assign(new Error('Each working day must be unique and between 0 (Sunday) and 6 (Saturday)'), { statusCode: 400 });
+    }
+    days.add(entry.day);
+    validateTimeWindow(entry.start, entry.end, duration);
+    return { day: entry.day, start: entry.start, end: entry.end };
+  });
+  const doctor = await getSchedule(doctorId, actor);
+  doctor.workingHours = hours;
+  doctor.consultationDuration = duration;
+  doctor.scheduleConfigured = true;
+  await doctor.save();
+  emitter.emit(EVENTS.SCHEDULE_UPDATED, {
+    performedBy: actor._id || actor.id, targetModel: 'User', targetId: doctor._id,
+    workingHours: hours, consultationDuration: duration,
+  });
+  return doctor;
+}
+
+module.exports = { register, login, getById, getDoctors, listUsers, getSchedule, updateSchedule };
 

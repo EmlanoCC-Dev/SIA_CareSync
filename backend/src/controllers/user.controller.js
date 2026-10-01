@@ -124,5 +124,17 @@ async function listUsers(req, res, next) {
   }
 }
 
-module.exports = { register, login, getMe, getDoctors, listUsers, createUser };
+async function schedule(req, res, next) {
+  try {
+    const doctor = req.method === 'PATCH'
+      ? await userService.updateSchedule(req.params.id, req.user, req.body)
+      : await userService.getSchedule(req.params.id, req.user);
+    res.json({ success: true, data: {
+      workingHours: doctor.workingHours, consultationDuration: doctor.consultationDuration,
+      scheduleConfigured: doctor.scheduleConfigured || doctor.workingHours.length > 0,
+    } });
+  } catch (err) { next(err); }
+}
+
+module.exports = { register, login, getMe, getDoctors, listUsers, createUser, schedule };
 

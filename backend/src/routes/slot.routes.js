@@ -18,4 +18,6 @@ router.get('/:id', slotController.getById);
 // Staff or Admin can explicitly trigger slot generation
 router.post('/generate', authorize('Staff', 'Admin', 'Doctor'), slotController.generate);
 
+router.patch('/:id/status', authorize('Staff', 'Admin', 'Doctor'), slotController.updateStatus);
+
 module.exports = router;

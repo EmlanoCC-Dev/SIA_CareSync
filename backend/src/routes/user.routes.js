@@ -21,5 +21,8 @@ router.get('/doctors', protect, userController.getDoctors);
 router.get('/', protect, authorize('Admin'), userController.listUsers);
 router.post('/', protect, authorize('Admin'), userController.createUser);
 
+router.get('/:id/schedule', protect, authorize('Staff', 'Admin', 'Doctor'), userController.schedule);
+router.patch('/:id/schedule', protect, authorize('Staff', 'Admin', 'Doctor'), userController.schedule);
+
 module.exports = router;
 

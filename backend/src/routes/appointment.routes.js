@@ -23,6 +23,7 @@ router.get('/', appointmentController.list);
 
 // Get single appointment
 router.get('/:id', appointmentController.getById);
+router.patch('/:id/assign', authorize('Staff', 'Admin'), appointmentController.assignSlot);
 
 // Staff/Admin approves pending appointment
 router.patch('/:id/approve', authorize('Staff', 'Admin'), appointmentController.approve);

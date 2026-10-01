@@ -65,10 +65,13 @@ async function generate(req, res, next) {
         message: 'Doctor ID is required to generate slots',
       });
     }
+    if (req.user.role === 'Doctor' && String(targetDoctorId) !== String(req.user._id || req.user.id)) {
+      return res.status(403).json({ success: false, message: 'You can only generate your own slots' });
+    }
     const slots = await slotService.generateSlotsForDoctor(
       targetDoctorId,
       resolvedDate,
-      duration ? Number(duration) : null,
+      duration === undefined ? null : Number(duration),
       startTime || null,
       endTime || null
     );
@@ -78,4 +81,11 @@ async function generate(req, res, next) {
   }
 }
 
-module.exports = { getSlots, getById, generate };
+async function updateStatus(req, res, next) {
+  try {
+    const slot = await slotService.updateStatus(req.params.id, req.body.status, req.user);
+    res.json({ success: true, data: slot });
+  } catch (err) { next(err); }
+}
+
+module.exports = { getSlots, getById, generate, updateStatus };

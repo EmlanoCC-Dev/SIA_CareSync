@@ -6,7 +6,7 @@
  */
 
 function errorHandler(err, _req, res, _next) {
-  const statusCode = err.statusCode || 500;
+  const statusCode = err.statusCode || (['CastError', 'ValidationError'].includes(err.name) ? 400 : 500);
   const message = err.message || 'Internal Server Error';
 
   // Log full error in development

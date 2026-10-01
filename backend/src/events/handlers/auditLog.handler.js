@@ -15,6 +15,9 @@ const auditLogService = require('../../services/auditLog.service');
 function registerAuditHandlers() {
   // Listen to every defined event and log it
   const auditableEvents = [
+    { event: EVENTS.APPOINTMENT_ASSIGNED, action: 'APPOINTMENT_ASSIGNED' },
+    { event: EVENTS.SCHEDULE_UPDATED, action: 'SCHEDULE_UPDATED' },
+    { event: EVENTS.SLOT_STATUS_UPDATED, action: 'SLOT_STATUS_UPDATED' },
     { event: EVENTS.APPOINTMENT_BOOKED, action: 'APPOINTMENT_BOOKED' },
     { event: EVENTS.APPOINTMENT_APPROVED, action: 'APPOINTMENT_APPROVED' },
     { event: EVENTS.APPOINTMENT_DECLINED, action: 'APPOINTMENT_DECLINED' },
@@ -39,7 +42,7 @@ function registerAuditHandlers() {
           action,
           performedBy: data.performedBy || data.userId || null,
           targetModel: data.targetModel || 'Appointment',
-          targetId: data.appointment?._id || data.slot?._id || data.walkIn?._id || data.targetId || null,
+          targetId: data.targetId || data.appointment?._id || data.slot?._id || data.walkIn?._id || null,
           changes: data,
         });
         console.log(`📝  [AuditLog] ${action} recorded`);

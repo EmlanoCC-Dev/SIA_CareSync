@@ -112,7 +112,28 @@ function isDateTimePassed(dateVal, timeStr, boundary = 'end') {
   return nowMinutes >= targetMinutes;
 }
 
+function parseDateOnly(value) {
+  const date = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? new Date(`${value}T00:00:00.000Z`) : new Date(NaN);
+  if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
+    throw Object.assign(new Error('A valid date in YYYY-MM-DD format is required'), { statusCode: 400 });
+  }
+  return date;
+}
+
+function validateTimeWindow(start, end, duration) {
+  const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
+  if (!Number.isInteger(duration) || duration < 5 || duration > 120 ||
+      typeof start !== 'string' || typeof end !== 'string' ||
+      !timePattern.test(start) || !timePattern.test(end) ||
+      parseTimeToMinutes(end) - parseTimeToMinutes(start) < duration) {
+    throw Object.assign(new Error('Use valid start/end times and a whole duration of 5–120 minutes that fits the working hours'), { statusCode: 400 });
+  }
+}
+
 module.exports = {
+  parseDateOnly,
+  validateTimeWindow,
   parseTimeToMinutes,
   formatDateKey,
   isDateTimePassed,

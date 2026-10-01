@@ -12,10 +12,11 @@
 
 const Appointment = require('../models/Appointment');
 const WalkIn = require('../models/WalkIn');
+const Slot = require('../models/Slot');
 const slotService = require('./slot.service');
 const emitter = require('../events/emitter');
 const EVENTS = require('../events/events');
-const { isDateTimePassed } = require('../utils/timeHelper');
+const { isDateTimePassed, parseDateOnly } = require('../utils/timeHelper');
 const { getNow } = require('../config/systemTime');
 
 /**
@@ -74,8 +75,11 @@ async function autoMarkNoShows() {
  * Book a new appointment (patient action).
  */
 async function create({ patientId, doctorId, date, timeSlot, slotId, reason }) {
+  if (doctorId && !slotId) {
+    throw Object.assign(new Error('Choose an available slot for the selected doctor, or request any available doctor'), { statusCode: 400 });
+  }
   let resolvedDoctorId = doctorId || null;
-  let resolvedDate = date;
+  let resolvedDate = slotId ? date : parseDateOnly(date);
   let resolvedTimeSlot = timeSlot;
 
   // If slotId is provided, validate & reserve slot
@@ -150,6 +154,10 @@ async function approve(appointmentId, staffId) {
     const err = new Error(`Cannot approve an appointment with status "${appointment.status}"`);
     err.statusCode = 400;
     throw err;
+  }
+
+  if (!appointment.slot || !appointment.doctor) {
+    throw Object.assign(new Error('Assign a doctor and time slot before approving this request'), { statusCode: 400 });
   }
 
   appointment.status = 'Confirmed';
@@ -548,7 +556,41 @@ async function listAll(filters = {}) {
     .populate('slot');
 }
 
+async function assignSlot(appointmentId, slotId, staffId) {
+  if (!slotId) throw Object.assign(new Error('A slot is required'), { statusCode: 400 });
+  const appointment = await Appointment.findById(appointmentId);
+  if (!appointment) throw Object.assign(new Error('Appointment not found'), { statusCode: 404 });
+  if (appointment.status !== 'Pending' || appointment.slot || appointment.walkIn) {
+    throw Object.assign(new Error('Only pending patient requests without a slot can be assigned'), { statusCode: 409 });
+  }
+  const slot = await slotService.getById(slotId);
+  if (new Date(appointment.date).toISOString().slice(0, 10) !== new Date(slot.date).toISOString().slice(0, 10)) {
+    throw Object.assign(new Error('Choose a slot on the requested appointment date'), { statusCode: 400 });
+  }
+  const reserved = await slotService.reserveSlot(slotId, appointment._id);
+  let assigned;
+  try {
+    assigned = await Appointment.findOneAndUpdate(
+      { _id: appointmentId, status: 'Pending', slot: null, walkIn: null, date: appointment.date },
+      { $set: { slot: reserved._id, doctor: reserved.doctor, date: reserved.date,
+        timeSlot: `${reserved.startTime}-${reserved.endTime}` },
+        $push: { statusHistory: { status: 'Pending', changedBy: staffId, changedAt: getNow(),
+          remarks: 'Doctor and consultation slot assigned by staff' } } },
+      { new: true, runValidators: true }
+    );
+    if (!assigned) throw Object.assign(new Error('This request was changed or assigned already. Refresh and try again.'), { statusCode: 409 });
+  } catch (err) {
+    // ponytail: compensating rollback; use a MongoDB transaction if cross-record atomicity is required.
+    await Slot.updateOne({ _id: slotId, appointment: appointment._id, status: 'Reserved-Tentative' },
+      { $set: { status: 'Available', appointment: null } });
+    throw err;
+  }
+  emitter.emit(EVENTS.APPOINTMENT_ASSIGNED, { appointment: assigned, performedBy: staffId, targetModel: 'Appointment' });
+  return assigned;
+}
+
 module.exports = {
+  assignSlot,
   create,
   approve,
   decline,

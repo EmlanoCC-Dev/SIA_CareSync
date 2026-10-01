@@ -53,6 +53,7 @@ const userSchema = new mongoose.Schema(
       min: 5,
       max: 120,
     },
+    scheduleConfigured: { type: Boolean, default: false },
     workingHours: [
       {
         day: {

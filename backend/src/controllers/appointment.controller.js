@@ -211,7 +211,15 @@ async function list(req, res, next) {
   }
 }
 
+async function assignSlot(req, res, next) {
+  try {
+    const appointment = await appointmentService.assignSlot(req.params.id, req.body.slotId, req.user.id);
+    res.json({ success: true, data: appointment });
+  } catch (err) { next(err); }
+}
+
 module.exports = {
+  assignSlot,
   create,
   approve,
   decline,

@@ -12,6 +12,9 @@
 const EVENTS = {
   // ── Module 2: Appointment ──────────────────────────────
   APPOINTMENT_BOOKED: 'appointment.booked',
+  APPOINTMENT_ASSIGNED: 'appointment.assigned',
+  SCHEDULE_UPDATED: 'doctor.scheduleUpdated',
+  SLOT_STATUS_UPDATED: 'slot.statusUpdated',
   APPOINTMENT_APPROVED: 'appointment.approved',
   APPOINTMENT_DECLINED: 'appointment.declined',
   APPOINTMENT_CANCELLED: 'appointment.cancelled',

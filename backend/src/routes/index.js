@@ -33,4 +33,6 @@ router.use('/walkins', walkInRoutes);
 router.use('/slots', slotRoutes);
 router.use('/system', systemRoutes);
 
+router.use('/reports', require('./report.routes'));
+
 module.exports = router;

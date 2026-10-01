@@ -13,7 +13,7 @@ const Slot = require('../models/Slot');
 const User = require('../models/User');
 const emitter = require('../events/emitter');
 const EVENTS = require('../events/events');
-const { isDateTimePassed } = require('../utils/timeHelper');
+const { isDateTimePassed, parseDateOnly, validateTimeWindow } = require('../utils/timeHelper');
 
 /**
  * Parse a time string "HH:MM" into total minutes since midnight.
@@ -36,9 +36,7 @@ function _formatTime(totalMinutes) {
  * Normalize a Date to midnight UTC for consistent date-only comparisons.
  */
 function _normalizeDate(date) {
-  const d = new Date(date);
-  d.setUTCHours(0, 0, 0, 0);
-  return d;
+  return parseDateOnly(date instanceof Date ? date.toISOString().slice(0, 10) : date);
 }
 
 /**
@@ -65,9 +63,16 @@ async function generateSlotsForDoctor(doctorId, date, customDuration = null, cus
 
   let startMinutes;
   let endMinutes;
-  const duration = customDuration || doctor.consultationDuration || 15;
+  const duration = customDuration ?? doctor.consultationDuration ?? 15;
+  if ((customStart == null) !== (customEnd == null)) {
+    throw Object.assign(new Error('Provide both start and end times'), { statusCode: 400 });
+  }
+  if (!Number.isInteger(duration) || duration < 5 || duration > 120) {
+    throw Object.assign(new Error('Consultation duration must be a whole number of 5–120 minutes'), { statusCode: 400 });
+  }
 
   if (customStart && customEnd) {
+    validateTimeWindow(customStart, customEnd, duration);
     startMinutes = _parseTime(customStart);
     endMinutes = _parseTime(customEnd);
   } else {
@@ -76,12 +81,17 @@ async function generateSlotsForDoctor(doctorId, date, customDuration = null, cus
     if (schedule) {
       startMinutes = _parseTime(schedule.start);
       endMinutes = _parseTime(schedule.end);
+    } else if (doctor.scheduleConfigured || doctor.workingHours?.length) {
+      return Slot.find({ doctor: doctorId, date: normalizedDate })
+        .populate('doctor', 'firstName lastName').sort({ startTime: 1 });
     } else {
       // Default working hours (09:00 to 17:00) if no custom schedule is set
       startMinutes = _parseTime('09:00');
       endMinutes = _parseTime('17:00');
     }
   }
+
+  validateTimeWindow(_formatTime(startMinutes), _formatTime(endMinutes), duration);
 
   // Build slot boundaries
   const slotDefs = [];
@@ -93,6 +103,14 @@ async function generateSlotsForDoctor(doctorId, date, customDuration = null, cus
   }
 
   if (slotDefs.length > 0) {
+    // ponytail: overlap checks precede writes; serialize per-doctor generation if concurrent custom generation is needed.
+    const existing = await Slot.find({ doctor: doctorId, date: normalizedDate });
+    for (const candidate of slotDefs) {
+      if (existing.some(slot => candidate.startTime < slot.endTime && candidate.endTime > slot.startTime &&
+          (candidate.startTime !== slot.startTime || candidate.endTime !== slot.endTime))) {
+        throw Object.assign(new Error('Generated times overlap existing slots. Use the existing time windows or choose a different date.'), { statusCode: 409 });
+      }
+    }
     // Bulk upsert: only create slots that don't already exist
     const ops = slotDefs.map((s) => ({
       updateOne: {
@@ -358,7 +376,32 @@ async function completeSlot(slotId) {
   return slot;
 }
 
+async function updateStatus(slotId, status, actor) {
+  if (!['Available', 'Cancelled'].includes(status)) {
+    throw Object.assign(new Error('Slots can only be blocked or reopened here'), { statusCode: 400 });
+  }
+  const slot = await Slot.findById(slotId);
+  if (!slot) throw Object.assign(new Error('Slot not found'), { statusCode: 404 });
+  if (actor.role === 'Doctor' && String(slot.doctor) !== String(actor._id || actor.id)) {
+    throw Object.assign(new Error('You can only manage your own slots'), { statusCode: 403 });
+  }
+  if (isDateTimePassed(slot.date, slot.startTime, 'start')) {
+    throw Object.assign(new Error('Cannot change a slot that has already started'), { statusCode: 400 });
+  }
+  const previousStatus = status === 'Cancelled' ? 'Available' : 'Cancelled';
+  const updated = await Slot.findOneAndUpdate(
+    { _id: slotId, status: previousStatus, appointment: null },
+    { $set: { status } }, { new: true, runValidators: true }
+  );
+  if (!updated) throw Object.assign(new Error('Only unbooked available/blocked slots can be changed. Refresh and try again.'), { statusCode: 409 });
+  emitter.emit(EVENTS.SLOT_STATUS_UPDATED, {
+    slot: updated, previousStatus, performedBy: actor._id || actor.id, targetModel: 'Slot',
+  });
+  return updated;
+}
+
 module.exports = {
+  updateStatus,
   generateSlotsForDoctor,
   getAvailableSlots,
   getAllSlots,
