@@ -161,6 +161,10 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
       setError('Please select an appointment date');
       return;
     }
+    if (doctorId && !selectedSlotId) {
+      setError('No available slot selected. Choose another date or request any available doctor.');
+      return;
+    }
     if (allSlots.length > 0 && !selectedSlotId) {
       setError('Please select an available consultation slot that has not passed or been taken.');
       return;
@@ -206,7 +210,7 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
             <Calendar size={20} color="var(--primary)" />
             <h3>Book New Appointment</h3>
           </div>
-          <button onClick={onClose} className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
+          <button onClick={onClose} aria-label="Close booking form" className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
             <X size={18} />
           </button>
         </div>
@@ -337,27 +341,7 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
                   </div>
                 ) : (
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
-                      <label className="form-label" style={{ margin: 0 }}>Select Preferred Time Window</label>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Flexible Booking</span>
-                    </div>
-                    <select
-                      className="form-select"
-                      value={timeSlot}
-                      onChange={(e) => {
-                        setTimeSlot(e.target.value);
-                        setSelectedSlotId(null);
-                      }}
-                    >
-                      {TIME_SLOTS.map((slot) => {
-                        const passed = isSlotPassed(date, slot, systemTimeStatus);
-                        return (
-                          <option key={slot} value={slot} disabled={passed}>
-                            {slot} {passed ? '(Passed)' : ''}
-                          </option>
-                        );
-                      })}
-                    </select>
+                    <p role="status">No slots are available for this doctor. Choose another date or request any available doctor.</p>
                   </div>
                 )}
               </div>
@@ -402,7 +386,7 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
             </button>
             <button
               type="submit"
-              disabled={loading || (processedSlots.length > 0 && !selectedSlotId)}
+              disabled={loading || loadingSlots || (!!doctorId && !selectedSlotId)}
               className="btn btn-primary"
             >
               <CheckCircle2 size={16} />

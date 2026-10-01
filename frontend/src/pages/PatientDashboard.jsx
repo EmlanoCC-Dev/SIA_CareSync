@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { useDialog } from '../context/DialogContext';
 import { useAuth } from '../context/AuthContext';
 import BookAppointmentModal from '../components/BookAppointmentModal';
 import StatusTimelineModal from '../components/StatusTimelineModal';
 import { PlusCircle, Calendar, Clock, User, AlertCircle, History, XCircle, CheckCircle2 } from 'lucide-react';
 
 export default function PatientDashboard() {
+  const showDialog = useDialog();
   const { user } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,14 +36,14 @@ export default function PatientDashboard() {
   }, []);
 
   const handleCancel = async (id) => {
-    const reason = window.prompt('Please enter cancellation reason (optional):');
-    if (reason === null) return; // User cancelled prompt
+    const reason = await showDialog({ kind: 'prompt', title: 'Cancel appointment', message: 'You can include a reason for cancelling your appointment.', confirmText: 'Cancel appointment', danger: true });
+    if (reason === null) return;
 
     try {
       await api.cancelAppointment(id, reason || 'Cancelled by patient');
       fetchAppointments();
     } catch (err) {
-      alert(err.message || 'Failed to cancel appointment');
+      await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to cancel appointment' });
     }
   };
 
@@ -64,15 +66,16 @@ export default function PatientDashboard() {
   const completedCount = appointments.filter((a) => a.status === 'Completed').length;
 
   return (
-    <div className="main-content">
+    <main className="main-content dashboard-page patient-dashboard">
       {/* Welcome Banner */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="page-header">
         <div>
-          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>
-            Hello, {user.firstName}! 👋
+          <p className="page-eyebrow">Patient portal / Overview</p>
+          <h1>
+            Welcome back, {user.firstName}
           </h1>
           <p style={{ color: 'var(--text-muted)' }}>
-            Manage your medical appointments, bookings, and consultation history.
+            Your appointments and consultation records, in one place.
           </p>
         </div>
         <button onClick={() => setIsBookingOpen(true)} className="btn btn-primary">
@@ -80,6 +83,11 @@ export default function PatientDashboard() {
           <span>Book New Appointment</span>
         </button>
       </div>
+
+      <nav className="dashboard-tabs" aria-label="Patient workspace">
+        <a className="btn btn-primary" href="#appointments" aria-current="page"><Calendar size={18} /> My appointments</a>
+        <button className="btn btn-secondary" onClick={() => setIsBookingOpen(true)}><PlusCircle size={18} /> Book a visit</button>
+      </nav>
 
       {/* Stats Cards */}
       <div className="stats-grid">
@@ -114,12 +122,21 @@ export default function PatientDashboard() {
         </div>
       </div>
 
+      <section className="care-path" aria-labelledby="visit-guide-title">
+        <div><p className="page-eyebrow">Your visit, step by step</p><h2 id="visit-guide-title">A little planning. Better care.</h2><p>Check your appointment status before you head to the clinic.</p></div>
+        <ol>
+          <li><span>01</span><strong>Book your visit</strong><p>Choose a doctor and an available time.</p></li>
+          <li><span>02</span><strong>Wait for confirmation</strong><p>The clinic will review your request.</p></li>
+          <li><span>03</span><strong>Check in at reception</strong><p>Let the care team know you have arrived.</p></li>
+        </ol>
+      </section>
+
       {/* Appointments List */}
-      <div className="card">
+      <div className="card" id="appointments">
         <div className="card-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Calendar size={20} color="var(--primary)" />
-            <h3>My Appointment Schedule</h3>
+            <h3>My appointments</h3>
           </div>
           <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
             {appointments.length} Total Records
@@ -181,7 +198,7 @@ export default function PatientDashboard() {
                       )}
                     </td>
                     <td>
-                      <span className={`badge badge-${apt.status}`}>
+                      <span className={`badge badge-${apt.status.replace(/\s+/g, '-')}`}>
                         <span className="status-dot"></span>
                         {apt.status}
                       </span>
@@ -245,7 +262,7 @@ export default function PatientDashboard() {
           <div className="modal-content" style={{ maxWidth: '560px' }}>
             <div className="modal-header">
               <h3>Doctor's Consultation Record</h3>
-              <button onClick={() => setNotesOpen(false)} className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
+              <button onClick={() => setNotesOpen(false)} aria-label="Close medical record" className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
                 ✕
               </button>
             </div>
@@ -300,16 +317,18 @@ export default function PatientDashboard() {
                             {doc.type ? doc.type.replace('_', ' ') : 'Medical Document'}
                           </div>
                         </div>
-                        {doc.url && doc.url !== '#' && (
-                          <a
-                            href={doc.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        {doc._id && doc.url && doc.url !== '#' && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try { await api.downloadAppointmentDocument(selectedNotesApt._id, doc); }
+                              catch (err) { await showDialog({ title: 'Download unsuccessful', danger: true, message: err.message }); }
+                            }}
                             className="btn btn-primary btn-sm"
                             style={{ fontSize: '0.75rem' }}
                           >
-                            View
-                          </a>
+                            Download
+                          </button>
                         )}
                       </div>
                     ))}
@@ -326,6 +345,7 @@ export default function PatientDashboard() {
           </div>
         </div>
       )}
-    </div>
+      <footer className="workspace-footer"><span>CareSync · Patient portal</span><span>Appointments &amp; consultation records</span></footer>
+    </main>
   );
 }

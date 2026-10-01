@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { useDialog } from '../context/DialogContext';
 import { useAuth } from '../context/AuthContext';
 import StatusTimelineModal from '../components/StatusTimelineModal';
 import SlotManagement from '../components/SlotManagement';
 import WalkInQueue from '../components/WalkInQueue';
+import AssignSlotModal from '../components/AssignSlotModal';
+import ReportsPage from './ReportsPage';
 import { Calendar, Check, X, CheckCircle2, Filter, History, RefreshCw, UserCheck, AlertTriangle, Clock, Users } from 'lucide-react';
 
 export default function StaffDashboard() {
+  const showDialog = useDialog();
   const { user } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
+  const [assignment, setAssignment] = useState(null);
   const [activeTab, setActiveTab] = useState('appointments'); // 'appointments' | 'slots' | 'walkins'
 
   const fetchAppointments = async () => {
@@ -36,23 +41,23 @@ export default function StaffDashboard() {
   }, [statusFilter]);
 
   const handleApprove = async (id) => {
-    if (!window.confirm('Are you sure you want to approve this appointment?')) return;
+    if (!await showDialog({ kind: 'confirm', title: 'Approve appointment', message: 'Approve this appointment request?', confirmText: 'Approve appointment' })) return;
     try {
       await api.approveAppointment(id);
       fetchAppointments();
     } catch (err) {
-      alert(err.message || 'Failed to approve appointment');
+      await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to approve appointment' });
     }
   };
 
   const handleDecline = async (id) => {
-    const reason = window.prompt('Please enter the reason for declining this request:');
+    const reason = await showDialog({ kind: 'prompt', title: 'Decline appointment', message: 'Please enter the reason for declining this request.', confirmText: 'Decline appointment', required: true, danger: true });
     if (!reason || !reason.trim()) return;
     try {
       await api.declineAppointment(id, reason.trim());
       fetchAppointments();
     } catch (err) {
-      alert(err.message || 'Failed to decline appointment');
+      await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to decline appointment' });
     }
   };
 
@@ -61,39 +66,39 @@ export default function StaffDashboard() {
       await api.checkInAppointment(id);
       fetchAppointments();
     } catch (err) {
-      alert(err.message || 'Failed to check in patient');
+      await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to check in patient' });
     }
   };
 
   const handleNoShow = async (id) => {
-    const reason = window.prompt('Reason for marking No-Show (optional):', 'Patient did not arrive for scheduled slot');
+    const reason = await showDialog({ kind: 'prompt', title: 'Mark as no-show', message: 'This will mark the patient as absent and free the appointment slot.', confirmText: 'Mark no-show', defaultValue: 'Patient did not arrive for scheduled slot', danger: true });
     if (reason === null) return;
     try {
       await api.noShowAppointment(id, reason);
       fetchAppointments();
     } catch (err) {
-      alert(err.message || 'Failed to mark as no-show');
+      await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to mark as no-show' });
     }
   };
 
   const handleComplete = async (id) => {
-    if (!window.confirm('Mark this appointment as Completed?')) return;
+    if (!await showDialog({ kind: 'confirm', title: 'Complete appointment', message: 'Mark this appointment as completed?', confirmText: 'Complete appointment' })) return;
     try {
       await api.completeAppointment(id);
       fetchAppointments();
     } catch (err) {
-      alert(err.message || 'Failed to complete appointment');
+      await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to complete appointment' });
     }
   };
 
   const handleCancel = async (id) => {
-    const reason = window.prompt('Enter reason for cancellation:');
+    const reason = await showDialog({ kind: 'prompt', title: 'Cancel appointment', message: 'You can include a reason for cancelling this appointment.', confirmText: 'Cancel appointment', danger: true });
     if (reason === null) return;
     try {
       await api.cancelAppointment(id, reason || 'Cancelled by staff');
       fetchAppointments();
     } catch (err) {
-      alert(err.message || 'Failed to cancel appointment');
+      await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to cancel appointment' });
     }
   };
 
@@ -108,15 +113,16 @@ export default function StaffDashboard() {
   const completedCount = appointments.filter((a) => a.status === 'Completed').length;
 
   return (
-    <div className="main-content dashboard-page staff-dashboard">
+    <main className="main-content dashboard-page staff-dashboard">
       {/* Welcome Banner */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="page-header">
         <div>
-          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>
-            Staff Triage & Operations Dashboard
+          <p className="page-eyebrow">Front desk / Overview</p>
+          <h1>
+            Keep every visit moving
           </h1>
           <p style={{ color: 'var(--text-muted)' }}>
-            Review, approve, triage, and manage appointment requests across all hospital departments.
+            Review appointment requests, check in patients, and coordinate the walk-in queue.
           </p>
         </div>
         <button onClick={fetchAppointments} className="btn btn-secondary">
@@ -126,8 +132,8 @@ export default function StaffDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="stats-grid">
-        <div className="stat-card" style={{ borderColor: 'var(--amber)' }}>
+      {activeTab !== 'reports' && <div className="stats-grid">
+        <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--amber-light)', color: 'var(--amber)' }}>
             <AlertTriangle size={24} />
           </div>
@@ -148,7 +154,7 @@ export default function StaffDashboard() {
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon" style={{ background: '#ede9fe', color: '#6d28d9' }}>
+          <div className="stat-icon" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
             <Clock size={24} />
           </div>
           <div>
@@ -166,7 +172,7 @@ export default function StaffDashboard() {
             <div className="stat-label">Completed Consultations</div>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Navigation Tabs */}
       <div className="dashboard-tabs" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
@@ -188,6 +194,7 @@ export default function StaffDashboard() {
         >
           <Users size={16} /> Walk-in Queue
         </button>
+        <button className={`btn ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('reports')}>Reports</button>
       </div>
 
       {activeTab === 'appointments' && (
@@ -196,7 +203,7 @@ export default function StaffDashboard() {
           <div className="card-header" style={{ flexWrap: 'wrap', gap: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Calendar size={20} color="var(--primary)" />
-              <h3>Master Appointment Queue</h3>
+              <h3>Appointment requests &amp; arrivals</h3>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -271,7 +278,7 @@ export default function StaffDashboard() {
                         )}
                       </td>
                       <td>
-                        <span className={`badge badge-${apt.status}`}>
+                        <span className={`badge badge-${apt.status.replace(/\s+/g, '-')}`}>
                           <span className="status-dot"></span>
                           {apt.status}
                         </span>
@@ -284,10 +291,12 @@ export default function StaffDashboard() {
                                 onClick={() => handleApprove(apt._id)}
                                 className="btn btn-success btn-sm"
                                 title="Approve Appointment"
+                                disabled={!apt.slot || !apt.doctor}
                               >
                                 <Check size={14} />
                                 <span>Approve</span>
                               </button>
+                              {!apt.slot && !apt.walkIn && <button className="btn btn-primary btn-sm" onClick={() => setAssignment(apt)}>Assign doctor &amp; slot</button>}
                               <button
                                 onClick={() => handleDecline(apt._id)}
                                 className="btn btn-danger btn-sm"
@@ -355,6 +364,8 @@ export default function StaffDashboard() {
       )}
 
       {activeTab === 'slots' && <SlotManagement />}
+      {activeTab === 'reports' && <ReportsPage />}
+      <AssignSlotModal isOpen={!!assignment} appointment={assignment} onClose={() => setAssignment(null)} onAssigned={fetchAppointments} />
 
       {activeTab === 'walkins' && <WalkInQueue isStaff={true} />}
 
@@ -363,6 +374,7 @@ export default function StaffDashboard() {
         onClose={() => setTimelineOpen(false)}
         appointment={selectedAppointment}
       />
-    </div >
+      <footer className="workspace-footer"><span>CareSync · Front desk</span><span>Appointments, arrivals &amp; walk-ins</span></footer>
+    </main>
   );
 }

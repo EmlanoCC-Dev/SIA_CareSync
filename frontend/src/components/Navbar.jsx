@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useDialog } from '../context/DialogContext';
 import { api } from '../services/api';
 import SystemTimeModal from './SystemTimeModal';
 import { LogOut, Tv, Clock } from 'lucide-react';
@@ -7,6 +8,7 @@ import logoSource from '../assets/landing-logo.png';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const showDialog = useDialog();
   const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
   const [systemTimeStatus, setSystemTimeStatus] = useState(null);
 
@@ -28,12 +30,15 @@ export default function Navbar() {
   return (
     <header className="navbar">
       <div className="navbar-inner">
-        <div className="brand">
-          <span className="nav-brand-mark"><img src={logoSource} alt="" /></span>
-          <span><b>CARE</b><em>SYNC</em></span>
+        <div>
+          <div className="brand">
+            <span className="nav-brand-mark"><img src={logoSource} alt="" /></span>
+            <span><b>CARE</b><em>SYNC</em></span>
+          </div>
+          <p className="brand-caption">Appointments &amp; patient flow</p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div className="navbar-tools">
           {/* System Time & Clinic Operating Status */}
           {systemTimeStatus && <time dateTime={systemTimeStatus.currentTime} style={{ fontSize: '0.85rem' }}>
             {new Date(systemTimeStatus.currentTime).toLocaleDateString([], { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
@@ -43,7 +48,7 @@ export default function Navbar() {
             type="button"
             onClick={() => setIsTimeModalOpen(true)}
             className="btn btn-secondary btn-sm"
-            title="Click to test / adjust system time or clinic operating hours"
+            title="Clinic clock and operating hours"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -80,7 +85,7 @@ export default function Navbar() {
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}
           >
             <Tv size={15} color="var(--primary)" />
-            <span>TV Display</span>
+            <span>Waiting room display</span>
           </a>
 
           {user && (
@@ -92,12 +97,14 @@ export default function Navbar() {
                 <span className={`role-badge role-${user.role}`}>{user.role}</span>
               </div>
               <button
-                onClick={logout}
+                onClick={async () => {
+                  if (await showDialog({ kind: 'confirm', title: 'Sign out', message: 'Are you sure you want to sign out?', confirmText: 'Sign out', cancelText: 'Stay signed in' })) logout();
+                }}
                 className="btn btn-secondary btn-sm"
                 title="Sign Out"
               >
                 <LogOut size={16} />
-                <span>Logout</span>
+                <span>Sign out</span>
               </button>
             </div>
           )}
@@ -107,6 +114,7 @@ export default function Navbar() {
         isOpen={isTimeModalOpen}
         onClose={() => setIsTimeModalOpen(false)}
         onTimeChanged={fetchTime}
+        canEdit={user?.role === 'Admin'}
       />
     </header>
   );

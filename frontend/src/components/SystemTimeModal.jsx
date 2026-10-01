@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { api } from '../services/api';
 import { X, Clock, Calendar, CheckCircle2, RotateCcw, AlertCircle, Sun, Moon, Sparkles } from 'lucide-react';
 
-export default function SystemTimeModal({ isOpen, onClose, onTimeChanged }) {
+export default function SystemTimeModal({ isOpen, onClose, onTimeChanged, canEdit = false }) {
   const [status, setStatus] = useState({
     currentTime: new Date().toISOString(),
     isOpen: true,
@@ -158,6 +158,7 @@ export default function SystemTimeModal({ isOpen, onClose, onTimeChanged }) {
           </div>
 
           {/* Quick Scenario Testing Presets */}
+          {canEdit && <>
           <div style={{ marginBottom: '1.25rem' }}>
             <label className="form-label" style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.5rem' }}>
               <Sparkles size={14} color="var(--primary)" />
@@ -257,12 +258,13 @@ export default function SystemTimeModal({ isOpen, onClose, onTimeChanged }) {
               </button>
             </div>
           </form>
+          </>}
         </div>
 
         <div className="modal-footer" style={{ borderTop: '1px solid var(--border-color, #e5e7eb)', paddingTop: '0.75rem' }}>
-          <button type="button" onClick={handleResetToReal} disabled={loading} className="btn btn-secondary">
+          {canEdit && <button type="button" onClick={handleResetToReal} disabled={loading} className="btn btn-secondary">
             <RotateCcw size={16} /> Reset to Real Time
-          </button>
+          </button>}
           <button type="button" onClick={onClose} className="btn btn-secondary">
             Close
           </button>

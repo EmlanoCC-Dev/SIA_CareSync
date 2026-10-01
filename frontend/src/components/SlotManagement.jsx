@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { useDialog } from '../context/DialogContext';
+import WorkingHoursEditor from './WorkingHoursEditor';
 import { Clock, Plus, Trash2, CheckCircle2, User, RefreshCw, Sparkles, Filter, ChevronDown } from 'lucide-react';
 
 export default function SlotManagement({ doctorId = null }) {
+  const showDialog = useDialog();
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -16,6 +19,8 @@ export default function SlotManagement({ doctorId = null }) {
   
   // Custom Generate Form State
   const [showGenerateForm, setShowGenerateForm] = useState(false);
+  const [showWorkingHours, setShowWorkingHours] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [doctors, setDoctors] = useState([]);
   const [genData, setGenData] = useState({
     doctor: doctorId || '',
@@ -54,6 +59,7 @@ export default function SlotManagement({ doctorId = null }) {
 
   const fetchSlots = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const activeDoctor = doctorId || selectedDoctor || undefined;
       const res = await api.getSlots({
@@ -69,6 +75,7 @@ export default function SlotManagement({ doctorId = null }) {
       }
     } catch (err) {
       console.error('Failed to load slots:', err);
+      setLoadError(err.message || 'Failed to load slots');
       setSlots([]);
     } finally {
       setLoading(false);
@@ -86,7 +93,7 @@ export default function SlotManagement({ doctorId = null }) {
     e.preventDefault();
     const targetDoc = doctorId || genData.doctor;
     if (!targetDoc) {
-      alert("Please select a doctor");
+      await showDialog({ title: 'CareSync notice', message: "Please select a doctor" });
       return;
     }
     setGenerating(true);
@@ -95,11 +102,11 @@ export default function SlotManagement({ doctorId = null }) {
         ...genData,
         doctor: targetDoc
       });
-      alert(`Successfully generated ${res.count || (res.data && res.data.length) || 0} slots.`);
+      await showDialog({ title: 'Slots generated', message: `Successfully generated ${res.count || (res.data && res.data.length) || 0} slots.` });
       setShowGenerateForm(false);
       fetchSlots();
     } catch (err) {
-      alert(err.message || 'Failed to generate slots');
+      await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to generate slots' });
     } finally {
       setGenerating(false);
     }
@@ -108,7 +115,7 @@ export default function SlotManagement({ doctorId = null }) {
   const handleAutoGenerateAll = async () => {
     const targetDoc = doctorId || selectedDoctor;
     if (!targetDoc && doctors.length === 0) {
-      alert("No doctors available to generate slots.");
+      await showDialog({ title: 'CareSync notice', message: "No doctors available to generate slots." });
       return;
     }
 
@@ -118,9 +125,6 @@ export default function SlotManagement({ doctorId = null }) {
         await api.generateSlots({
           doctor: targetDoc,
           date: dateFilter || currentDate,
-          startTime: '09:00',
-          endTime: '17:00',
-          duration: 15
         });
       } else {
         // Generate for all doctors
@@ -128,27 +132,24 @@ export default function SlotManagement({ doctorId = null }) {
           await api.generateSlots({
             doctor: doc._id,
             date: dateFilter || currentDate,
-            startTime: '09:00',
-            endTime: '17:00',
-            duration: 15
           });
         }
       }
       fetchSlots();
     } catch (err) {
-      alert(err.message || 'Failed to auto-generate slots');
+      await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to auto-generate slots' });
     } finally {
       setGenerating(false);
     }
   };
 
   const handleUpdateStatus = async (id, status) => {
-    if (!window.confirm(`Change slot status to ${status}?`)) return;
+    if (!await showDialog({ kind: 'confirm', title: status === 'Cancelled' ? 'Block slot' : 'Make slot available', message: `Change slot status to ${status}?`, confirmText: status === 'Cancelled' ? 'Block slot' : 'Make available', danger: status === 'Cancelled' })) return;
     try {
       await api.updateSlotStatus(id, status);
       fetchSlots();
     } catch (err) {
-      alert(err.message || 'Failed to update slot status');
+      await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to update slot status' });
     }
   };
 
@@ -273,7 +274,7 @@ export default function SlotManagement({ doctorId = null }) {
           <button 
             onClick={handleAutoGenerateAll} 
             className="btn btn-secondary" 
-            title="Auto-create 9AM-5PM slots based on doctor availability"
+            title="Create slots using saved weekly working hours"
             disabled={generating}
           >
             <Sparkles size={16} color="var(--primary)" />
@@ -284,8 +285,12 @@ export default function SlotManagement({ doctorId = null }) {
             <Plus size={16} />
             <span>Custom Generator</span>
           </button>
+          <button type="button" className="btn btn-secondary" onClick={() => setShowWorkingHours(!showWorkingHours)} aria-expanded={showWorkingHours}>Weekly hours</button>
         </div>
       </div>
+
+      {loadError && <p className="alert alert-error" role="alert">{loadError}</p>}
+      {showWorkingHours && <WorkingHoursEditor doctorId={doctorId} doctors={doctors} onSaved={fetchSlots} />}
 
       {/* Metric summary badges */}
       <div style={{ 

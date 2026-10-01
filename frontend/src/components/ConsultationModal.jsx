@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
+import { useDialog } from '../context/DialogContext';
 import { X, FileText, Plus, Trash2, CheckCircle2, Save, User, Calendar, Clock, AlertCircle, Upload, ExternalLink, Paperclip } from 'lucide-react';
 
 export default function ConsultationModal({ isOpen, onClose, appointment, onSuccess }) {
+  const showDialog = useDialog();
   const [consultationNotes, setConsultationNotes] = useState('');
   const [documents, setDocuments] = useState([]);
   
@@ -75,7 +77,7 @@ export default function ConsultationModal({ isOpen, onClose, appointment, onSucc
   };
 
   const handleRemoveDocument = async (doc, index) => {
-    if (!window.confirm(`Delete document "${doc.filename}"?`)) return;
+    if (!await showDialog({ kind: 'confirm', title: 'Delete document', message: `Delete document "${doc.filename}"? This cannot be undone.`, confirmText: 'Delete document', danger: true })) return;
 
     if (doc._id) {
       try {
@@ -96,7 +98,6 @@ export default function ConsultationModal({ isOpen, onClose, appointment, onSucc
     try {
       await api.uploadDocuments(appointment._id, {
         consultationNotes,
-        documents,
       });
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -109,7 +110,7 @@ export default function ConsultationModal({ isOpen, onClose, appointment, onSucc
   };
 
   const handleCompleteConsultation = async () => {
-    if (!window.confirm('Are you sure you want to finalize and mark this consultation as Completed?')) {
+    if (!await showDialog({ kind: 'confirm', title: 'Complete consultation', message: 'Save the notes and documents, then mark this consultation as completed?', confirmText: 'Complete consultation' })) {
       return;
     }
 
@@ -119,7 +120,6 @@ export default function ConsultationModal({ isOpen, onClose, appointment, onSucc
       // First persist any notes & documents
       await api.uploadDocuments(appointment._id, {
         consultationNotes,
-        documents,
       });
       // Then mark complete
       await api.completeAppointment(appointment._id);
@@ -151,7 +151,7 @@ export default function ConsultationModal({ isOpen, onClose, appointment, onSucc
             <FileText size={20} color="var(--primary)" />
             <h3 style={{ margin: 0 }}>Consultation Notes & Medical Records</h3>
           </div>
-          <button onClick={onClose} className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
+          <button onClick={onClose} aria-label="Close consultation record" className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
             <X size={18} />
           </button>
         </div>
@@ -260,17 +260,19 @@ export default function ConsultationModal({ isOpen, onClose, appointment, onSucc
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        {doc.url && doc.url !== '#' && (
-                          <a
-                            href={doc.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        {doc._id && doc.url && doc.url !== '#' && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try { await api.downloadAppointmentDocument(appointment._id, doc); }
+                              catch (err) { setError(err.message || 'Failed to download document'); }
+                            }}
                             className="btn btn-secondary btn-sm"
                             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
                           >
                             <ExternalLink size={13} />
-                            <span>View</span>
-                          </a>
+                            <span>Download</span>
+                          </button>
                         )}
                         <button
                           type="button"

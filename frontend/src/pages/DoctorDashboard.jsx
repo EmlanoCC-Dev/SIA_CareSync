@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { useDialog } from '../context/DialogContext';
 import { useAuth } from '../context/AuthContext';
 import StatusTimelineModal from '../components/StatusTimelineModal';
 import SlotManagement from '../components/SlotManagement';
 import WalkInQueue from '../components/WalkInQueue';
 import ConsultationModal from '../components/ConsultationModal';
+import ReportsPage from './ReportsPage';
 import {
   Stethoscope,
   Calendar,
@@ -21,6 +23,7 @@ import {
 } from 'lucide-react';
 
 export default function DoctorDashboard() {
+  const showDialog = useDialog();
   const { user } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,30 +65,30 @@ export default function DoctorDashboard() {
         setConsultationOpen(true);
       }
     } catch (err) {
-      alert(err.message || 'Failed to start consultation');
+      await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to start consultation' });
     }
   };
 
   const handleDecline = async (id) => {
-    const reason = window.prompt('Please enter the reason for declining this appointment request:');
+    const reason = await showDialog({ kind: 'prompt', title: 'Decline appointment', message: 'Please enter the reason for declining this appointment request.', confirmText: 'Decline appointment', required: true, danger: true });
     if (!reason || !reason.trim()) return;
 
     try {
       await api.declineAppointment(id, reason.trim());
       fetchAppointments();
     } catch (err) {
-      alert(err.message || 'Failed to decline appointment');
+      await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to decline appointment' });
     }
   };
 
   const handleCancel = async (id) => {
-    const reason = window.prompt('Enter reason for cancellation:');
+    const reason = await showDialog({ kind: 'prompt', title: 'Cancel appointment', message: 'You can include a reason for cancelling this appointment.', confirmText: 'Cancel appointment', danger: true });
     if (reason === null) return;
     try {
       await api.cancelAppointment(id, reason || 'Cancelled by Doctor');
       fetchAppointments();
     } catch (err) {
-      alert(err.message || 'Failed to cancel appointment');
+      await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to cancel appointment' });
     }
   };
 
@@ -108,14 +111,15 @@ export default function DoctorDashboard() {
   const completedCount = appointments.filter((a) => a.status === 'Completed').length;
 
   return (
-    <div className="main-content dashboard-page doctor-dashboard">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+    <main className="main-content dashboard-page doctor-dashboard">
+      <div className="page-header">
         <div>
-          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>
-            Doctor Dashboard
+          <p className="page-eyebrow">Clinical workspace / Overview</p>
+          <h1>
+            Your consultation workspace
           </h1>
           <p style={{ color: 'var(--text-muted)' }}>
-            Review, approve, and manage appointment requests across all hospital departments.
+            Manage your schedule, see waiting patients, and record their care.
           </p>
         </div>
         <button onClick={fetchAppointments} className="btn btn-secondary">
@@ -124,19 +128,19 @@ export default function DoctorDashboard() {
         </button>
       </div>
 
-      <div className="stats-grid">
+      {activeTab !== 'reports' && <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
             <Calendar size={24} />
           </div>
           <div>
             <div className="stat-val">{confirmedCount}</div>
-            <div className="stat-label">Upcoming Confirmed Today</div>
+            <div className="stat-label">Confirmed appointments</div>
           </div>
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon" style={{ background: '#ede9fe', color: '#6d28d9' }}>
+          <div className="stat-icon" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
             <Stethoscope size={24} />
           </div>
           <div>
@@ -154,7 +158,7 @@ export default function DoctorDashboard() {
             <div className="stat-label">Consultations Completed</div>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Navigation Tabs */}
       <div className="dashboard-tabs" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
@@ -176,6 +180,7 @@ export default function DoctorDashboard() {
         >
           <Users size={16} /> Walk-in Queue
         </button>
+        <button className={`btn ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('reports')}>Reports</button>
       </div>
 
       {activeTab === 'appointments' && (
@@ -183,7 +188,7 @@ export default function DoctorDashboard() {
           <div className="card-header" style={{ flexWrap: 'wrap', gap: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Stethoscope size={20} color="var(--teal)" />
-              <h3>Assigned Consultations & Queue</h3>
+              <h3>Consultation schedule</h3>
             </div>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -250,7 +255,7 @@ export default function DoctorDashboard() {
                         )}
                       </td>
                       <td>
-                        <span className={`badge badge-${apt.status}`}>
+                        <span className={`badge badge-${apt.status.replace(/\s+/g, '-')}`}>
                           <span className="status-dot"></span>
                           {apt.status}
                         </span>
@@ -325,6 +330,7 @@ export default function DoctorDashboard() {
       )}
 
       {activeTab === 'slots' && <SlotManagement doctorId={doctorId} />}
+      {activeTab === 'reports' && <ReportsPage />}
 
       {activeTab === 'walkins' && <WalkInQueue isStaff={false} doctorId={doctorId} />}
 
@@ -340,6 +346,7 @@ export default function DoctorDashboard() {
         onClose={() => setTimelineOpen(false)}
         appointment={selectedAppointment}
       />
-    </div>
+      <footer className="workspace-footer"><span>CareSync · Clinical workspace</span><span>Schedule, queue &amp; patient care</span></footer>
+    </main>
   );
 }

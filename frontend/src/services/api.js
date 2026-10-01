@@ -38,6 +38,7 @@ async function request(endpoint, options = {}) {
   }
 
   const response = await fetch(`${API_BASE}${endpoint}`, config);
+  if (response.ok && options.responseType === 'blob') return response.blob();
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
@@ -59,6 +60,9 @@ export const api = {
   getDoctors: () => request('/users/doctors'),
   getUsers: (role) => request(`/users${role ? `?role=${role}` : ''}`),
   createUser: (userData) => request('/users', { method: 'POST', body: userData }),
+  getDoctorSchedule: (id) => request(`/users/${id}/schedule`),
+  updateDoctorSchedule: (id, data) => request(`/users/${id}/schedule`, { method: 'PATCH', body: data }),
+  getReports: (params) => request(`/reports?${new URLSearchParams(params)}`),
 
   // ── Appointments ──
   getAppointments: (params = {}) => {
@@ -71,6 +75,7 @@ export const api = {
   getAppointmentById: (id) => request(`/appointments/${id}`),
   createAppointment: (appointmentData) => request('/appointments', { method: 'POST', body: appointmentData }),
   approveAppointment: (id) => request(`/appointments/${id}/approve`, { method: 'PATCH' }),
+  assignAppointmentSlot: (id, slotId) => request(`/appointments/${id}/assign`, { method: 'PATCH', body: { slotId } }),
   declineAppointment: (id, reason) => request(`/appointments/${id}/decline`, { method: 'PATCH', body: { reason } }),
   checkInAppointment: (id) => request(`/appointments/${id}/check-in`, { method: 'PATCH' }),
   noShowAppointment: (id, reason) => request(`/appointments/${id}/no-show`, { method: 'PATCH', body: { reason } }),
@@ -78,6 +83,17 @@ export const api = {
   uploadDocuments: (id, data) => request(`/appointments/${id}/documents`, { method: 'PATCH', body: data }),
   uploadAppointmentFile: (id, formData) => request(`/appointments/${id}/upload`, { method: 'POST', body: formData }),
   deleteAppointmentDocument: (id, docId) => request(`/appointments/${id}/documents/${docId}`, { method: 'DELETE' }),
+  downloadAppointmentDocument: async (id, doc) => {
+    const blob = await request(`/appointments/${encodeURIComponent(id)}/documents/${encodeURIComponent(doc._id)}/download`, { responseType: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = doc.filename || 'Medical document';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
   completeAppointment: (id) => request(`/appointments/${id}/complete`, { method: 'PATCH' }),
 
   // ── Audit Logs ──

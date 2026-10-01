@@ -3,6 +3,9 @@ import { api } from '../services/api';
 import { ShieldAlert, RefreshCw, Clock, User, FileText, ChevronDown, ChevronRight, CheckCircle2, Code2, Tag, Calendar, AlertCircle } from 'lucide-react';
 
 const ACTION_LABELS = {
+  APPOINTMENT_ASSIGNED: 'Doctor and slot assigned',
+  SCHEDULE_UPDATED: 'Weekly doctor hours updated',
+  SLOT_STATUS_UPDATED: 'Slot availability updated',
   APPOINTMENT_BOOKED: 'Appointment booked',
   APPOINTMENT_APPROVED: 'Appointment approved',
   APPOINTMENT_DECLINED: 'Appointment declined',
@@ -180,7 +183,7 @@ export default function AuditLogViewer() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <ShieldAlert size={22} color="var(--indigo)" />
           <div>
-            <h3 style={{ margin: 0 }}>System Audit Trail (Module 9)</h3>
+            <h3 style={{ margin: 0 }}>Clinic activity &amp; audit trail</h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
               Immutable record of all appointment transitions, file uploads, and state changes
             </p>

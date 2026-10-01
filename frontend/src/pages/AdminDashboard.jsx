@@ -3,6 +3,9 @@ import { api } from '../services/api';
 import AuditLogViewer from '../components/AuditLogViewer';
 import StatusTimelineModal from '../components/StatusTimelineModal';
 import AddUserModal from '../components/AddUserModal';
+import AssignSlotModal from '../components/AssignSlotModal';
+import SlotManagement from '../components/SlotManagement';
+import ReportsPage from './ReportsPage';
 import { ShieldCheck, Users, Calendar, ShieldAlert, CheckCircle2, History, RefreshCw, UserPlus, Filter, Search } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -12,6 +15,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
+  const [assignment, setAssignment] = useState(null);
 
   // User Directory filters & modal state
   const [userRoleFilter, setUserRoleFilter] = useState('');
@@ -59,15 +63,16 @@ export default function AdminDashboard() {
   });
 
   return (
-    <div className="main-content dashboard-page admin-dashboard">
+    <main className="main-content dashboard-page admin-dashboard">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="page-header">
         <div>
-          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>
-            System Administration Center 🛡️
+          <p className="page-eyebrow">Administration / Overview</p>
+          <h1>
+            Clinic administration
           </h1>
           <p style={{ color: 'var(--text-muted)' }}>
-            System-wide audit trail, appointment management, and user governance.
+            Oversee appointments, manage your care team, and review clinic activity.
           </p>
         </div>
         <button onClick={loadData} className="btn btn-secondary">
@@ -77,7 +82,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Top Metrics */}
-      <div className="stats-grid">
+      {activeTab !== 'reports' && <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'var(--indigo-light)', color: 'var(--indigo)' }}>
             <Users size={24} />
@@ -104,10 +109,10 @@ export default function AdminDashboard() {
           </div>
           <div>
             <div className="stat-val">{users.filter((u) => u.role === 'Doctor').length}</div>
-            <div className="stat-label">Active Doctors On-Call</div>
+            <div className="stat-label">Registered doctors</div>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Navigation Tabs */}
       <div className="dashboard-tabs" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
@@ -116,7 +121,7 @@ export default function AdminDashboard() {
           className={`btn btn-sm ${activeTab === 'audit' ? 'btn-primary' : 'btn-secondary'}`}
         >
           <ShieldAlert size={15} />
-          <span>System Audit Logs (Module 9)</span>
+          <span>Activity &amp; audit trail</span>
         </button>
         <button
           onClick={() => setActiveTab('appointments')}
@@ -132,16 +137,20 @@ export default function AdminDashboard() {
           <Users size={15} />
           <span>User Directory</span>
         </button>
+        <button className={`btn btn-sm ${activeTab === 'slots' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('slots')}>Slot Management</button>
+        <button className={`btn btn-sm ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('reports')}>Reports</button>
       </div>
 
       {/* Tab 1: Audit Logs */}
       {activeTab === 'audit' && <AuditLogViewer />}
+      {activeTab === 'slots' && <SlotManagement />}
+      {activeTab === 'reports' && <ReportsPage />}
 
       {/* Tab 2: Appointments */}
       {activeTab === 'appointments' && (
         <div className="card">
           <div className="card-header">
-            <h3>Master Appointments Registry</h3>
+            <h3>All appointments</h3>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{appointments.length} records</span>
           </div>
           <div className="table-container">
@@ -157,6 +166,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
+                {appointments.length === 0 && <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{loading ? 'Loading appointments...' : 'No appointments have been booked yet.'}</td></tr>}
                 {appointments.map((apt) => (
                   <tr key={apt._id}>
                     <td>
@@ -172,12 +182,13 @@ export default function AdminDashboard() {
                     </td>
                     <td>{apt.reason}</td>
                     <td>
-                      <span className={`badge badge-${apt.status}`}>
+                      <span className={`badge badge-${apt.status.replace(/\s+/g, '-')}`}>
                         <span className="status-dot"></span>
                         {apt.status}
                       </span>
                     </td>
                     <td style={{ textAlign: 'right' }}>
+                      {apt.status === 'Pending' && !apt.slot && !apt.walkIn && <button className="btn btn-primary btn-sm" onClick={() => setAssignment(apt)}>Assign doctor &amp; slot</button>}
                       <button onClick={() => openTimeline(apt)} className="btn btn-secondary btn-sm">
                         <History size={14} />
                         <span>Timeline</span>
@@ -196,7 +207,7 @@ export default function AdminDashboard() {
         <div className="card">
           <div className="card-header" style={{ flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
             <div>
-              <h3 style={{ margin: 0 }}>User Directory & Role Governance</h3>
+              <h3 style={{ margin: 0 }}>Patients &amp; care team</h3>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
                 Showing {filteredUsers.length} of {users.length} registered users
               </div>
@@ -286,6 +297,7 @@ export default function AdminDashboard() {
       )}
 
       {/* Add Doctor / Staff User Modal */}
+      <AssignSlotModal isOpen={!!assignment} appointment={assignment} onClose={() => setAssignment(null)} onAssigned={loadData} />
       <AddUserModal
         isOpen={isAddUserModalOpen}
         onClose={() => setIsAddUserModalOpen(false)}
@@ -297,6 +309,7 @@ export default function AdminDashboard() {
         onClose={() => setTimelineOpen(false)}
         appointment={selectedAppointment}
       />
-    </div>
+      <footer className="workspace-footer"><span>CareSync · Administration</span><span>Care team &amp; clinic oversight</span></footer>
+    </main>
   );
 }

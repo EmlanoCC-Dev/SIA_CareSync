@@ -54,7 +54,7 @@ export default function ClinicDisplayScreen() {
     setPulse(true);
     const timeout = setTimeout(() => setPulse(false), 2000);
     return () => clearTimeout(timeout);
-  }, [data.nowServing?._id]);
+  }, [data.nowServing?.queueNumber]);
 
   const formatTime = (date) => date.toLocaleTimeString([], {
     hour: '2-digit', minute: '2-digit', second: '2-digit',
@@ -71,7 +71,7 @@ export default function ClinicDisplayScreen() {
           <span className="cd-brand-mark">
             <img src={careSyncLogo} alt="" />
           </span>
-          <span className="cd-wordmark"><b>CARE</b><em>SYNC</em></span>
+          <div><span className="cd-wordmark"><b>CARE</b><em>SYNC</em></span><p className="cd-brand-caption">Patient queue · Waiting room</p></div>
         </div>
         <time className="cd-date" dateTime={clock.toISOString()}>{formatDate(clock)}</time>
       </header>
@@ -96,14 +96,14 @@ export default function ClinicDisplayScreen() {
           {data.nowServing ? (
             <div className="cd-serving-content">
               <div className="cd-queue-number-large">#{data.nowServing.queueNumber}</div>
-              <div className="cd-patient-name">{data.nowServing.name}</div>
+              <div className="cd-patient-name">Please proceed to consultation</div>
               <div className="cd-serving-badge">
                 <RefreshCw size={18} className="cd-spin" /> In Progress
               </div>
             </div>
           ) : (
             <div className="cd-serving-content cd-serving-empty">
-              <p>No patient being served</p>
+              <p>Waiting for the next consultation</p>
             </div>
           )}
         </section>
@@ -116,10 +116,10 @@ export default function ClinicDisplayScreen() {
           {data.upcoming.length > 0 ? (
             <div className="cd-queue-list">
               {data.upcoming.map((entry, index) => (
-                <div key={entry._id} className={`cd-queue-item ${index === 0 ? 'cd-next-up' : ''}`} style={{ animationDelay: `${index * 0.08}s` }}>
+                <div key={entry.queueNumber} className={`cd-queue-item ${index === 0 ? 'cd-next-up' : ''}`} style={{ animationDelay: `${index * 0.08}s` }}>
                   <span className="cd-queue-rank">{index + 1}</span>
                   <strong className="cd-queue-number">#{entry.queueNumber}</strong>
-                  <span className="cd-queue-name">{entry.name}</span>
+                  <span className="cd-queue-name">Consultation queue</span>
                   <span className={`cd-queue-status cd-status-${entry.status.replace(/\s+/g, '-')}`}>
                     <span className="cd-status-dot" /> {entry.status}
                   </span>
@@ -129,14 +129,15 @@ export default function ClinicDisplayScreen() {
           ) : (
             <div className="cd-empty-queue">
               <Users aria-hidden="true" />
-              <p>No patients in queue</p>
+              <p>No patients waiting</p>
+              <small>Please check in at reception when you arrive.</small>
             </div>
           )}
         </section>
       </main>
 
       <footer className="cd-footer" data-node-id="186:585">
-        Please wait for your number to be called
+        Please wait for your number to be called. Our care team will assist you shortly.
       </footer>
     </div>
   );
