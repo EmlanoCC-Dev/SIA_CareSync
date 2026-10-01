@@ -1,151 +1,47 @@
-/* Device adaptations shared by the Figma-inspired screens. */
-:root { --sidebar-width: 248px; }
-.landing-page, .auth-figma, .clinic-display, .dashboard-page { font-family: var(--font-family); }
-button, input, select, textarea { font-family: inherit; }
-button:focus-visible, a:focus-visible { outline: 3px solid #38bdf8; outline-offset: 4px; }
-.landing-page button, .auth-figma button, .dashboard-page .btn { min-height: 44px; }
-
-.landing-header { min-height: 100px; }
-.landing-hero { min-height: 640px; padding-block: 12px; gap: clamp(24px, 4vw, 64px); grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
-.landing-hero h1 { font-size: clamp(36px, 5.8vw, 88px); line-height: 1.06; letter-spacing: -.055em; margin-bottom: 24px; }
-.landing-intro { font-size: clamp(16px, 1.25vw, 20px); max-width: 60ch; }
-.landing-hero-actions { flex-wrap: wrap; gap: 16px; margin-top: 28px; }
-.landing-hero-actions .landing-button { min-width: 0; }
-.landing-hero-image { min-height: 0; aspect-ratio: 1.15; }
-.landing-hero-image img { display: block; min-height: 0; height: 100%; }
-.landing-services { padding-block: clamp(56px, 7vw, 112px); }
-.landing-section-heading { margin-bottom: 56px; }
-.landing-section-heading h2, .landing-mission h2 { font-size: clamp(28px, 3.3vw, 48px); line-height: 1.2; }
-.landing-service-grid { gap: 24px; }
-.landing-service-grid article { min-height: 0; padding: clamp(24px, 3vw, 40px); }
-.landing-service-grid h3 { font-size: 20px; line-height: 1.4; }
-.landing-service-grid article:nth-child(2) { transform: none; }
-.landing-mission { min-height: 0; padding-block: clamp(56px, 7vw, 112px); gap: 40px; }
-.landing-mission-image { height: auto; aspect-ratio: 1; }
-.landing-footer-grid { gap: 28px; grid-template-columns: minmax(0, 1.5fr) minmax(0, .7fr) minmax(0, 1.2fr) minmax(0, .8fr); }
-.landing-footer p { overflow-wrap: anywhere; }
-
-.auth-figma { align-items: stretch; }
-.auth-figma .auth-form-panel { min-height: 100svh; padding: 128px 28px 48px; }
-.auth-figma .auth-card, .auth-register .auth-card { width: 100%; max-width: 460px; }
-.auth-figma .auth-header h2 { font-size: clamp(28px, 3.2vw, 48px); line-height: 1.2; }
-.auth-figma .auth-header p, .auth-figma .auth-welcome-panel p { font-size: clamp(16px, 1.4vw, 20px); }
-.auth-figma .auth-card form { gap: 24px; }
-.auth-figma .form-input { height: 56px; padding-inline: 20px; border-radius: 18px; font-size: 16px; }
-.auth-figma .auth-welcome-panel { min-height: 100svh; padding: 40px; border-radius: 40px; }
-.auth-figma .auth-welcome-panel h2 { font-size: clamp(32px, 4vw, 56px); }
-.auth-figma .auth-welcome-panel button, .auth-submit { min-width: min(220px, 100%); min-height: 52px; padding: 12px 28px; font-size: 18px; border-radius: 18px; }
-.auth-forgot { font-size: 16px; }
-.auth-mini-brand { top: 32px; left: 32px; border: 0; padding: 0; background: transparent; font: inherit; cursor: pointer; border-radius: 12px; }
-.auth-mini-brand:hover { opacity: .78; }
-.auth-register .auth-mini-brand { right: 32px; }
-
-.app-container:has(.dashboard-page) > .navbar { width: var(--sidebar-width); flex-basis: var(--sidebar-width); padding: 28px 18px; }
-.app-container:has(.dashboard-page) .navbar .brand { font-size: 18px; }
-.app-container:has(.dashboard-page) .nav-brand-mark { width: 48px; height: 48px; flex-shrink: 0; border-radius: 16px; }
-.dashboard-page { width: calc(100% - var(--sidebar-width)); padding: 32px clamp(20px, 3vw, 48px) 40px; }
-.dashboard-page::before { font-size: 24px; margin-bottom: 32px; }
-.dashboard-page h1 { font-size: clamp(24px, 2.35vw, 36px) !important; line-height: 1.25; overflow-wrap: anywhere; }
-.dashboard-page > div:first-child { margin-bottom: 24px !important; }
-.dashboard-page .stats-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 16px; margin-bottom: 24px; }
-.dashboard-page .stat-card { min-height: 112px; padding: 20px; gap: 14px; }
-.dashboard-page .stat-icon { width: 48px; height: 48px; flex-shrink: 0; }
-.dashboard-page .stat-val { font-size: 30px; line-height: 1.2; }
-.dashboard-page .stat-label { font-size: 13px; line-height: 1.5; }
-.dashboard-page .card-header { padding: 20px; flex-wrap: wrap; gap: 16px; }
-.dashboard-page .card-header h3 { font-size: clamp(18px, 1.8vw, 26px); line-height: 1.3; }
-.dashboard-page .table-container { max-width: calc(100% - 40px); margin: 0 20px 20px; overflow-x: auto; }
-.dashboard-page table { min-width: 640px; }
-.dashboard-tabs { top: 120px; left: 16px; width: calc(var(--sidebar-width) - 32px); }
-.dashboard-tabs .btn { min-height: 46px; font-size: 14px; white-space: normal; text-align: left; }
-.dashboard-tabs .btn svg { width: 22px; height: 22px; flex-shrink: 0; }
-.dashboard-page::after { margin-top: 40px; font-size: 13px; }
-.dashboard-page .modal-content { max-height: calc(100dvh - 32px); overflow-y: auto; }
-.system-time-overlay { backdrop-filter: none; animation: none; }
-.modal-content.system-time-modal { display: flex; flex-direction: column; max-height: calc(100dvh - 32px); overflow: hidden; color: var(--text-main); animation: fadeIn .12s ease-out; }
-.system-time-modal .modal-body { flex: 1 1 auto; min-height: 0; max-height: none; overflow-y: auto; padding: 20px; }
-.system-time-modal .modal-header, .system-time-modal .modal-footer { flex-shrink: 0; padding: 20px; gap: 12px; }
-.system-time-modal .modal-footer { flex-wrap: wrap; }
-.dashboard-page .modal-header, .dashboard-page .modal-body, .dashboard-page .modal-footer { padding: 20px; }
-.dashboard-page .modal-footer { flex-wrap: wrap; }
-
-/* Let content determine panel height; fixed empty-state spacers clipped on laptops. */
-.clinic-display { height: auto; min-height: 100svh; gap: 20px; padding: clamp(16px, 3vw, 48px) clamp(16px, 4vw, 64px) 0; overflow: visible; }
-.cd-header { min-height: 76px; padding: 16px clamp(20px, 2vw, 32px); gap: 20px; border-radius: 20px; }
-.cd-brand-mark { width: 48px; height: 48px; border-radius: 16px; flex-shrink: 0; }
-.cd-wordmark { font-size: clamp(20px, 1.4vw, 26px); }
-.cd-date { font-size: clamp(16px, 1.3vw, 24px); }
-.cd-clock { font-size: clamp(22px, 1.6vw, 30px); letter-spacing: .06em; }
-.cd-queue-state { min-height: 38px; font-size: clamp(15px, 1vw, 18px); padding: 8px 14px; }
-.cd-information-bar { min-height: 44px; }
-.cd-main { margin: 0; padding-bottom: 24px; gap: 24px; }
-.cd-panel { min-height: 320px; border-radius: 28px; }
-.cd-now-serving { padding: clamp(24px, 2vw, 32px); }
-.cd-section-label { font-size: clamp(18px, 1.3vw, 24px); }
-.cd-upcoming-label svg { width: 26px; height: 26px; }
-.cd-live-dot { width: 12px; height: 12px; flex-shrink: 0; }
-.cd-empty-queue svg { width: 60px; height: 60px; margin-bottom: 12px; }
-.cd-serving-empty, .cd-empty-queue p { font-size: clamp(16px, 1vw, 20px); }
-.cd-serving-label { margin: 0 0 24px; }
-.cd-serving-empty { flex: 1; padding: 0; justify-content: center; }
-.cd-upcoming { padding: clamp(24px, 2vw, 32px); }
-.cd-queue-list { max-height: 55vh; }
-.cd-queue-item { grid-template-columns: 24px auto minmax(0, 1fr); gap: 12px; }
-.cd-queue-status { grid-column: 2 / -1; justify-self: start; display: inline-flex; }
-.cd-date { white-space: normal; text-align: right; }
-.cd-footer { margin-inline: calc(clamp(16px, 4vw, 64px) * -1); min-height: 52px; padding: 12px 16px; font-size: clamp(16px, 1.1vw, 20px); text-align: center; }
-
-@media (max-width: 1000px), (max-height: 740px) {
-  .app-container:has(.dashboard-page) { flex-direction: column; }
-  .app-container:has(.dashboard-page) > .navbar { position: relative; width: 100%; height: auto; flex-basis: auto; padding: 16px 20px; }
-  .app-container:has(.dashboard-page) .navbar-inner { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 16px; }
-  .app-container:has(.dashboard-page) .navbar-inner > div:last-of-type { flex: initial; flex-direction: row; flex-wrap: wrap; justify-content: flex-start; }
-  .app-container:has(.dashboard-page) .navbar-user { padding: 0; border: 0; }
-  .app-container:has(.dashboard-page) .navbar-user > div { display: none; }
-  .dashboard-page { width: 100%; }
-  .dashboard-tabs { position: static; width: 100%; flex-direction: row; flex-wrap: wrap; margin-bottom: 24px !important; }
-  .dashboard-tabs .btn { background: #f1f5f9; color: #0f172a; }
-  .dashboard-tabs .btn-primary { background: #0e7490; color: white; }
+﻿@media (max-width: 1100px), (max-height: 700px) {
+  .app-container { flex-direction: column; }
+  .navbar { position: relative; width: 100%; height: auto; flex-basis: auto; padding: 16px 24px; border-right: 0; border-bottom: 1px solid var(--border); }
+  .navbar-inner { flex-direction: row; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .brand-caption { display: none; } .navbar-tools { margin: 0; flex-direction: row; align-items: center; flex-wrap: wrap; } .navbar-tools time { display: none; }
+  .navbar-user { flex-direction: row; margin: 0; padding: 0; border: 0; align-items: center; } .navbar-user > div { display: none; }
+  .main-content { width: 100%; padding: 28px 24px; }
+  .dashboard-tabs { position: static; flex-direction: row; flex-wrap: wrap; width: 100%; margin-bottom: 24px !important; gap: 8px !important; }
+  .dashboard-tabs::before { display: none; } .dashboard-tabs .btn { background: white; border-color: var(--border); }
+  .dashboard-tabs .btn-primary { background: var(--primary-light); border-color: rgb(8 127 117 / 20%); } .dashboard-tabs .btn-primary::after { display: none; }
 }
 @media (max-width: 900px) {
-  .landing-hero, .landing-mission { grid-template-columns: minmax(0, 1fr); }
-  .landing-hero-image, .landing-mission-image { max-height: 440px; }
-  .landing-footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .cd-main { grid-template-columns: minmax(0, 1fr); }
+  .landing-header { grid-template-columns: 1fr auto; min-height: 80px; padding: 16px 0; } .landing-auth-actions { grid-column: 2; }
+  .landing-nav-dock { grid-column: 1 / -1; grid-row: 2; justify-self: stretch; } .landing-nav { justify-content: center; }
+  .landing-hero { grid-template-columns: 1fr; padding-block: 48px; gap: 32px; } .landing-hero-image { aspect-ratio: 1.5; max-height: 440px; }
+  .landing-mission { grid-template-columns: 1fr 1fr; gap: 32px; } .landing-footer-grid { grid-template-columns: 1fr 1fr; }
+  .cd-main { grid-template-columns: 1fr; } .cd-panel { min-height: 360px; } .care-path { grid-template-columns: 1fr; gap: 20px; }
 }
-@media (max-width: 760px) {
-  .auth-figma .auth-form-panel { min-height: auto; padding: 112px 20px 40px; }
-  .auth-figma .auth-welcome-panel { min-height: auto; padding: 32px 20px; border-radius: 0 0 28px 28px; }
-  .auth-figma .auth-welcome-panel > div { gap: 20px; }
-  .auth-login .auth-welcome-panel { grid-row: auto; border-radius: 28px 28px 0 0; }
-  .auth-register .auth-mini-brand { position: static; margin-bottom: 28px; }
-  .auth-register .auth-form-panel { padding-top: 32px; }
-  .dashboard-page { padding: 24px 16px; }
-  .dashboard-page .modal-body .form-row { grid-template-columns: minmax(0, 1fr) !important; }
-  .dashboard-page .form-input, .dashboard-page .form-select { max-width: 100%; font-size: 16px !important; }
-  .dashboard-page .card-header > div { min-width: 0; flex-wrap: wrap; }
-  .cd-header { align-items: center; flex-direction: column; }
-  .cd-date { text-align: center; font-size: 16px; }
-  .cd-information-bar { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; }
-  .cd-clock { font-size: clamp(20px, 5vw, 28px); flex-wrap: wrap; justify-content: center; }
-  .cd-queue-state { min-height: 40px; font-size: 14px; }
-  .cd-panel { min-height: 300px; }
-  .cd-section-label { font-size: 20px; }
-  .cd-serving-empty, .cd-empty-queue p { font-size: 16px; }
-}
-@media (max-width: 560px) {
-  .landing-footer-grid { grid-template-columns: minmax(0, 1fr); }
-  .landing-header { gap: 12px; }
-  .landing-nav a, .landing-nav button { min-height: 44px; }
-  .landing-services { padding-inline: 16px; }
-  .landing-hero h1 { font-size: clamp(34px, 9vw, 50px); }
-  .landing-hero-actions .landing-button { width: 100%; }
-  .landing-hero-image, .landing-mission-image { aspect-ratio: 1.2; height: auto; min-height: 0; }
-  .dashboard-page .card-header { padding: 16px; }
-  .dashboard-page .table-container { margin-inline: 12px; max-width: calc(100% - 24px); }
+@media (max-width: 640px) {
+  .navbar { padding: 16px; } .navbar-inner { gap: 12px; } .navbar-tools { width: 100%; gap: 8px; } .navbar-user { margin-left: auto; } .navbar .btn { font-size: 11px; }
+  .main-content { padding: 24px 16px; } .page-header { align-items: flex-start; gap: 16px; } .page-header h1 { font-size: 25px; } .page-header > .btn { width: 100%; }
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } .stat-card { padding: 16px; gap: 12px; flex-direction: column; align-items: flex-start; min-height: 130px; } .stat-val { font-size: 28px; } .stat-label { font-size: 11px; }
+  .dashboard-page .card-header { padding: 20px 16px; } .dashboard-page .card-header > div { max-width: 100%; flex-wrap: wrap; }
+  .dashboard-page .table-container { width: calc(100% - 32px); margin: 0 16px 16px; } .card-header h3 { font-size: 17px; }
+  .form-row { grid-template-columns: 1fr !important; } .form-input, .form-select, .form-textarea { max-width: 100%; font-size: 16px !important; }
+  .modal-header, .modal-body, .modal-footer { padding: 20px 16px; } .modal-header h3 { font-size: 16px; } .modal-footer .btn { flex: 1; }
+  .slot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .auth-modal-backdrop { padding: 12px; } .auth-modal-backdrop .auth-figma { max-height: calc(100dvh - 24px); } .auth-figma { grid-template-columns: 1fr; }
+  .auth-form-panel, .auth-register .auth-form-panel { min-height: 0; padding: 28px 24px; }
+  .auth-welcome-panel { grid-column: 1; grid-row: 2; padding: 24px; border-left: 0; border-top: 1px solid var(--border); }
+  .auth-welcome-panel > div { max-width: 360px; gap: 12px; width: 100%; } .auth-welcome-panel h2 { font-size: 22px; } .auth-panel-icon { display: none; } .auth-mini-brand { margin-bottom: 24px; } .auth-modal-close { top: 18px; right: 18px; }
+  .care-path { padding: 20px; } .care-path ol { grid-template-columns: 1fr; gap: 16px; } .care-path li { display: grid; grid-template-columns: 28px 1fr; column-gap: 12px; row-gap: 2px; } .care-path li > span { grid-row: span 2; }
+  .workspace-footer { flex-direction: column; gap: 4px; }
+  .landing-header, .landing-hero, .landing-mission { width: calc(100% - 32px); } .landing-header { gap: 16px; } .landing-brand { font-size: 16px; }
+  .landing-auth-actions { gap: 8px; } .landing-auth-actions .landing-button { min-height: 40px; padding: 8px 12px; font-size: 11px; }
+  .landing-nav { gap: 4px; justify-content: space-between; } .landing-nav a, .landing-nav button { font-size: 11px; padding: 8px; } .landing-nav svg { display: none; }
+  .landing-hero h1 { font-size: 40px; } .landing-intro { font-size: 14px; } .landing-hero-actions { flex-direction: column; } .landing-hero-actions .landing-button { width: 100%; }
+  .landing-visit-steps { flex-direction: column; gap: 12px; } .landing-service-grid, .landing-mission { grid-template-columns: 1fr; }
+  .landing-services { padding: 48px 16px; } .landing-section-heading h2, .landing-mission h2 { font-size: 28px; } .landing-mission-image { max-height: 320px; }
+  .landing-footer { padding: 32px 16px 24px; } .landing-footer-grid { grid-template-columns: 1fr; gap: 28px; }
+  .clinic-display { padding: 16px; } .cd-header { align-items: flex-start; flex-direction: column; padding: 20px; gap: 16px; } .cd-date { font-size: 13px; }
+  .cd-information-bar { gap: 12px; flex-wrap: wrap; } .cd-clock { font-size: 24px; } .cd-panel { min-height: 320px; padding: 24px; }
+  .cd-queue-item { grid-template-columns: 20px 64px minmax(0, 1fr); gap: 8px; } .cd-queue-status { grid-column: 2 / -1; justify-self: start; } .cd-footer { font-size: 13px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .system-time-modal { animation: none !important; }
-  html { scroll-behavior: auto; }
-  .landing-page *, .auth-figma *, .dashboard-page *, .clinic-display * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }

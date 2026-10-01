@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { useDialog } from '../context/DialogContext';
 import AddWalkInModal from './AddWalkInModal';
 import AssignSlotModal from './AssignSlotModal';
 import { Users, Plus, RefreshCw, UserCheck, AlertTriangle, CalendarCheck } from 'lucide-react';
 
 export default function WalkInQueue({ isStaff = true, doctorId = null }) {
+  const showDialog = useDialog();
   const [walkIns, setWalkIns] = useState([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
@@ -49,7 +51,7 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
       await api.updateWalkInStatus(id, status);
       fetchWalkIns();
     } catch (err) {
-      alert(err.message || 'Failed to update status');
+      await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to update status' });
     }
   };
 

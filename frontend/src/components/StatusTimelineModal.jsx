@@ -9,13 +9,13 @@ export default function StatusTimelineModal({ isOpen, onClose, appointment }) {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'Confirmed':
-        return <CheckCircle size={14} color="#0284c7" />;
+        return <CheckCircle size={14} color="var(--primary)" />;
       case 'Completed':
-        return <CheckCircle size={14} color="#10b981" />;
+        return <CheckCircle size={14} color="var(--emerald)" />;
       case 'Cancelled':
-        return <XCircle size={14} color="#f43f5e" />;
+        return <XCircle size={14} color="var(--rose)" />;
       default:
-        return <AlertTriangle size={14} color="#f59e0b" />;
+        return <AlertTriangle size={14} color="var(--amber)" />;
     }
   };
 
@@ -25,9 +25,9 @@ export default function StatusTimelineModal({ isOpen, onClose, appointment }) {
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <History size={20} color="var(--primary)" />
-            <h3>Status History & Version Tracking</h3>
+            <h3>Appointment status history</h3>
           </div>
-          <button onClick={onClose} className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
+          <button onClick={onClose} aria-label="Close appointment history" className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
             <X size={18} />
           </button>
         </div>
@@ -38,7 +38,7 @@ export default function StatusTimelineModal({ isOpen, onClose, appointment }) {
               <div>
                 <strong>Appointment ID:</strong> #{appointment._id?.substring(appointment._id.length - 6)}
               </div>
-              <span className={`badge badge-${appointment.status}`}>
+              <span className={`badge badge-${appointment.status.replace(/\s+/g, '-')}`}>
                 <span className="status-dot"></span>
                 {appointment.status}
               </span>

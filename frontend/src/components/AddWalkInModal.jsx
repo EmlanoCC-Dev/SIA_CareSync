@@ -45,7 +45,7 @@ export default function AddWalkInModal({ isOpen, onClose, onAdded }) {
       <div className="modal-content" style={{ maxWidth: '420px' }}>
         <div className="modal-header">
           <h3>Add Walk-In Patient</h3>
-          <button className="btn-icon" onClick={onClose}>
+          <button className="btn-icon" onClick={onClose} aria-label="Close walk-in form">
             <X size={20} />
           </button>
         </div>

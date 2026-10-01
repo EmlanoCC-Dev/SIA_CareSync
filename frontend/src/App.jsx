@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import LoginPage from './pages/LoginPage';
@@ -9,12 +9,13 @@ import DoctorDashboard from './pages/DoctorDashboard';
 import StaffDashboard from './pages/StaffDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import ClinicDisplayScreen from './pages/ClinicDisplayScreen';
-import { Activity } from 'lucide-react';
+import { Activity, CalendarCheck } from 'lucide-react';
 
 export default function App() {
   const { user, loading } = useAuth();
   const [authView, setAuthView] = useState('landing'); // 'landing' | 'login' | 'register'
   const [hash, setHash] = useState(window.location.hash);
+  const authDialog = useRef(null);
 
 
   // Listen for hash changes so the display route works
@@ -25,11 +26,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (authView === 'landing') return;
-    const onKeyDown = (event) => event.key === 'Escape' && setAuthView('landing');
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [authView]);
+    if (authView !== 'landing' && !user && authDialog.current && !authDialog.current.open) {
+      authDialog.current.showModal();
+    }
+  }, [authView, user]);
 
   // ★ Public display screen — no auth required
   if (hash === '#/display') {
@@ -53,7 +53,7 @@ export default function App() {
     return <>
       <LandingPage onLogin={() => setAuthView('login')} onRegister={() => setAuthView('register')} />
       {authView !== 'landing' && (
-        <div className="auth-modal-backdrop" role="dialog" aria-modal="true" aria-label={authView === 'login' ? 'Sign in' : 'Create account'} onMouseDown={(event) => event.target === event.currentTarget && setAuthView('landing')}>
+        <dialog ref={authDialog} className="auth-modal-backdrop" aria-label={authView === 'login' ? 'Sign in' : 'Create account'} onCancel={() => setAuthView('landing')} onMouseDown={(event) => event.target === event.currentTarget && setAuthView('landing')}>
           <button type="button" className="auth-modal-close" onClick={() => setAuthView('landing')} aria-label="Close">&times;</button>
           <div className={`auth-wrapper auth-figma auth-slider ${authView === 'register' ? 'auth-register' : 'auth-login'}`}>
             <div className="auth-moving-form">
@@ -62,13 +62,15 @@ export default function App() {
             </div>
             <aside className="auth-welcome-panel">
               <div>
-                <h2>{authView === 'register' ? <>Welcome To<br />CareSync</> : 'Hello!'}</h2>
-                <p>{authView === 'register' ? 'Sign In With Email & Password' : 'Sign Up now and enjoy our site'}</p>
-                <button type="button" onClick={() => setAuthView(authView === 'register' ? 'login' : 'register')}>{authView === 'register' ? 'SIGN IN' : 'SIGN UP'}</button>
+                <span className="auth-panel-icon"><CalendarCheck size={26} /></span>
+                <h2>Your care.<br />Connected.</h2>
+                <p>Plan your next visit, manage your appointments, and keep your consultation records together.</p>
+                <p>{authView === 'register' ? 'Already have a CareSync account?' : 'New to CareSync? Start your patient account.'}</p>
+                <button type="button" onClick={() => setAuthView(authView === 'register' ? 'login' : 'register')}>{authView === 'register' ? 'Sign in to your account' : 'Create a patient account'}</button>
               </div>
             </aside>
           </div>
-        </div>
+        </dialog>
       )}
     </>;
   }

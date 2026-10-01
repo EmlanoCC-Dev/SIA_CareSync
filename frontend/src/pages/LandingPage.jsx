@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import {
   CalendarCheck, Clock3, Database, Globe2, Home, MessageCircle,
-  Mail, MapPin, Phone, ShieldCheck, Stethoscope, UserRound, Users,
+  Mail, MapPin, Phone, ShieldCheck, Stethoscope, Users,
 } from 'lucide-react';
 import logoSource from '../assets/landing-logo.png';
 import heroImage from '../assets/landing-image-1.png';
@@ -17,32 +17,16 @@ function Brand() {
 }
 
 export default function LandingPage({ onLogin, onRegister }) {
-  const [navHidden, setNavHidden] = useState(false);
-  const lastScrollY = useRef(window.scrollY);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      if (currentScrollY < 16) setNavHidden(false);
-      else if (Math.abs(currentScrollY - lastScrollY.current) > 6) setNavHidden(currentScrollY > lastScrollY.current);
-      lastScrollY.current = currentScrollY;
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   return (
     <div className="landing-page" data-node-id="1:7">
       <header className="landing-header">
         <a href="#home" className="landing-logo-link"><Brand /></a>
         <div className="landing-nav-dock">
-          <nav className={`landing-nav${navHidden ? ' landing-nav-hidden' : ''}`} aria-label="Main navigation">
+          <nav className="landing-nav" aria-label="Main navigation">
             <a href="#home" aria-label="Home"><Home /><span>Home</span></a>
             <a href="#about" aria-label="About"><Users /><span>About</span></a>
             <a href="#services" aria-label="Services"><Stethoscope /><span>Services</span></a>
-            <a href="#queue" aria-label="Queue"><CalendarCheck /><span>Queue</span></a>
-            <button type="button" onClick={onLogin} aria-label="Profile"><UserRound /><span>Profile</span></button>
+            <a href="#/display" aria-label="Waiting room queue"><CalendarCheck /><span>Queue</span></a>
           </nav>
         </div>
         <div className="landing-auth-actions">
@@ -54,45 +38,47 @@ export default function LandingPage({ onLogin, onRegister }) {
       <main>
         <section className="landing-hero" id="home">
           <div className="landing-hero-copy">
-            <p className="landing-eyebrow">Welcome to CareSync</p>
-            <h1><span>Expert Care.</span><br />Every Time.</h1>
-            <p className="landing-intro">Experience a smarter way to manage your hospital visit with digital queuing. Track your queue status and receive timely notifications from anywhere.</p>
+            <p className="landing-eyebrow">Appointments &amp; patient flow, made simple</p>
+            <h1>Your next visit.<br /><span>A little easier.</span></h1>
+            <p className="landing-intro">Find time for your health. Book a clinic appointment, check the waiting-room queue, and keep your consultation records in one place.</p>
             <div className="landing-hero-actions">
               <button type="button" className="landing-button landing-button-dark" onClick={onLogin}>Book Appointment <span>→</span></button>
-              <a className="landing-button landing-button-light" href="#services">Our Services <span>→</span></a>
+              <a className="landing-button landing-button-light" href="#/display">View waiting-room queue <span>→</span></a>
             </div>
+            <ol className="landing-visit-steps" aria-label="Your visit steps"><li><span>1</span>Book a time</li><li><span>2</span>Get confirmation</li><li><span>3</span>Check in &amp; see your doctor</li></ol>
           </div>
-          <div className="landing-hero-image"><img src={heroImage} alt="Healthcare professional wearing a stethoscope" /></div>
+          <div className="landing-hero-image"><img src={heroImage} alt="Healthcare professional wearing a stethoscope" /><div className="landing-image-caption"><CalendarCheck size={24} /><div><strong>More clarity at every step</strong><p>From your first booking to your next consultation.</p></div></div></div>
         </section>
 
         <section className="landing-services" id="services">
           <div className="landing-section-heading">
-            <h2>Systematic Efficiency</h2>
-            <p>Designed with Clinical Minimalism to reduce cognitive load and enhance operational clarity across all touchpoints.</p>
+            <p className="page-eyebrow">Made for your clinic visit</p>
+            <h2>Less waiting. More peace of mind.</h2>
+            <p>Practical tools to help patients and care teams stay on the same page.</p>
           </div>
           <div className="landing-service-grid" id="queue">
-            <article><Clock3 /><h3>Real-time Queuing</h3><p>Intelligent patient flow management that provides accurate wait times and reduces congestion in waiting areas, fostering a calmer environment.</p></article>
-            <article><CalendarCheck /><h3>Seamless Appointments</h3><p>Frictionless scheduling for patients and administrators, ensuring optimized practitioner utilization and zero double-bookings.</p></article>
-            <article><Database /><h3>Integrated Records</h3><p>Unified clinical data presentation that strips away visual noise, presenting practitioners with actionable patient history at a glance.</p></article>
+            <article><Clock3 /><h3>Know who is up next</h3><p>See the current queue number and upcoming patients on the waiting-room display. Reception helps you check in when you arrive.</p></article>
+            <article><CalendarCheck /><h3>Plan your appointment</h3><p>Choose your doctor and an available time. Check your request status and manage your bookings in your patient portal.</p></article>
+            <article><Database /><h3>Keep your care together</h3><p>Return to your consultation notes, prescriptions, and attached medical reports whenever you need them.</p></article>
           </div>
         </section>
 
         <section className="landing-mission" id="about">
           <div className="landing-mission-image"><img src={missionImage} alt="Clinical staff working in a hospital corridor" /></div>
           <div className="landing-mission-copy">
-            <h2>Our <span>Mission</span></h2>
-            <p className="landing-mission-tag">Clarity in Care</p>
-            <p>CareSync was born from a singular observation: healthcare environments are inherently high-stress, yet the tools used to manage them often add cognitive friction rather than alleviating it.</p>
-            <p>We believe in <strong>Clinical Minimalism</strong>. By removing non-essential visual noise and prioritizing data clarity, we create systems that feel authoritative, reliable, and inherently calm.</p>
-            <p>Our platforms are designed not just to process data, but to facilitate emotional regulation for patients seeking clarity and operational flow for practitioners requiring precision.</p>
+            <p className="landing-mission-tag">Patients first, at every step</p>
+            <h2>Thoughtful care.<br /><span>A clearer experience.</span></h2>
+            <p>A clinic visit has enough to think about. Booking your appointment and finding your place in the queue should feel straightforward.</p>
+            <p>CareSync connects patients, reception, and doctors around one appointment schedule. Your care team can focus on your visit while you stay informed about what happens next.</p>
+            <button type="button" className="landing-button landing-button-dark" onClick={onRegister}>Create your patient account <span>→</span></button>
           </div>
         </section>
       </main>
 
       <footer className="landing-footer">
         <div className="landing-footer-grid">
-          <div><Brand /><p>CareSync Hospital is dedicated to delivering world-class, patient-centered healthcare through advanced medical technology, compassionate clinical expertise, and a commitment to community wellness.</p></div>
-          <div><h3>Quick Links</h3><a href="#home">Home</a><a href="#about">About</a><button onClick={onLogin}>Appointment</button><a href="#queue">Queue</a></div>
+          <div><Brand /><p>Connecting appointments, patients, and care teams for a smoother clinic experience.</p></div>
+          <div><h3>Quick Links</h3><a href="#home">Home</a><a href="#about">About</a><button onClick={onLogin}>Book appointment</button><a href="#/display">Waiting-room queue</a></div>
           <div><h3>Contact Details</h3><p><MapPin /> Sampaloc, Manila</p><p><Mail /> caresync@gmail.com</p><p><Phone /> +63 (0952) 998 3452</p><p><Clock3 /> 10:00am–6:00pm, Mon–Fri</p></div>
           <div><h3>Connect with us!</h3><div className="landing-socials"><Globe2 /><MessageCircle /><ShieldCheck /></div></div>
         </div>

@@ -66,7 +66,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
             <UserPlus size={20} color="var(--primary)" />
             <h3 style={{ margin: 0 }}>Add Doctor or Staff Account</h3>
           </div>
-          <button onClick={onClose} className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
+          <button onClick={onClose} aria-label="Close account form" className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
             <X size={18} />
           </button>
         </div>
