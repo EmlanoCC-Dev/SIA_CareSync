@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import AuditLogViewer from '../components/AuditLogViewer';
 import StatusTimelineModal from '../components/StatusTimelineModal';
+import AppointmentPatientDetails from '../components/AppointmentPatientDetails';
 import AddUserModal from '../components/AddUserModal';
 import AssignSlotModal from '../components/AssignSlotModal';
 import SlotManagement from '../components/SlotManagement';
@@ -170,8 +171,7 @@ export default function AdminDashboard() {
                 {appointments.map((apt) => (
                   <tr key={apt._id}>
                     <td>
-                      <strong>{apt.patient?.firstName} {apt.patient?.lastName}</strong>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{apt.patient?.email}</div>
+                      <AppointmentPatientDetails appointment={apt} />
                     </td>
                     <td>
                       {apt.doctor ? `Dr. ${apt.doctor.firstName} ${apt.doctor.lastName}` : 'Unassigned'}

@@ -3,6 +3,7 @@ import { api } from '../services/api';
 import { useDialog } from '../context/DialogContext';
 import { useAuth } from '../context/AuthContext';
 import StatusTimelineModal from '../components/StatusTimelineModal';
+import AppointmentPatientDetails from '../components/AppointmentPatientDetails';
 import SlotManagement from '../components/SlotManagement';
 import WalkInQueue from '../components/WalkInQueue';
 import ConsultationModal from '../components/ConsultationModal';
@@ -235,12 +236,7 @@ export default function DoctorDashboard() {
                   filteredAppointments.map((apt) => (
                     <tr key={apt._id}>
                       <td>
-                        <strong>
-                          {apt.patient?.firstName} {apt.patient?.lastName}
-                        </strong>
-                        <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>
-                          {apt.patient?.email}
-                        </div>
+                        <AppointmentPatientDetails appointment={apt} />
                       </td>
                       <td>
                         <div>{new Date(apt.date).toLocaleDateString()}</div>

@@ -1,5 +1,8 @@
 ﻿/* Clinic workspaces */
 .app-container { min-height: 100vh; display: flex; align-items: flex-start; }
+.appointment-patient-details { overflow-wrap: anywhere; }
+.appointment-patient-contact { color: var(--text-muted); font-size: 12px; }
+.appointment-visit-source { margin-top: 4px; color: var(--primary-hover); font-size: 11px; font-weight: 650; }
 .navbar { position: sticky; top: 0; flex: 0 0 var(--sidebar-width); width: var(--sidebar-width); height: 100dvh; padding: 28px 20px 20px; background: var(--bg-main); border-right: 1px solid var(--border); z-index: 100; }
 .navbar-inner { display: flex; flex-direction: column; height: 100%; gap: 24px; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--text-main); text-decoration: none; font-size: 19px; font-weight: 800; letter-spacing: -.05em; }
