@@ -2,13 +2,29 @@
 
 **Project:** Healthcare Appointment, Queue, and Patient Notification Integration System
 
-**Assessment date:** October 1, 2026 (Asia/Manila)
+**Assessment date:** October 1, 2026; updated October 2, 2026 (Asia/Manila)
 
 **Specification:** `C:/Users/Adrian/Downloads/Final Project Specification_MWA.pdf`
 
 **Scope:** Current frontend, backend, repository documentation, and specification requirements.
 
-**Updated status:** October 1, 2026, after the reports, assignment, schedule, and API access-control implementations. This document now reflects the remaining gaps. See the [feature walkthrough](261001_reports_assignment_and_working_hours_walkthrough.md) and [API security walkthrough](261001_api_access_controls_and_security_walkthrough.md) for behavior, verification, and limits.
+**Updated status:** October 2, 2026, after queue actions/filtering, concurrency/assignment recovery, and persistent in-app notifications. See the [feature walkthrough](261001_reports_assignment_and_working_hours_walkthrough.md), [API security walkthrough](261001_api_access_controls_and_security_walkthrough.md), [queue walkthrough](261002_walkin_queue_status_and_filters_walkthrough.md), [concurrency/recovery walkthrough](261002_concurrency_and_assignment_recovery_walkthrough.md), and [notification walkthrough](261002_in_app_notifications_walkthrough.md).
+
+**Latest code review:** October 2, 2026, including queue, concurrency/recovery, notification, and walk-in identity display changes in the workspace after baseline commit `910533d` on `main`. Automated checks use model doubles or mocked APIs; live MongoDB verification is still pending. Staff/Doctor/Admin appointment tables now display linked walk-in names/contact details without requiring a patient account; see the [identity walkthrough](261002_walkin_appointment_identity_walkthrough.md).
+
+### Current remaining gaps at a glance
+
+| Priority | Gap | Current evidence and completion target |
+| --- | --- | --- |
+| 1 — notification coverage/acceptance | Notification delivery and reminders | Persistent private in-app inbox and appointment/doctor queue updates are implemented. Live persistence, queue-turn/advance reminders, guaranteed delivery, and acceptance of in-app delivery versus the theme’s SMS/email requirement remain unresolved. |
+| 2 — workflow integrity | Queue coverage and no-shows | Public display uses walk-ins only; scheduled appointment check-in immediately starts consultation; automatic no-shows leave linked slots unsynchronized. Safe slot-freed reassignment is now registered. |
+| 3 — verification/reliability | Live competing writes and recovery | Unique daily ticket constraint, conditional automatic/manual assignment, operation-owned reservations, durable generation plans, and assignment recovery are implemented. Isolated checks passed; the live MongoDB command could not connect. Consultation/status outage behavior still needs separate verification. |
+| 4 — traceability | Incomplete audit coverage | User creation, document deletion, slot generation, and clock changes lack corresponding audit records. Walk-in registration/status actions now record the authenticated actor; automatic assignments are identified as system actions. |
+| Scope confirmation | Feedback, revisions, version history, and account maintenance | No dedicated feedback/correction/resubmission flow, previous note/document versions, or account editing/role changes/deactivation. Confirm how the generic specification applies to healthcare before fixing the accepted scope. |
+| Verification | Live database and complete patient journey | Recorded checks use model doubles or mocked APIs. Verify persistence, aggregation, competing writes, role restrictions, downloads, and the full journey with real test accounts and MongoDB. |
+| Submission | Final paper and evidence package | Development notes, walkthroughs, and runnable checks exist. Complete the final paper, diagrams/ERD, categorized results, deployment and integration evidence, backup/restore demonstration, and submission materials. |
+
+Priorities are a recommended implementation order, not severity scores from the specification. Scope-confirmation items are absent features whose exact required healthcare behavior remains unsettled. Submission gaps describe repository evidence; independently maintained deliverables may already exist elsewhere.
 
 ### Completed since the initial assessment
 
@@ -20,12 +36,14 @@
 | Slot blocking/reopening | Authorized slot-status route is implemented with ownership, occupied-slot, expired-slot, and reservation-conflict checks. | Live concurrent reservation versus blocking. |
 | API access controls | Central authentication, appointment ownership/doctor assignment, protected downloads, Admin-only clock changes, scoped slot/walk-in responses, and ticket-only public queue responses are implemented. | Live test-account and deployment verification. |
 | Doctor consultation-start permission | Assigned Doctors can now use the existing check-in/start action. | Live consultation workflow; separating arrival and actual consultation start remains open. |
+| Walk-in queue actions and list filters | Status route, permitted transitions, appointment/slot synchronization, Doctor assignment checks, status/date filters, and status audit events are implemented. Walk-in arrival is separate from session start. | Live persistence, competing writes across endpoints, and recovery from database outages. |
+| Queue concurrency, automatic assignment, and assignment recovery | Unique daily tickets, guarded/date-scoped automatic assignment, revision-controlled slot generation, and durable booking/assignment recovery are implemented. Slot-freed automation is registered. | Live MongoDB concurrency/index verification; the live check was attempted but could not connect. |
 
-Backend service/HTTP checks, the frontend production build, and mocked desktop/mobile UI smoke checks passed. These features are implemented; live-database and full end-to-end verification remain outstanding. Reports exports, split shifts, and holiday calendars are optional enhancements, not established specification gaps.
+The private notification inbox, unread counts, read actions, and lifecycle handlers are also implemented. Backend service/HTTP checks, the frontend production build, and mocked desktop/mobile UI smoke checks passed. These features are implemented; live-database and full end-to-end verification remain outstanding. Reports exports, split shifts, and holiday calendars are optional enhancements, not established specification gaps.
 
 ## 1. Overall assessment
 
-CareSync has the core healthcare modules, but several workflows are incomplete or disconnected. The largest remaining implementation gaps are patient notifications and queue operations. Live verification of the completed access controls and the documentation/testing evidence required for submission also remain outstanding.
+CareSync has the core healthcare modules, including persistent in-app notifications and account-free walk-in identity display. Remaining implementation gaps include queue coverage/no-show consistency and audit coverage. Notification channel acceptance and delivery reliability, live verification, and submission evidence also remain outstanding.
 
 This assessment distinguishes:
 
@@ -65,16 +83,16 @@ Important scope distinctions:
 | --- | --- | --- |
 | User management | Mostly present | Login, patient registration, four roles, and admin account creation exist. Editing users, changing existing roles, and deactivating accounts are absent. |
 | Patient booking | Implemented; live verification pending | Booking/listing and later doctor/slot assignment exist. Cross-record failure recovery and live concurrency still need verification. |
-| Doctor schedules | Implemented; live verification pending | Daily/custom generation, weekly working-hours editing, and slot blocking/reopening exist. Simultaneous custom generation with different slot boundaries remains a reliability concern. |
+| Doctor schedules | Implemented; live verification pending | Daily/custom generation, weekly working hours, and blocking/reopening exist. Durable doctor/day plans coordinate competing generators and repair partial writes. Actual MongoDB concurrency/index verification remains pending. |
 | Review and approval | Partial | Approve/decline exists. Correction requests, patient revisions, and resubmission are absent. |
 | Consultation records/files | Implemented; live verification pending | Notes, attachments, owner/assigned-doctor checks, and authenticated downloads exist. Revision tracking remains subject to healthcare mapping confirmation. |
 | Version tracking | Partial | Appointment status history exists. Previous versions of notes/documents are not tracked. |
 | Comment/feedback | Missing as a workflow | Reasons and consultation notes exist, but no dedicated feedback thread or revision-instruction interface exists. |
-| Patient notifications | Stub only | Messages print to the console. No SMS/email delivery, persistent notification records, or notification page exists. |
-| Queue management | Partial | Registration/manual assignment exists. Status actions are disconnected, and scheduled patients are excluded from the queue board. |
+| Patient notifications | In-app implemented; live verification pending | Persistent owner-only inbox, unread/read state, patient appointment outcomes, Staff/Admin requests, and doctor assignment/arrival updates exist. No SMS/email, advance reminders, queue-turn alerts, or durable event replay. Confirm instructor acceptance of in-app delivery. |
+| Queue management | Partial | Registration, manual/automatic assignment, status transitions, daily ticket uniqueness, and filters exist. Scheduled patients are excluded from the board. Live transition/recovery checks remain pending. |
 | Dashboard/reports | Implemented; live verification pending | Role dashboards and date-filtered reports exist. Live aggregation needs verification. |
 | Audit logs | Partial | Assignment, schedule changes, slot-status changes, and appointment events are logged. Other important changes and actor attribution remain incomplete. |
-| Integration component | Present | REST APIs and event-driven audit logging connect modules. Some advertised automation is not activated. |
+| Integration component | Present | REST APIs, audit events, active slot-freed reassignment, and persistent in-app notification handlers connect modules. Event delivery is in-process and lacks durable replay. |
 
 ## 4. Defects and resolution status
 
@@ -102,13 +120,15 @@ A successful Admin clock change still invokes existing no-show processing. Reset
 
 **Evidence:** [System routes](../../backend/src/routes/system.routes.js).
 
-### 4.4 High: missing walk-in status endpoint
+### 4.4 Resolved in implementation: walk-in status endpoint and filters
 
-Check In, Start Session, Complete, and Left controls call `PATCH /api/walkins/:id/status`, but the backend does not register that route.
+`PATCH /api/walkins/:id/status` now handles Check In, Start Session, Complete, and Left with role/assignment checks, permitted transitions, linked-record validation, conditional writes, and compensating recovery. Check-in keeps the appointment Confirmed and slot reserved; start/completion synchronize all three records; leaving cancels the linked appointment and releases the slot.
 
-**Required outcome:** Connect these actions to backend transitions that keep walk-in, appointment, and slot records consistent.
+The focused check passed 35 HTTP checks. Live competing writes, persistence, and outage recovery still need verification; compensating writes are not a multi-document transaction.
 
 **Evidence:** [Walk-in queue](../../frontend/src/components/WalkInQueue.jsx), [API client](../../frontend/src/services/api.js), and [walk-in routes](../../backend/src/routes/walkIn.routes.js).
+
+The [walk-in controller](../../backend/src/controllers/walkIn.controller.js) now applies validated status/date filters while retaining Doctor assignment scope. The screen uses the backend clinic day by omitting its former browser-derived date. Stale list responses are ignored. See the [queue walkthrough](261002_walkin_queue_status_and_filters_walkthrough.md).
 
 ### 4.5 Resolved: slot status endpoint
 
@@ -126,11 +146,11 @@ Separating arrival/waiting from actual consultation start remains a workflow que
 
 **Evidence:** [Doctor dashboard](../../frontend/src/pages/DoctorDashboard.jsx) and [appointment routes](../../backend/src/routes/appointment.routes.js).
 
-### 4.7 High: automatic reassignment handler is not registered
+### 4.7 Resolved in implementation: safe automatic reassignment
 
-The slot-freed handler exists but is not registered at startup. A runtime inspection using the current startup registrations found one `SLOT_FREED` listener, belonging to audit logging only. Cancellations therefore do not activate the intended walk-in reassignment.
+The slot-freed handler is now registered at startup. It reuses the guarded manual assignment path and selects only today's unassigned waiting entries for future slots today during clinic hours. Conditional claims, distinct operation ownership, and durable recovery protect competing requests.
 
-**Required outcome:** Register the handler and verify assignment safety before enabling the automation.
+Isolated checks cover competing assignments and the registered event handler. Live MongoDB and deployment verification remain pending. See the [concurrency/recovery walkthrough](261002_concurrency_and_assignment_recovery_walkthrough.md).
 
 **Evidence:** [Backend server](../../backend/server.js) and [slot-freed handler](../../backend/src/events/handlers/slotFreed.handler.js).
 
@@ -138,35 +158,36 @@ The slot-freed handler exists but is not registered at startup. A runtime inspec
 
 | Finding | Current behavior | Completion needed |
 | --- | --- | --- |
-| Flexible booking failure recovery | Assignment now reserves a slot conditionally and updates the appointment, with compensating rollback on failure. | Verify live concurrency and rollback; define reconciliation if a database failure prevents rollback. |
+| Flexible booking failure recovery | Reservations now carry an operation ID, and booking/assignment intents are persisted before claims. Failed cleanup remains recoverable through the offline script; committed links are preserved after lost acknowledgements. | Verify live database failures and the documented offline recovery procedure. Other appointment/status mutations are not covered by this journal. |
 | Scheduled patient queue | The display backend queries walk-in records only. | Include checked-in scheduled patients if the intended queue covers all clinic patients. |
-| Arrival versus consultation start | Appointment check-in immediately marks the consultation In Progress. | Separate arrival/waiting from actual consultation start where the clinic workflow requires it. |
+| Arrival versus consultation start | Walk-in queue check-in now records arrival separately and prevents automatic no-show processing for arrived walk-ins. Scheduled appointment check-in still marks consultation In Progress immediately. | Resolve the scheduled-patient arrival/start flow where the clinic workflow requires it. |
 | Automatic no-show slot state | Automatic processing changes appointment status without calling the release service used by manual processing. | Keep related slot state consistent and define expired-slot behavior. |
-| Queue-number concurrency | Registration reads the last number and increments it. | Prevent duplicate daily queue numbers under concurrent requests. |
-| Automatic walk-in assignment | Unlike manual assignment, the automatic path lacks conditional claims and a restriction to today's waiting patients. | Prevent concurrent duplicate assignments and assignment of stale waiting entries. |
-| Concurrent custom slot generation | Date/time/duration validation and overlap rejection are implemented. The overlap check runs before writes without serializing competing generators. | Verify simultaneous generation with different boundaries; coordinate writes if concurrent generation must be supported. |
-| Audit completeness | User creation, document deletion, slot generation, and clock changes lack corresponding audit records. Walk-in creation omits the authenticated actor. | Record important changes with the correct actor and affected record. |
+| Queue-number concurrency | Resolved in implementation: the daily unique index arbitrates insertion retries; the clinic-clock timestamp/day is stored. Legacy tickets are preserved. | Verify actual index creation and concurrent registrations against MongoDB. |
+| Automatic walk-in assignment | Resolved in implementation: automatic/manual paths share conditional claims, date restrictions, and durable assignment recovery. The handler is active. | Verify deployed event handling, competing requests, and recovery against MongoDB. |
+| Concurrent custom slot generation | Resolved in implementation: durable doctor/day plans use a revision compare-and-set before materializing slots. Partial writes can be repaired without resetting reservations/blocks. | Verify actual MongoDB revision races, unique indexes, and startup restoration. |
+| Audit completeness | User creation, document deletion, slot generation, and clock changes lack corresponding audit records. Walk-in registration now captures the authenticated actor. | Record the remaining important changes with the correct actor and affected record. |
+| Walk-in identity in appointment lists | Resolved in implementation: Staff/Doctor/Admin tables use account details or linked walk-in name/contact and a Walk-in/queue label. Missing identities have an explicit fallback. Account-free registration and the existing single visit link are preserved. | Verify the display using live records/test accounts; permanent repeat-visit profiles/account linking are separate enhancements. |
 | Public queue privacy | Resolved in implementation: public entries contain only queueNumber/status; the screen uses tickets instead of names. Doctors' private walk-in lists are scoped to assigned entries. | Verify the final deployed response and role scopes with live test accounts. |
 
 Relevant implementation: [Appointment service](../../backend/src/services/appointment.service.js), [walk-in service](../../backend/src/services/walkIn.service.js), [slot service](../../backend/src/services/slot.service.js), and [audit handler](../../backend/src/events/handlers/auditLog.handler.js).
 
-## 6. Notification gap
+## 6. Notification status and remaining work
 
-[Notification service](../../backend/src/services/notification.service.js) only prints messages to the server console. No persistent notification model/API/page was identified. A runtime listener inspection also found no active `PATIENT_TURN_ALERT` listener under the current startup registrations.
+[Notification service](../../backend/src/services/notification.service.js) now stores MongoDB records. A shared inbox exposes owner-only history, unread counts, filtering, pagination, and read actions. Patient requests notify Staff/Admin and the selected doctor; assignment/approval/status events notify the relevant Patient/Doctor. Walk-in assignment and arrival notify the assigned Doctor; an account-free walk-in has no patient inbox. See the [notification walkthrough](261002_in_app_notifications_walkthrough.md).
 
-Recommended minimum completion:
+Remaining notification work:
 
-1. Store notification records with recipient, event type, message, timestamp, and delivery/simulation outcome.
-2. Provide a notification or notification-log screen with recipient-appropriate access.
-3. Connect relevant appointment and queue events to notification records.
-4. Implement SMS/email delivery or document an instructor-accepted simulation.
-5. Capture successful and failed notification evidence for testing and defense.
+1. Verify stored records, read timestamps, indexes, and recipient scope against live test MongoDB/accounts.
+2. Confirm acceptance of in-app delivery; add SMS/email if the instructor requires those channels.
+3. Implement advance/queue-turn reminders if required; no active `PATIENT_TURN_ALERT` listener exists.
+4. Add durable event dispatch/retry if guaranteed delivery is required. Current save failures are logged, and process-local events can be lost during outages.
+5. Capture successful/failed notification and complete patient-journey evidence for testing and defense.
 
-Persistent logs and a visible screen address the generic notification-log requirement more clearly. They should not be described as actual SMS/email delivery unless a delivery integration exists.
+Persistent records and a visible inbox address the generic notification-log requirement. They are in-app delivery, not SMS/email. The isolated notification check passed event/privacy/failure cases and 32 HTTP checks; the mocked browser checks passed on desktop/mobile. Live persistence remains unverified.
 
 ## 7. Documentation and submission gaps
 
-The following items were not found in the repository reviewed. They may exist outside the repository and should be checked before creating duplicates.
+The complete deliverables below were not found in the repository reviewed. Existing development notes, implementation walkthroughs, the API role/access matrix, and runnable checks cover parts of the work. Other materials may exist outside the repository and should be checked before creating duplicates.
 
 | Required deliverable | Gap to address |
 | --- | --- |
@@ -177,7 +198,7 @@ The following items were not found in the repository reviewed. They may exist ou
 | Enterprise architecture | Document business, data, application, and technology architecture, including sources of truth. |
 | Architecture decisions | Compare architecture styles/integration patterns and record the selected approach, rationale, and consequences. |
 | Required diagrams | Prepare the eight required diagrams and database design/ERD. |
-| Security/governance | Prepare RBAC matrix, least-privilege/separation-of-duties explanation, privacy controls, and module/data ownership. |
+| Security/governance | The API role/access matrix and privacy controls are documented in the security walkthrough. Incorporate them into the final paper and complete separation of duties, module/data ownership, and governance responsibilities. |
 | Risk register | Identify at least 8 risks with likelihood, impact, risk level, controls, and monitoring plans. |
 | Integration evidence | Capture requests/responses, mappings, payloads, saved database records, and successful/failed integration logs. |
 | Test plan/results | Categorize test cases and record actual outcomes against the required minimums. |
@@ -226,7 +247,6 @@ Database design/ERD is additionally requested under System Design.
 Existing pages/modals cover login, dashboards, appointment lists, submission, status history, approval actions, audit logs, and user creation/listing. The generic screen list still leaves these gaps:
 
 - Comment/feedback page
-- Notification or notification-log page
 - Actual document/note version history, if required by the healthcare mapping
 - Complete user/role management beyond creation/listing, if expected by the instructor
 
@@ -244,7 +264,7 @@ The specification requires the following minimum evidence:
 | Security/access-control test cases | 3 |
 | End-to-end scenario | 1 |
 
-The expanded [UI smoke script](../ui-smoke.mjs) checks intercepted API calls and mock responses at desktop/mobile widths. The [backend workflow check](../../backend/tests/clinic-workflows.check.js) passed using actual services, Express routes, and JWT middleware with isolated model doubles. The [API access check](../../backend/tests/api-access.check.js) passed 109 HTTP checks, including missing-login rejection on all 30 registered private routes, record scope, uploads/downloads, clock restrictions, and response privacy. The frontend production build also passed. These checks do not establish live MongoDB persistence, aggregation, concurrency, notification delivery, or the complete patient journey. A categorized results package meeting all specification minimums remains outstanding.
+The expanded [UI smoke script](../ui-smoke.mjs) checks intercepted API calls and mock responses at desktop/mobile widths, including the notification inbox for all roles. The [backend workflow check](../../backend/tests/clinic-workflows.check.js) passed using actual services, Express routes, and JWT middleware with isolated model doubles. The [API access check](../../backend/tests/api-access.check.js) passed 113 HTTP checks, including missing-login rejection on all 34 registered private routes, record scope, uploads/downloads, clock restrictions, and response privacy. The [notification check](../../backend/tests/notifications.check.js) passed event/privacy/failure cases and 32 HTTP checks. The frontend production build also passed. These checks do not establish live MongoDB persistence, aggregation, concurrency, notification delivery, or the complete patient journey. A categorized results package meeting all specification minimums remains outstanding.
 
 Recommended cases should include:
 
@@ -261,23 +281,26 @@ Suggested end-to-end scenario: patient books a slot, staff approves, patient rec
 
 ## 9. Recommended completion order
 
-1. **Validate implemented access controls:** use real test accounts and MongoDB to confirm ownership, doctor assignment, medical downloads, public response fields, and Admin-only clock changes in the final environment.
-2. **Repair disconnected queue actions:** implement walk-in status routes. Make automatic assignment safe before registering the slot-freed handler. Doctor consultation-start permissions are implemented.
-3. **Complete workflow integrity:** scheduled-patient queue coverage, arrival/start transitions, automatic no-show slot consistency, queue-number safety, and date-scoped conditional automatic assignment. Verify concurrent assignment and custom slot generation against MongoDB.
-4. **Complete notifications:** persistent records, visible log screen, and actual or accepted simulated delivery.
-5. **Resolve ambiguous module requirements:** obtain instructor confirmation for healthcare versioning, feedback, revision requests, and screen mappings; implement the accepted scope.
-6. **Prepare evidence:** live verification of the completed features/access controls and the full patient journey, categorized test results, diagrams, final documentation, integration screenshots/logs, deployment, and demonstrated backup/restore.
+1. **Verify the implemented queue fix:** run the reception-to-doctor lifecycle with real test accounts/MongoDB, including filtered lists, linked records, competing actions, and recovery. The former missing route/filter defects are implemented and covered by isolated checks.
+2. **Verify notifications and channel acceptance:** the private persistent inbox and lifecycle handlers are implemented. Verify live records, confirm whether in-app delivery satisfies the instructor’s requirements, and identify required reminders or guaranteed-delivery behavior.
+3. **Complete workflow integrity and verify reliability:** scheduled-patient queue coverage, arrival/start transitions, and automatic no-show slot consistency. Queue-number safety, conditional automatic assignment, generation coordination, and assignment recovery are implemented; verify them against reachable MongoDB infrastructure.
+4. **Complete audit coverage:** record the missing changes and authenticated actors so the completed workflows can be traced.
+5. **Resolve ambiguous module requirements:** obtain instructor confirmation for healthcare versioning, feedback, revision requests, user management, and screen mappings; implement the accepted scope. Seek this confirmation while completing the definite gaps above.
+6. **Validate and prepare evidence:** use real test accounts and MongoDB to verify the implemented access controls, reports, assignment, schedules, blocking, and complete patient journey. Produce categorized results, diagrams, final documentation, integration screenshots/logs, deployment evidence, and demonstrated backup/restore. Start organizing existing evidence now; complete final workflow results after the defects are repaired.
 
 ### Remaining-work checklist
 
 - [x] Implement patient ownership and assigned-doctor access on individual appointment reads and mutations; dummy-record HTTP checks passed.
 - [x] Protect medical downloads, restrict/validate clock changes, and minimize public queue responses; dummy-record HTTP checks passed.
 - [x] Connect doctor consultation start with correct role and assignment permissions; dummy-record HTTP checks passed.
-- [ ] Implement walk-in status transitions.
+- [x] Implement walk-in status transitions and working status/date filters; 35 isolated HTTP checks passed.
 - [ ] Include scheduled patients in the intended clinic queue and define arrival versus consultation-start behavior.
 - [ ] Release/synchronize slots during automatic no-show processing.
-- [ ] Prevent duplicate queue numbers and unsafe automatic walk-in assignment; then activate reassignment events.
-- [ ] Store notifications, expose a notification/log screen, and connect appointment/queue events to actual or instructor-accepted simulated delivery.
+- [x] Implement new-ticket uniqueness, guarded automatic assignment, and active slot-freed events; isolated concurrency checks passed.
+- [x] Coordinate slot generation with durable plans and add durable booking/assignment recovery plus an offline reconciliation script.
+- [x] Store in-app notifications, expose an owner-only inbox/read state, and connect implemented appointment and doctor queue events; isolated API/event and mocked desktop/mobile checks passed.
+- [ ] Confirm in-app channel acceptance and required queue-turn/advance reminders; verify live persistence and assess required delivery reliability.
+- [x] Display account-free walk-in names/contact details and queue labels in Staff/Doctor/Admin appointment tables, with an explicit missing-identity fallback; mocked desktop/mobile checks and production build passed.
 - [ ] Complete audit event coverage and actor attribution.
 - [ ] Confirm the expected healthcare scope for feedback, revision requests, note/document versions, and user editing/deactivation.
 - [ ] Verify access controls, reports, assignment, schedules, and blocking against a test MongoDB database, including competing writes and rollback failure handling.
@@ -293,5 +316,10 @@ Suggested end-to-end scenario: patient books a slot, staff approves, patient rec
 - Live database workflows, delivery-provider tests, and deployed-system checks have not been run.
 - Subsequent user-authorized work implemented access controls and passed 109 HTTP checks, including all 30 private routes, with dummy database responses. No real patient records were changed by the checks.
 - Expanded desktop/mobile UI checks also passed with mocked APIs for authenticated downloads, Admin-only clock editing, and ticket-only queue display.
+- The October 1 source review against `910533d` reconfirmed the then-missing walk-in status route and ignored filters, plus console-only notifications, inactive slot-freed handling, queue-number allocation, no-show slot inconsistency, and incomplete audit coverage.
+- On October 2, the user-authorized queue fix added status transitions and filters. The new check passed 35 HTTP checks, the existing workflow check passed, API access checks passed 110 HTTP checks across 31 private routes, and the frontend build passed. These results do not establish live database correctness.
+- Expanded mocked browser checks passed at 1440px/390px, including Staff Check In/Left and Doctor Start Session/Complete with status filtering. Changed queue screenshots were visually reviewed.
+- Subsequent October 2 concurrency/recovery changes passed the new isolated concurrency suite and all existing backend suites. Live mode was attempted outside the sandbox and could not connect to MongoDB. The new walkthrough documents what the journal covers, index rollout, and offline recovery prerequisites.
+- Subsequent October 2 in-app notification changes passed event/privacy/failure checks and 32 isolated HTTP checks. API access checks now pass 113 HTTP checks across all 34 private routes. The frontend build and expanded all-role desktop/mobile browser checks passed; inbox screenshots were reviewed. Actual MongoDB notification persistence remains unverified.
 
-Findings describe the workspace reviewed and updated on October 1, 2026. "Implemented" and "verified against live infrastructure" are separate states. Record relevant live-backend evidence before claiming complete workflow verification.
+Findings describe the workspace updated on October 2, 2026. "Implemented" and "verified against live infrastructure" are separate states. Record relevant live-backend evidence before claiming complete workflow verification.

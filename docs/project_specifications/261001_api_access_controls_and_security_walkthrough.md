@@ -44,6 +44,7 @@ All paths below start with `/api` unless indicated. Authentication is enforced o
 | `POST /users/register` | Public; creates Patient accounts only. A supplied Admin/Doctor/Staff role is ignored. |
 | `POST /users/login` | Public; credentials must be text and must authenticate successfully. |
 | `GET /users/me` | Any valid login; current user's account. |
+| `GET /notifications`, `PATCH /notifications/:id/read`, `PATCH /notifications/read-all` (added October 2) | Any valid login; only the authenticated recipient's inbox/read state, including for Admin. No client notification creation or recipient override. See the [notification walkthrough](261002_in_app_notifications_walkthrough.md). |
 | `GET /users/doctors` | Any valid login; Patients receive names/IDs, without doctor email/contact numbers. |
 | `GET /users`, `POST /users` | Admin only. |
 | `GET/PATCH /users/:id/schedule` | Staff/Admin; Doctor only for their own schedule. |
@@ -61,6 +62,7 @@ All paths below start with `/api` unless indicated. Authentication is enforced o
 | `POST /slots/generate`, `PATCH /slots/:id/status` | Staff/Admin or Doctor managing their own slots. |
 | `GET /walkins` | Staff/Admin: clinic list; Doctor: assigned entries only; Patient denied. |
 | `POST /walkins`, `POST /walkins/:id/assign` | Staff/Admin only. |
+| `PATCH /walkins/:id/status` (added October 2) | Staff/Admin: permitted queue transitions; assigned Doctor: start/complete only; Patient denied. Validates transitions and linked appointment/slot records. See the [queue walkthrough](261002_walkin_queue_status_and_filters_walkthrough.md). |
 | `GET /walkins/now-serving` | Public; ticket numbers/statuses only, plus queue timing/open-state metadata. |
 | `GET /reports` | Staff/Admin: clinic scope; Doctor: own records regardless of supplied doctor filter; Patient denied. |
 | `GET /audit-logs` | Admin only. |
@@ -153,4 +155,4 @@ Restart the backend to load the new route protection, then reload the frontend. 
 
 No database migration is required for these access controls. Existing local uploads remain in place, and their raw URLs are intentionally disabled; use the new Download buttons.
 
-Live MongoDB persistence, deployed proxy behavior, real-account workflows, and concurrent writes still need verification. These changes enforce the current access policy; they do not replace deployment controls such as HTTPS, secret management, or testing against the final environment. Account deactivation, comprehensive audit coverage, notification delivery, and remaining queue workflow gaps are separate work.
+Live MongoDB persistence, deployed proxy behavior, real-account workflows, and concurrent writes still need verification. These changes enforce the current access policy; they do not replace deployment controls such as HTTPS, secret management, or testing against the final environment. Account deactivation, comprehensive audit coverage, external notification delivery/reliability, and remaining queue workflow gaps are separate work. The October 2 in-app inbox implementation passed 32 isolated notification HTTP checks and event/privacy/failure cases; the expanded API access suite passed 113 HTTP checks across all 34 private routes.

@@ -235,8 +235,8 @@ The browser check covers role screens, weekly-hour submission, flexible assignme
 ### Remaining limits
 
 - Live MongoDB persistence, aggregation, and concurrent writes still require a test database verification pass.
-- Cross-record assignment uses conditional claims and compensating rollback, not a database transaction. A database outage during rollback can require reconciliation.
-- Overlap validation runs before slot writes; simultaneous custom generation with different boundaries is not serialized. Add per-doctor serialization/transaction coordination if that operation must support concurrent writers.
+- Updated October 2: cross-record booking/assignment uses conditional claims, distinct operation ownership, and durable recovery records. Offline reconciliation handles interrupted work; this is not a multi-document transaction. See the [concurrency/recovery walkthrough](261002_concurrency_and_assignment_recovery_walkthrough.md).
+- Updated October 2: doctor/day generation plans use a revision compare-and-set to coordinate competing generators, and saved plans repair partial writes. Actual MongoDB concurrency verification remains pending.
 - Weekly edits affect newly generated dates; existing dated slots are preserved.
 - One recurring working window per day is supported; split shifts and holiday calendars are not included.
 - Reports summarize current appointment states, not historical snapshots, and do not include exports or notification-delivery analytics.
