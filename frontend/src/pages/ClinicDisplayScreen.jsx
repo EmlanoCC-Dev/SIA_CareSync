@@ -95,11 +95,12 @@ export default function ClinicDisplayScreen() {
           </div>
           {data.nowServing ? (
             <div className="cd-serving-content">
-              <div className="cd-queue-number-large">#{data.nowServing.queueNumber}</div>
+              <div className={`cd-queue-number-large${String(data.nowServing.queueNumber).startsWith('A-') ? ' is-scheduled' : ''}`}>#{data.nowServing.queueNumber}</div>
               <div className="cd-patient-name">Please proceed to consultation</div>
               <div className="cd-serving-badge">
                 <RefreshCw size={18} className="cd-spin" /> In Progress
               </div>
+              {data.serving?.length > 1 && <p>Also in consultation: {data.serving.slice(1).map(entry => `#${entry.queueNumber}`).join(', ')}</p>}
             </div>
           ) : (
             <div className="cd-serving-content cd-serving-empty">
@@ -119,7 +120,7 @@ export default function ClinicDisplayScreen() {
                 <div key={entry.queueNumber} className={`cd-queue-item ${index === 0 ? 'cd-next-up' : ''}`} style={{ animationDelay: `${index * 0.08}s` }}>
                   <span className="cd-queue-rank">{index + 1}</span>
                   <strong className="cd-queue-number">#{entry.queueNumber}</strong>
-                  <span className="cd-queue-name">Consultation queue</span>
+                  <span className="cd-queue-name">{String(entry.queueNumber).startsWith('A-') ? 'Scheduled visit' : 'Walk-in'}</span>
                   <span className={`cd-queue-status cd-status-${entry.status.replace(/\s+/g, '-')}`}>
                     <span className="cd-status-dot" /> {entry.status}
                   </span>
@@ -137,7 +138,7 @@ export default function ClinicDisplayScreen() {
       </main>
 
       <footer className="cd-footer" data-node-id="186:585">
-        Please wait for your number to be called. Our care team will assist you shortly.
+        A- tickets are scheduled visits. Please wait for your number to be called.
       </footer>
     </div>
   );

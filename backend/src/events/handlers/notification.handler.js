@@ -1,6 +1,7 @@
 ﻿const emitter = require('../emitter');
 const EVENTS = require('../events');
 const User = require('../../models/User');
+const { recordId } = require('../../middleware/auth');
 const { sendNotification } = require('../../services/notification.service');
 
 function registerAllHandlers() {
@@ -51,14 +52,23 @@ function registerAllHandlers() {
     notify(app, app.doctor, 'DOCTOR_APPOINTMENT_NO_SHOW', 'Appointment marked no-show', `The appointment for ${visit(app)} was marked no-show.`),
   ]));
   listen(EVENTS.APPOINTMENT_CHECKED_IN, ({ appointment: app }) =>
+    notify(app, app.doctor, 'PATIENT_ARRIVED', 'Patient arrived', `The patient for ${visit(app)} has checked in and is waiting for consultation.`));
+  listen(EVENTS.APPOINTMENT_STARTED, ({ appointment: app }) =>
     notify(app, app.doctor, 'PATIENT_READY', 'Consultation started', `The appointment for ${visit(app)} is now in progress.`));
   listen(EVENTS.APPOINTMENT_COMPLETED, ({ appointment: app }) =>
     notify(app, app.patient, 'APPOINTMENT_COMPLETED', 'Consultation completed', `Your consultation for ${visit(app)} is complete. View your appointment for the consultation record.`));
+  listen(EVENTS.COMMENT_ADDED, async ({ appointment: app, performedBy }) => {
+    const recipients = new Set([recordId(app.patient), recordId(app.doctor)].filter(id => id && id !== recordId(performedBy)));
+    const send = id => notify(app, id, 'COMMENT_ADDED', 'New appointment comment',
+      `There is a new comment on appointment #${recordId(app._id).slice(-6)}. Open History & comments in Appointments to read and reply.`);
+    const direct = deliver([...recipients].map(send));
+    try {
+      const reviewers = await User.find({ role: { $in: ['Staff', 'Admin'] }, status: { $ne: 'Deactivated' } }).select('_id');
+      await deliver(reviewers.filter(user => recordId(user) !== recordId(performedBy) && !recipients.has(recordId(user))).map(user => send(recordId(user))));
+    } finally { await direct; }
+  });
   listen(EVENTS.WALKIN_SLOT_ASSIGNED, ({ appointment: app, slot, walkIn }) =>
     notify(app, slot.doctor, 'WALKIN_ASSIGNED', 'Walk-in assigned', `Queue #${walkIn.queueNumber} was assigned to your ${slot.startTime}–${slot.endTime} slot.`));
-  listen(EVENTS.WALKIN_STATUS_UPDATED, ({ appointment: app, walkIn, status }) => {
-    if (status === 'Checked In' && app) return notify(app, app.doctor, 'PATIENT_ARRIVED', 'Patient arrived', `Queue #${walkIn.queueNumber} has checked in and is waiting for consultation.`);
-  });
 }
 
 module.exports = { registerAllHandlers };

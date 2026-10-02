@@ -32,7 +32,7 @@ const appointments = new Map();
 const plans = new Map();
 const original = [];
 const stub = (model, method, fn) => { original.push([model, method, model[method]]); model[method] = fn; };
-const query = data => ({ populate() { return this; }, sort() { return this; }, then(resolve, reject) { return Promise.resolve(data).then(resolve, reject); } });
+const query = data => ({ populate() { return this; }, select() { return this; }, sort() { return this; }, then(resolve, reject) { return Promise.resolve(data).then(resolve, reject); } });
 const error = code => err => err.statusCode === code;
 const events = [];
 const listeners = [EVENTS.APPOINTMENT_ASSIGNED, EVENTS.SCHEDULE_UPDATED, EVENTS.SLOT_STATUS_UPDATED].map(name => {

@@ -74,6 +74,7 @@ section[id] { scroll-margin-top: 24px; }
 .cd-serving-content { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding-block: 32px; width: 100%; }
 .cd-serving-empty { color: #d8f1ec; font-size: 17px; }
 .cd-queue-number-large { font-size: clamp(88px, 10vw, 150px); font-weight: 750; line-height: 1; letter-spacing: -.06em; font-variant-numeric: tabular-nums; }
+.cd-queue-number-large.is-scheduled { font-size: clamp(56px, 8vw, 120px); }
 .cd-patient-name { font-size: clamp(24px, 2.2vw, 32px); font-weight: 600; max-width: 100%; overflow-wrap: anywhere; }
 .cd-serving-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border: 1px solid rgb(255 255 255 / 25%); border-radius: 999px; color: #d8f1ec; font-size: 12px; }
 .cd-upcoming { display: flex; flex-direction: column; } .cd-upcoming-label { color: var(--text-main); } .cd-upcoming-label svg { width: 20px; height: 20px; color: var(--primary); }

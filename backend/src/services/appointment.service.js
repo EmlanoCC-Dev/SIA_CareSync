@@ -11,12 +11,14 @@
  */
 
 const Appointment = require('../models/Appointment');
+const AppointmentComment = require('../models/AppointmentComment');
 const WalkIn = require('../models/WalkIn');
 const Slot = require('../models/Slot');
 const slotService = require('./slot.service');
 const emitter = require('../events/emitter');
 const EVENTS = require('../events/events');
-const { isDateTimePassed, parseDateOnly } = require('../utils/timeHelper');
+const { isDateTimePassed, parseDateOnly, formatDateKey } = require('../utils/timeHelper');
+const { assertAppointmentAccess, recordId } = require('../middleware/auth');
 const { getNow } = require('../config/systemTime');
 const recovery = require('./assignmentRecovery.service');
 const mongoose = require('mongoose');
@@ -28,7 +30,7 @@ const mongoose = require('mongoose');
 async function autoMarkNoShows() {
   try {
     const pendingOrConfirmed = await Appointment.find({
-      status: { $in: ['Pending', 'Confirmed'] },
+      status: { $in: ['Pending', 'Confirmed', 'No-show'] },
     }).populate('slot').populate('walkIn');
 
     const now = getNow();
@@ -36,35 +38,41 @@ async function autoMarkNoShows() {
 
     for (const app of pendingOrConfirmed) {
       // Arrival is separate from starting the consultation in the walk-in queue.
-      if (app.walkIn?.status === 'Checked In') continue;
+      if (app.status === 'Checked In' || app.walkIn?.status === 'Checked In') continue;
       const slotTime = app.slot ? `${app.slot.startTime}-${app.slot.endTime}` : app.timeSlot;
       const slotDate = app.slot ? app.slot.date : app.date;
 
       // Check if appointment end time has passed
       if (isDateTimePassed(slotDate, slotTime, 'end')) {
         const previousStatus = app.status;
-        app.status = 'No-show';
-        app.statusHistory.push({
-          status: 'No-show',
-          changedBy: app.doctor || app.patient,
-          changedAt: now,
-          remarks: 'Automatically marked No-show (appointment time passed)',
-        });
-
-        await app.save();
-
-        if (app.walkIn) {
-          await WalkIn.findByIdAndUpdate(app.walkIn._id || app.walkIn, { status: 'Left' });
+        if (previousStatus !== 'No-show') {
+          const claimed = await Appointment.findOneAndUpdate(
+            { _id: app._id, status: previousStatus },
+            { $set: { status: 'No-show' }, $push: { statusHistory: {
+              status: 'No-show', changedBy: app.doctor || app.patient, changedAt: now,
+              remarks: 'Automatically marked No-show (appointment time passed)',
+            } } }, { new: true }
+          );
+          if (!claimed) continue; // A competing consultation/status action won.
+          app.status = 'No-show';
+          app.statusHistory = claimed.statusHistory;
+          emitter.emit(EVENTS.APPOINTMENT_NO_SHOW, {
+            appointment: app, previousStatus, autoMarked: true, targetModel: 'Appointment',
+          });
+          updated.push(app._id);
         }
 
-        emitter.emit(EVENTS.APPOINTMENT_NO_SHOW, {
-          appointment: app,
-          previousStatus,
-          autoMarked: true,
-          targetModel: 'Appointment',
-        });
+        // Also repair a previous run interrupted after the appointment write.
+        if (app.slot && String(app.slot.appointment) === String(app._id) &&
+            ['Reserved-Tentative', 'Reserved-Confirmed'].includes(app.slot.status)) {
+          await slotService.freeSlot(app.slot._id, 'Appointment automatically marked No-show', app._id, 'No-show');
+        }
 
-        updated.push(app._id);
+        if (app.walkIn && !['Left', 'Completed', 'In Progress'].includes(app.walkIn.status)) {
+          await WalkIn.findOneAndUpdate({ _id: app.walkIn._id || app.walkIn,
+            status: { $in: ['Waiting', 'Slot Assigned'] } }, { $set: { status: 'Left' } });
+        }
+
       }
     }
 
@@ -255,14 +263,15 @@ async function cancel(appointmentId, userId, reason) {
   }
 
   const previousStatus = appointment.status;
-  appointment.status = 'Cancelled';
-  appointment.declineReason = reason || 'Cancelled by user';
-  appointment.statusHistory.push({
-    status: 'Cancelled',
-    changedBy: userId,
-    remarks: reason || 'Cancelled',
-  });
-  await appointment.save();
+  const cancelled = await Appointment.findOneAndUpdate(
+    { _id: appointmentId, status: previousStatus },
+    { $set: { status: 'Cancelled', declineReason: reason || 'Cancelled by user' },
+      $push: { statusHistory: { status: 'Cancelled', changedBy: userId, changedAt: getNow(), remarks: reason || 'Cancelled' } } }, { new: true }
+  );
+  if (!cancelled) throw Object.assign(new Error('Appointment changed; refresh before cancelling'), { statusCode: 409 });
+  appointment.status = cancelled.status;
+  appointment.statusHistory = cancelled.statusHistory;
+  appointment.declineReason = cancelled.declineReason;
 
   // Free linked slot
   if (appointment.slot) {
@@ -303,17 +312,25 @@ async function noShow(appointmentId, userId, reason) {
     throw err;
   }
 
-  appointment.status = 'No-show';
-  appointment.statusHistory.push({
-    status: 'No-show',
-    changedBy: userId,
-    remarks: reason || 'Patient did not check in',
-  });
-  await appointment.save();
+  if (appointment.walkIn) {
+    const walkIn = await WalkIn.findById(appointment.walkIn);
+    if (walkIn?.status === 'Checked In') throw Object.assign(new Error('This patient has already arrived'), { statusCode: 409 });
+  }
+  const marked = await Appointment.findOneAndUpdate(
+    { _id: appointmentId, status: 'Confirmed' },
+    { $set: { status: 'No-show' }, $push: { statusHistory: {
+      status: 'No-show', changedBy: userId, changedAt: getNow(), remarks: reason || 'Patient did not check in',
+    } } }, { new: true }
+  );
+  if (!marked) throw Object.assign(new Error('Appointment changed; refresh before marking no-show'), { statusCode: 409 });
+  appointment.status = marked.status;
+  appointment.statusHistory = marked.statusHistory;
 
   // Free linked slot
   if (appointment.slot) {
-    await slotService.freeSlot(appointment.slot, 'Patient marked No-show', appointment._id);
+    const slot = await slotService.getById(appointment.slot);
+    await slotService.freeSlot(slot._id, 'Patient marked No-show', appointment._id,
+      isDateTimePassed(slot.date, slot.endTime, 'end') ? 'No-show' : 'Available');
   }
 
   if (appointment.walkIn) {
@@ -331,9 +348,9 @@ async function noShow(appointmentId, userId, reason) {
 
 /**
  * Check in patient on appointment day.
- * Confirmed → In Progress, slot → In Progress
+ * Confirmed → Checked In; keep the slot reserved until consultation starts.
  */
-async function checkIn(appointmentId, userId) {
+async function checkIn(appointmentId, actor) {
   const appointment = await Appointment.findById(appointmentId);
   if (!appointment) {
     const err = new Error('Appointment not found');
@@ -342,45 +359,112 @@ async function checkIn(appointmentId, userId) {
   }
   if (appointment.status !== 'Confirmed') {
     const err = new Error(`Cannot check in for appointment with status "${appointment.status}"`);
-    err.statusCode = 400;
+    err.statusCode = 409;
     throw err;
   }
-
-  appointment.status = 'In Progress';
-  appointment.statusHistory.push({
-    status: 'In Progress',
-    changedBy: userId,
-    remarks: 'Patient checked in - consultation in progress',
-  });
-  await appointment.save();
-
-  if (appointment.slot) {
-    await slotService.startSlot(appointment.slot);
-  }
-
   if (appointment.walkIn) {
-    await WalkIn.findByIdAndUpdate(appointment.walkIn, { status: 'In Progress' });
+    await require('./walkIn.service').updateStatus(recordId(appointment.walkIn), 'Checked In', actor);
+    return Appointment.findById(appointmentId);
   }
+  assertAppointmentAccess(appointment, actor);
+  const now = getNow(), queueDay = formatDateKey(now);
+  if (new Date(appointment.date).toISOString().slice(0, 10) !== queueDay) {
+    throw Object.assign(new Error('Check-in is only available on the appointment day'), { statusCode: 400 });
+  }
+  const slot = appointment.slot ? await Slot.findById(appointment.slot) : null;
+  if (!slot || slot.status !== 'Reserved-Confirmed' || recordId(slot.appointment) !== recordId(appointment._id) ||
+      recordId(slot.doctor) !== recordId(appointment.doctor)) {
+    throw Object.assign(new Error('The appointment does not have a matching confirmed reservation'), { statusCode: 409 });
+  }
+  if (isDateTimePassed(slot.date, slot.endTime, 'end')) {
+    throw Object.assign(new Error('The appointment time has passed; check its no-show status'), { statusCode: 400 });
+  }
+  await Appointment.init();
+  const last = await Appointment.findOne({ queueDay }).sort({ queueNumber: -1 });
+  let queueNumber = (last?.queueNumber || 0) + 1, arrived;
+  // ponytail: unique-index retries suit clinic traffic; use an atomic daily counter if check-in contention becomes heavy.
+  for (;;) {
+    try {
+      arrived = await Appointment.findOneAndUpdate(
+        { _id: appointmentId, status: 'Confirmed', slot: appointment.slot, doctor: appointment.doctor, date: appointment.date },
+        { $set: { status: 'Checked In', checkedInAt: now, queueDay, queueNumber },
+          $push: { statusHistory: { status: 'Checked In', changedBy: actor._id || actor.id, changedAt: now,
+            remarks: `Patient arrived and is waiting — queue #A-${queueNumber}` } } },
+        { new: true, runValidators: true }
+      );
+      if (!arrived) throw Object.assign(new Error('Appointment changed; refresh before retrying'), { statusCode: 409 });
+      break;
+    } catch (err) {
+      if (err.code !== 11000 || !err.keyPattern?.queueDay || !err.keyPattern?.queueNumber) throw err;
+      queueNumber++;
+    }
+  }
+  emitter.emit(EVENTS.APPOINTMENT_CHECKED_IN, { appointment: arrived, performedBy: actor._id || actor.id, targetModel: 'Appointment' });
+  return arrived;
+}
 
-  emitter.emit(EVENTS.APPOINTMENT_CHECKED_IN, {
-    appointment,
-    performedBy: userId,
-    targetModel: 'Appointment',
-  });
+async function startConsultation(appointmentId, actor) {
+  return updateConsultation(appointmentId, actor, 'In Progress');
+}
 
-  return appointment;
+async function updateConsultation(appointmentId, actor, status) {
+  const appointment = await Appointment.findById(appointmentId);
+  if (!appointment) throw Object.assign(new Error('Appointment not found'), { statusCode: 404 });
+  assertAppointmentAccess(appointment, actor);
+  if (appointment.walkIn) {
+    await require('./walkIn.service').updateStatus(recordId(appointment.walkIn), status, actor);
+    return Appointment.findById(appointmentId);
+  }
+  const previousStatus = status === 'In Progress' ? 'Checked In' : 'In Progress';
+  if (appointment.status !== previousStatus) {
+    throw Object.assign(new Error(`Cannot ${status === 'In Progress' ? 'start consultation before check-in' : 'complete a consultation that has not started'}`), { statusCode: 409 });
+  }
+  if (status === 'In Progress' && new Date(appointment.date).toISOString().slice(0, 10) !== formatDateKey(getNow())) {
+    throw Object.assign(new Error('Start consultation on the appointment day'), { statusCode: 400 });
+  }
+  const history = { status, changedBy: actor._id || actor.id, changedAt: getNow(),
+    remarks: status === 'In Progress' ? 'Doctor started consultation' : 'Consultation completed' };
+  const changed = await Appointment.findOneAndUpdate(
+    { _id: appointmentId, status: previousStatus, slot: appointment.slot, doctor: appointment.doctor },
+    { $set: { status }, $push: { statusHistory: history } }, { new: true, runValidators: true }
+  );
+  if (!changed) throw Object.assign(new Error('Appointment changed; refresh before retrying'), { statusCode: 409 });
+  try {
+    const slot = await Slot.findOneAndUpdate(
+      { _id: appointment.slot, appointment: appointment._id, doctor: appointment.doctor,
+        status: status === 'In Progress' ? 'Reserved-Confirmed' : 'In Progress' },
+      { $set: { status } }, { new: true }
+    );
+    if (!slot) throw Object.assign(new Error('Slot changed; refresh before retrying'), { statusCode: 409 });
+  } catch (err) {
+    // ponytail: compensating writes support standalone MongoDB; use transactions for atomic outage recovery.
+    try {
+      const restored = await Appointment.updateOne(
+        { _id: appointmentId, status, statusHistory: { $elemMatch: history } },
+        { $set: { status: previousStatus }, $pull: { statusHistory: history } }
+      );
+      if (!restored.modifiedCount) throw new Error('Appointment changed during recovery');
+    } catch {
+      throw Object.assign(new Error('Consultation update and recovery failed; ask clinic staff to reconcile the records'), { statusCode: 500 });
+    }
+    throw err;
+  }
+  emitter.emit(status === 'In Progress' ? EVENTS.APPOINTMENT_STARTED : EVENTS.APPOINTMENT_COMPLETED,
+    { appointment: changed, performedBy: actor._id || actor.id, targetModel: 'Appointment' });
+  return changed;
 }
 
 /**
  * Upload consultation notes and documents (Doctor action).
  */
-async function uploadDocuments(appointmentId, userId, { consultationNotes, documents }) {
+async function uploadDocuments(appointmentId, actor, { consultationNotes, documents, notesRevision }) {
   const appointment = await Appointment.findById(appointmentId);
   if (!appointment) {
     const err = new Error('Appointment not found');
     err.statusCode = 404;
     throw err;
   }
+  assertClinicalAccess(appointment, actor);
 
   if (consultationNotes !== undefined && typeof consultationNotes !== 'string') {
     throw Object.assign(new Error('Consultation notes must be text'), { statusCode: 400 });
@@ -391,56 +475,69 @@ async function uploadDocuments(appointmentId, userId, { consultationNotes, docum
         saved.url === doc.url && saved.filename === doc.filename && saved.type === doc.type)))) {
     throw Object.assign(new Error('Use the file upload/delete endpoints to change documents'), { statusCode: 400 });
   }
-  if (consultationNotes !== undefined) appointment.consultationNotes = consultationNotes;
-
-  await appointment.save();
-
-  emitter.emit(EVENTS.DOCUMENT_UPLOADED, {
-    appointment,
-    performedBy: userId,
-    targetModel: 'Appointment',
-  });
-
-  return appointment;
+  if (notesRevision !== undefined && (!Number.isSafeInteger(notesRevision) || notesRevision < 0)) {
+    throw Object.assign(new Error('Invalid notes revision'), { statusCode: 400 });
+  }
+  if (consultationNotes === undefined || consultationNotes.trim() === (appointment.consultationNotes || '')) return appointment;
+  const revision = appointment.notesRevision || 0;
+  if (notesRevision !== undefined && notesRevision !== revision) {
+    throw Object.assign(new Error('Notes were changed by another user. Close and reopen the record before saving.'), { statusCode: 409 });
+  }
+  const previous = noteHistory(appointment);
+  const version = previous.length ? previous[previous.length - 1].version + 1 : 1;
+  const snapshot = { version, notes: consultationNotes.trim(), savedAt: new Date(), savedBy: actor._id || actor.id,
+    authorName: actorName(actor), authorRole: actor.role };
+  // ponytail: embedded history gives one atomic write; move to a transaction-backed collection if records approach MongoDB's 16 MB limit.
+  const updated = await Appointment.findOneAndUpdate(
+    { _id: appointmentId, consultationNotes: appointment.consultationNotes ?? null,
+      notesRevision: revision ? revision : { $in: [0, null] } },
+    { $set: { consultationNotes: snapshot.notes, notesRevision: version },
+      $push: { noteVersions: { $each: [...(!(appointment.noteVersions || []).length ? previous : []), snapshot] } } },
+    { new: true, runValidators: true }
+  );
+  if (!updated) throw Object.assign(new Error('Notes changed while saving. Close and reopen the record.'), { statusCode: 409 });
+  emitRecordChange(updated, actor, { operation: 'Notes updated', notesVersion: version });
+  return updated;
 }
 
 /**
  * Attach a newly uploaded physical file to an appointment.
  */
-async function attachFile(appointmentId, userId, { filename, url, type }) {
+async function attachFile(appointmentId, actor, { filename, url, type }, docId, expectedVersion) {
   const appointment = await Appointment.findById(appointmentId);
   if (!appointment) {
     const err = new Error('Appointment not found');
     err.statusCode = 404;
     throw err;
   }
-
-  const newDoc = {
-    filename,
-    url,
-    type: type || 'general',
-    uploadedAt: new Date(),
-  };
-
-  appointment.documents.push(newDoc);
-  await appointment.save();
-
-  emitter.emit(EVENTS.DOCUMENT_UPLOADED, {
-    appointment,
-    performedBy: userId,
-    targetModel: 'Appointment',
-  });
-
-  return {
-    appointment,
-    document: appointment.documents[appointment.documents.length - 1],
-  };
+  assertClinicalAccess(appointment, actor);
+  if (typeof filename !== 'string' || !filename.trim() || typeof url !== 'string' || !url.startsWith('/uploads/') ||
+      (type !== undefined && typeof type !== 'string')) {
+    throw Object.assign(new Error('Invalid uploaded document metadata'), { statusCode: 400 });
+  }
+  const current = docId ? findCurrentDocument(appointment, docId, expectedVersion) : null;
+  const newDoc = { _id: current?._id || new mongoose.Types.ObjectId(), filename: filename.trim(), url,
+    type: type || current?.type || 'general', uploadedAt: new Date(), uploadedBy: actor._id || actor.id,
+    uploaderName: actorName(actor), uploaderRole: actor.role, version: current ? (current.version || 1) + 1 : 1,
+    versions: current ? [...(current.versions || []), documentSnapshot(current)] : [] };
+  const updated = await Appointment.findOneAndUpdate(
+    current ? { _id: appointmentId, documents: { $elemMatch: { _id: current._id, url: current.url } } } : { _id: appointmentId },
+    current ? { $set: { 'documents.$': newDoc } } : { $push: { documents: newDoc } },
+    { new: true, runValidators: true }
+  );
+  if (!updated) throw Object.assign(new Error('Document changed or was archived. Reopen the record before uploading.'), { statusCode: 409 });
+  emitRecordChange(updated, actor, { operation: current ? 'Document replaced' : 'Document uploaded',
+    document: { _id: newDoc._id, filename: newDoc.filename, type: newDoc.type, version: newDoc.version } });
+  return { appointment: updated, document: updated.documents.find(doc => recordId(doc) === recordId(newDoc)) };
 }
 
 /**
  * Remove an attached document from an appointment.
  */
-async function removeDocument(appointmentId, docId) {
+async function removeDocument(appointmentId, docId, actor, expectedVersion) {
+  if (!mongoose.isObjectIdOrHexString(docId)) {
+    throw Object.assign(new Error('Invalid document ID'), { statusCode: 400 });
+  }
   const appointment = await Appointment.findById(appointmentId);
   if (!appointment) {
     const err = new Error('Appointment not found');
@@ -448,58 +545,83 @@ async function removeDocument(appointmentId, docId) {
     throw err;
   }
 
-  appointment.documents = appointment.documents.filter(
-    (doc) => doc._id.toString() !== docId.toString()
+  assertClinicalAccess(appointment, actor);
+  const document = findCurrentDocument(appointment, docId, expectedVersion);
+  const archived = { ...(document.toObject ? document.toObject() : document),
+    archivedAt: new Date(), archivedBy: actor._id || actor.id, archivedByName: actorName(actor) };
+  // Archive and remove the current attachment together; the files remain available in version history.
+  const updated = await Appointment.findOneAndUpdate(
+    { _id: appointmentId, documents: { $elemMatch: { _id: document._id, url: document.url } } },
+    { $pull: { documents: { _id: docId } }, $push: { archivedDocuments: archived } }, { new: true, runValidators: true }
   );
+  if (!updated) throw Object.assign(new Error('Document was already removed; refresh the appointment'), { statusCode: 409 });
+  emitter.emit(EVENTS.DOCUMENT_DELETED, {
+    performedBy: actor._id || actor.id, targetModel: 'Appointment', targetId: updated._id, archived: true,
+    document: { _id: document._id, filename: document.filename, type: document.type },
+  });
+  return updated;
+}
 
-  await appointment.save();
-  return appointment;
+const actorName = actor => [actor.firstName, actor.lastName].filter(Boolean).join(' ') || actor.role;
+function assertClinicalAccess(appointment, actor) {
+  assertAppointmentAccess(appointment, actor);
+  if (!['Doctor', 'Staff', 'Admin'].includes(actor.role)) throw Object.assign(new Error('Only clinic users can change the consultation record'), { statusCode: 403 });
+}
+function noteHistory(appointment) {
+  if (appointment.noteVersions?.length) return appointment.noteVersions;
+  return appointment.consultationNotes ? [{ version: 1, notes: appointment.consultationNotes,
+    savedAt: null, savedBy: null, authorName: null, authorRole: null }] : [];
+}
+function documentSnapshot(document) {
+  return { version: document.version || 1, filename: document.filename, url: document.url, type: document.type,
+    uploadedAt: document.uploadedAt || null, uploadedBy: document.uploadedBy || null,
+    uploaderName: document.uploaderName || null, uploaderRole: document.uploaderRole || null };
+}
+function findCurrentDocument(appointment, docId, expectedVersion) {
+  if (!mongoose.isObjectIdOrHexString(docId)) throw Object.assign(new Error('Invalid document ID'), { statusCode: 400 });
+  const document = appointment.documents.find(doc => recordId(doc) === String(docId));
+  if (!document) throw Object.assign(new Error('Document not found'), { statusCode: 404 });
+  if (expectedVersion !== undefined && (!Number.isSafeInteger(expectedVersion) || expectedVersion < 1)) {
+    throw Object.assign(new Error('Invalid document version'), { statusCode: 400 });
+  }
+  if (expectedVersion !== undefined && expectedVersion !== (document.version || 1)) {
+    throw Object.assign(new Error('Document was changed. Close and reopen the record.'), { statusCode: 409 });
+  }
+  return document;
+}
+function emitRecordChange(appointment, actor, metadata) {
+  emitter.emit(EVENTS.DOCUMENT_UPLOADED, { appointment: { _id: appointment._id }, performedBy: actor._id || actor.id,
+    targetModel: 'Appointment', ...metadata });
+}
+async function getVersions(appointmentId, actor) {
+  const appointment = await Appointment.findById(appointmentId);
+  if (!appointment) throw Object.assign(new Error('Appointment not found'), { statusCode: 404 });
+  assertAppointmentAccess(appointment, actor);
+  return { notes: noteHistory(appointment), notesRevision: appointment.notesRevision || 0,
+    documents: [...appointment.documents.map(doc => ({ doc, archived: false })),
+      ...(appointment.archivedDocuments || []).map(doc => ({ doc, archived: true }))].map(({ doc, archived }) => ({
+        _id: doc._id, filename: doc.filename, archived, archivedAt: doc.archivedAt || null,
+        archivedByName: doc.archivedByName || null, version: doc.version || 1,
+        versions: [...(doc.versions || []), documentSnapshot(doc)],
+      })) };
+}
+async function getDocumentVersion(appointmentId, docId, version, actor) {
+  if (!mongoose.isObjectIdOrHexString(docId) || !/^[1-9]\d*$/.test(version) || !Number.isSafeInteger(Number(version))) {
+    throw Object.assign(new Error('Invalid document ID or version'), { statusCode: 400 });
+  }
+  const history = await getVersions(appointmentId, actor);
+  const document = history.documents.find(doc => recordId(doc) === String(docId));
+  const snapshot = document?.versions.find(entry => entry.version === Number(version));
+  if (!snapshot) throw Object.assign(new Error('Document version not found'), { statusCode: 404 });
+  return snapshot;
 }
 
 /**
  * Complete appointment (Doctor/Staff action).
  * In Progress → Completed, slot → Completed
  */
-async function complete(appointmentId, userId) {
-  const appointment = await Appointment.findById(appointmentId);
-  if (!appointment) {
-    const err = new Error('Appointment not found');
-    err.statusCode = 404;
-    throw err;
-  }
-  if (appointment.status !== 'In Progress' && appointment.status !== 'Confirmed') {
-    const err = new Error(`Cannot complete an appointment with status "${appointment.status}"`);
-    err.statusCode = 400;
-    throw err;
-  }
-
-  appointment.status = 'Completed';
-  appointment.statusHistory.push({
-    status: 'Completed',
-    changedBy: userId,
-    remarks: 'Appointment completed',
-  });
-  await appointment.save();
-
-  if (appointment.slot) {
-    try {
-      await slotService.completeSlot(appointment.slot);
-    } catch (e) {
-      // ignore if slot status was already updated
-    }
-  }
-
-  if (appointment.walkIn) {
-    await WalkIn.findByIdAndUpdate(appointment.walkIn, { status: 'Completed' });
-  }
-
-  emitter.emit(EVENTS.APPOINTMENT_COMPLETED, {
-    appointment,
-    performedBy: userId,
-    targetModel: 'Appointment',
-  });
-
-  return appointment;
+async function complete(appointmentId, actor) {
+  return updateConsultation(appointmentId, actor, 'Completed');
 }
 
 /**
@@ -529,6 +651,7 @@ async function listByPatient(patientId) {
   await autoMarkNoShows();
 
   return Appointment.find({ patient: patientId })
+    .select('-noteVersions -archivedDocuments -documents.versions')
     .sort({ date: -1, createdAt: -1 })
     .populate('doctor', 'firstName lastName')
     .populate('slot');
@@ -541,6 +664,7 @@ async function listByDoctor(doctorId) {
   await autoMarkNoShows();
 
   return Appointment.find({ doctor: doctorId })
+    .select('-noteVersions -archivedDocuments -documents.versions')
     .sort({ date: -1, createdAt: -1 })
     .populate('patient', 'firstName lastName email contactNumber')
     .populate('walkIn')
@@ -558,6 +682,7 @@ async function listAll(filters = {}) {
   if (filters.date) query.date = { $gte: new Date(filters.date) };
 
   return Appointment.find(query)
+    .select('-noteVersions -archivedDocuments -documents.versions')
     .sort({ date: -1, createdAt: -1 })
     .populate('patient', 'firstName lastName email contactNumber')
     .populate('doctor', 'firstName lastName')
@@ -598,7 +723,38 @@ async function assignSlot(appointmentId, slotId, staffId) {
   return assigned;
 }
 
+async function listComments(appointmentId, actor) {
+  const appointment = await Appointment.findById(appointmentId);
+  if (!appointment) throw Object.assign(new Error('Appointment not found'), { statusCode: 404 });
+  assertAppointmentAccess(appointment, actor);
+  // ponytail: read each appointment thread together; paginate if long threads affect load.
+  return AppointmentComment.find({ appointment: appointmentId }).sort({ createdAt: 1, _id: 1 }).lean();
+}
+
+async function addComment(appointmentId, actor, message) {
+  const appointment = await Appointment.findById(appointmentId);
+  if (!appointment) throw Object.assign(new Error('Appointment not found'), { statusCode: 404 });
+  assertAppointmentAccess(appointment, actor);
+  if (typeof message !== 'string' || !message.trim() || message.trim().length > 2000) {
+    throw Object.assign(new Error('Comment must contain 1 to 2000 characters'), { statusCode: 400 });
+  }
+  const comment = await AppointmentComment.create({
+    appointment: appointmentId, author: actor._id || actor.id,
+    authorName: [actor.firstName, actor.lastName].filter(Boolean).join(' ') || actor.role,
+    authorRole: actor.role, message: message.trim(),
+  });
+  emitter.emit(EVENTS.COMMENT_ADDED, {
+    appointment: { _id: appointment._id, patient: appointment.patient, doctor: appointment.doctor },
+    performedBy: actor._id || actor.id, commentId: comment._id,
+  });
+  return comment;
+}
+
 module.exports = {
+  getVersions,
+  getDocumentVersion,
+  listComments,
+  addComment,
   assignSlot,
   create,
   approve,
@@ -606,6 +762,7 @@ module.exports = {
   cancel,
   noShow,
   checkIn,
+  startConsultation,
   uploadDocuments,
   attachFile,
   removeDocument,

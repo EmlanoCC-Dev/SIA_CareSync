@@ -3,6 +3,10 @@ import { api } from '../services/api';
 import { ShieldAlert, RefreshCw, Clock, User, FileText, ChevronDown, ChevronRight, CheckCircle2, Code2, Tag, Calendar, AlertCircle } from 'lucide-react';
 
 const ACTION_LABELS = {
+  USER_CREATED: 'User account created',
+  USER_UPDATED: 'User account updated',
+  DOCUMENT_DELETED: 'Document deleted',
+  SLOTS_GENERATED: 'Doctor slots generated',
   APPOINTMENT_ASSIGNED: 'Doctor and slot assigned',
   SCHEDULE_UPDATED: 'Weekly doctor hours updated',
   SLOT_STATUS_UPDATED: 'Slot availability updated',
@@ -12,8 +16,9 @@ const ACTION_LABELS = {
   APPOINTMENT_CANCELLED: 'Appointment cancelled',
   APPOINTMENT_NO_SHOW: 'Appointment marked as no-show',
   APPOINTMENT_CHECKED_IN: 'Appointment checked in',
+  APPOINTMENT_STARTED: 'Consultation started',
   APPOINTMENT_COMPLETED: 'Appointment completed',
-  SLOT_FREED: 'Schedule slot reopened',
+  SLOT_FREED: 'Schedule slot released',
   WALKIN_ADDED: 'Walk-in patient added',
   WALKIN_SLOT_ASSIGNED: 'Walk-in slot assigned',
   REVISION_REQUESTED: 'Revision requested',
@@ -81,6 +86,15 @@ export default function AuditLogViewer() {
     return (
       <div style={{ fontSize: '0.8rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+          {changes.user && <div><strong>{[changes.user.firstName, changes.user.lastName].filter(Boolean).join(' ') || 'User account'}</strong> · {changes.user.role} · {changes.creationMethod}</div>}
+          {log.action === 'USER_UPDATED' && <div>{Object.entries(changes.changes || {}).map(([field, value]) => `${formatLabel(field)}: ${value}`).join(' · ')}</div>}
+          {changes.document && <div>{changes.archived ? 'Archived attachment' : changes.operation || 'Removed attachment'}: <strong>{changes.document.filename || 'Document'}</strong>{changes.document.version ? ` · Version ${changes.document.version}` : ''}</div>}
+          {changes.notesVersion && <div>Consultation notes saved · Version {changes.notesVersion}</div>}
+          {changes.generation && <div>
+            <strong>{[changes.doctor?.firstName, changes.doctor?.lastName].filter(Boolean).join(' ') || 'Doctor'}</strong>
+            <div>{new Date(changes.generation.date).toLocaleDateString()} · {changes.generation.startTime}–{changes.generation.endTime} · {changes.generation.duration} min</div>
+            <div>{changes.generation.source} · {changes.generation.requestedSlots} requested windows · {changes.generation.totalSlots} total slots</div>
+          </div>}
           {/* Status Changed */}
           {apt.status && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -236,7 +250,7 @@ export default function AuditLogViewer() {
                           display: 'inline-block',
                         }}
                       >
-                        {ACTION_LABELS[log.action] || formatLabel(log.action)}
+                        {log.changes?.archived ? 'Document archived' : log.changes?.operation || ACTION_LABELS[log.action] || formatLabel(log.action)}
                       </span>
                     </td>
                     <td>

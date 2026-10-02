@@ -35,12 +35,12 @@ async function getSlots(req, res, next) {
     let slots;
     if (doctorId) {
       if (status && status === 'Available') {
-        slots = await slotService.getAvailableSlots(doctorId, resolvedDate);
+        slots = await slotService.getAvailableSlots(doctorId, resolvedDate, req.user._id || req.user.id);
       } else {
-        slots = await slotService.getAllSlots(doctorId, resolvedDate);
+        slots = await slotService.getAllSlots(doctorId, resolvedDate, req.user._id || req.user.id);
       }
     } else {
-      slots = await slotService.getAllSlotsForDate(resolvedDate, status || null);
+      slots = await slotService.getAllSlotsForDate(resolvedDate, status || null, req.user._id || req.user.id);
     }
 
     slots = slots.filter(slot => !isDateTimePassed(slot.date, slot.startTime, 'start') && (!status || slot.status === status));
@@ -89,7 +89,8 @@ async function generate(req, res, next) {
       resolvedDate,
       duration === undefined ? null : Number(duration),
       startTime || null,
-      endTime || null
+      endTime || null,
+      { actorId: req.user._id || req.user.id, source: 'Manual' }
     );
     res.status(201).json({ success: true, count: slots.length, data: slots.map(slot => visibleSlot(slot, req.user)) });
   } catch (err) {

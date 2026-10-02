@@ -33,7 +33,7 @@ const doc = value => {
   Object.defineProperty(copy, 'toObject', { value: () => structuredClone(value) });
   return copy;
 };
-const query = value => ({ populate() { return this; }, sort() { return this; }, limit(count) { value = value.slice(0, count); return this; },
+const query = value => ({ populate() { return this; }, select() { return this; }, sort() { return this; }, limit(count) { value = value.slice(0, count); return this; },
   then(resolve, reject) { return Promise.resolve(value).then(resolve, reject); } });
 const apply = (row, update) => {
   Object.assign(row, update.$set);
@@ -62,6 +62,7 @@ async function main() {
     ...row, appointment: appointments.get(row.appointment) || null, assignedSlot: slots.get(row.assignedSlot) || null,
   }))));
   stub(Appointment, 'findById', key => query(doc(appointments.get(String(key)))));
+  stub(Appointment, 'find', () => query([]));
   stub(Slot, 'findById', key => query(doc(slots.get(String(key)))));
   for (const [model, records] of [[WalkIn, rows], [Appointment, appointments], [Slot, slots]]) {
     stub(model, 'findOneAndUpdate', async (filter, update) => {
@@ -108,7 +109,7 @@ async function main() {
   await transition(key, 'Checked In', doctor, 403);
   await transition(key, 'Checked In', staff);
   assert.equal(rows.get(key).status, 'Checked In');
-  assert.equal(appointments.get(id(110)).status, 'Confirmed');
+  assert.equal(appointments.get(id(110)).status, 'Checked In');
   assert.equal(slots.get(id(210)).status, 'Reserved-Confirmed');
   await transition(key, 'Checked In', staff, 409);
   await transition(key, 'In Progress', otherDoctor, 403);

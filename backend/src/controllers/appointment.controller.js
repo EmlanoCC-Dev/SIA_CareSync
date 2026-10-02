@@ -93,7 +93,7 @@ async function noShow(req, res, next) {
  */
 async function checkIn(req, res, next) {
   try {
-    const appointment = await appointmentService.checkIn(req.params.id, req.user.id);
+    const appointment = await appointmentService.checkIn(req.params.id, req.user);
     res.json({ success: true, data: appointment });
   } catch (err) {
     next(err);
@@ -106,10 +106,11 @@ async function checkIn(req, res, next) {
  */
 async function uploadDocuments(req, res, next) {
   try {
-    const { consultationNotes, documents } = req.body;
-    const appointment = await appointmentService.uploadDocuments(req.params.id, req.user.id, {
+    const { consultationNotes, documents, notesRevision } = req.body;
+    const appointment = await appointmentService.uploadDocuments(req.params.id, req.user, {
       consultationNotes,
       documents,
+      notesRevision,
     });
     res.json({ success: true, data: appointment });
   } catch (err) {
@@ -131,14 +132,18 @@ async function uploadFile(req, res, next) {
     }
 
     const { type, title } = req.body;
+    if ((title !== undefined && typeof title !== 'string') || (type !== undefined && typeof type !== 'string')) {
+      throw Object.assign(new Error('Document title and category must be text'), { statusCode: 400 });
+    }
+    const version = req.body.version === undefined ? undefined : (/^[1-9]\d*$/.test(req.body.version) ? Number(req.body.version) : NaN);
     const fileUrl = `${req.uploadRelativePath}/${req.file.filename}`;
     const filename = title && title.trim() ? title.trim() : req.file.originalname;
 
-    const result = await appointmentService.attachFile(req.params.id, req.user.id, {
+    const result = await appointmentService.attachFile(req.params.id, req.user, {
       filename,
       url: fileUrl,
-      type: type || 'general',
-    });
+      type,
+    }, req.params.docId, version);
 
     res.status(201).json({
       success: true,
@@ -158,7 +163,9 @@ async function deleteDocument(req, res, next) {
   try {
     const appointment = await appointmentService.removeDocument(
       req.params.id,
-      req.params.docId
+      req.params.docId,
+      req.user,
+      req.body?.version
     );
     res.json({ success: true, data: appointment });
   } catch (err) {
@@ -171,7 +178,9 @@ async function downloadDocument(req, res, next) {
     if (!mongoose.isObjectIdOrHexString(req.params.docId)) {
       throw Object.assign(new Error('Invalid document ID'), { statusCode: 400 });
     }
-    const document = req.appointment.documents.find(doc => String(doc._id) === req.params.docId);
+    const document = req.params.version
+      ? await appointmentService.getDocumentVersion(req.params.id, req.params.docId, req.params.version, req.user)
+      : req.appointment.documents.find(doc => String(doc._id) === req.params.docId);
     if (!document || typeof document.url !== 'string' || !document.url.startsWith('/uploads/')) {
       throw Object.assign(new Error('Uploaded document not found'), { statusCode: 404 });
     }
@@ -201,7 +210,7 @@ async function downloadDocument(req, res, next) {
  */
 async function complete(req, res, next) {
   try {
-    const appointment = await appointmentService.complete(req.params.id, req.user.id);
+    const appointment = await appointmentService.complete(req.params.id, req.user);
     res.json({ success: true, data: appointment });
   } catch (err) {
     next(err);
@@ -251,7 +260,37 @@ async function assignSlot(req, res, next) {
   } catch (err) { next(err); }
 }
 
+async function startConsultation(req, res, next) {
+  try { res.json({ success: true, data: await appointmentService.startConsultation(req.params.id, req.user) }); }
+  catch (err) { next(err); }
+}
+
+async function listComments(req, res, next) {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, data: await appointmentService.listComments(req.params.id, req.user) });
+  } catch (err) { next(err); }
+}
+
+async function getVersions(req, res, next) {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, data: await appointmentService.getVersions(req.params.id, req.user) });
+  } catch (err) { next(err); }
+}
+
+async function addComment(req, res, next) {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.status(201).json({ success: true, data: await appointmentService.addComment(req.params.id, req.user, req.body?.message) });
+  } catch (err) { next(err); }
+}
+
 module.exports = {
+  getVersions,
+  listComments,
+  addComment,
+  startConsultation,
   downloadDocument,
   assignSlot,
   create,

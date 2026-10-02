@@ -19,6 +19,7 @@ const appointments = ['Pending', 'Confirmed', 'In Progress', 'Completed'].map((s
   reason: 'Follow-up consultation', consultationNotes: 'Review of routine results.', documents: [{ _id: 'document-1', filename: 'Lab result.pdf', type: 'lab_result', url: '/uploads/mock-lab-result.pdf' }],
   statusHistory: [{ status, changedAt: '2026-10-01T01:00:00Z', remarks: 'Updated by the care team' }],
 }));
+appointments.push({ ...appointments[1], _id: 'arrived-appointment', status: 'Checked In', queueNumber: 7, checkedInAt: '2026-10-01T01:00:00Z' });
 appointments.push({ _id: 'flexible-appointment', patient, doctor: null, slot: null, status: 'Pending', date: '2026-10-01', timeSlot: '09:00 - 09:30 AM', reason: 'Flexible consultation', statusHistory: [] });
 appointments.push({ _id: 'walkin-appointment', patient: null, walkIn: { _id: 'walkin-visit', name: 'Sofia Cruz', contactNumber: '09181234567', queueNumber: 41 }, doctor, slot: 'walkin-slot', status: 'No-show', date: '2026-10-01', timeSlot: '09:00–09:15', reason: 'Walk-in consultation', statusHistory: [] });
 appointments.push({ _id: 'missing-patient-details', patient: null, walkIn: 'unavailable-walkin-reference', doctor, status: 'No-show', date: '2026-10-01', timeSlot: '09:15–09:30', reason: 'Walk-in consultation', statusHistory: [] });
@@ -30,6 +31,12 @@ let failNextMutation = false;
 let walkIns = [];
 let notifications = [];
 let failNextNotificationGet = false;
+let directoryUsers = [patient, doctor].map(user => ({ ...user, status: 'Active', createdAt: '2026-01-01', contactNumber: '09171234567' }));
+const auditLogs = [
+  { _id: 'audit-user', action: 'USER_CREATED', targetModel: 'User', targetId: 'created-user', changes: { user: { firstName: 'Created', lastName: 'Staff', role: 'Staff' }, creationMethod: 'Admin creation' } },
+  { _id: 'audit-document', action: 'DOCUMENT_DELETED', targetModel: 'Appointment', targetId: 'appointment-1', changes: { document: { filename: 'Test record.pdf', type: 'lab_result' } } },
+  { _id: 'audit-generation', action: 'SLOTS_GENERATED', targetModel: 'User', targetId: doctor._id, changes: { doctor, generation: { date: '2026-10-03', startTime: '09:00', endTime: '09:30', duration: 15, requestedSlots: 2, totalSlots: 2, source: 'Manual' } } },
+].map(row => ({ ...row, timestamp: '2026-10-03T02:00:00Z', performedBy: { ...patient, role: 'Admin' } }));
 try {
   const page = await browser.newPage();
   await (await page.createCDPSession()).send('Browser.setDownloadBehavior', { behavior: 'deny' });
@@ -63,6 +70,17 @@ try {
         const row = walkIns.find(row => url.pathname.includes(`/${row._id}/`));
         row.status = JSON.parse(request.postData()).status;
       }
+      if (request.method() === 'PATCH' && url.pathname.match(/^\/api\/appointments\/[^/]+\/(check-in|start)$/)) {
+        const visit = appointments.find(visit => url.pathname.includes(`/${visit._id}/`));
+        visit.status = url.pathname.endsWith('/start') ? 'In Progress' : 'Checked In';
+        visit.queueNumber ||= 8;
+        return request.respond({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: visit }) });
+      }
+      if (request.method() === 'PATCH' && url.pathname.match(/^\/api\/users\/[^/]+$/)) {
+        const user = directoryUsers.find(user => url.pathname === `/api/users/${user._id}`);
+        Object.assign(user, JSON.parse(request.postData()));
+        return request.respond({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: user }) });
+      }
       if (url.pathname === '/api/notifications/read-all') notifications.forEach(item => { item.readAt ||= new Date().toISOString(); });
       else if (url.pathname.match(/^\/api\/notifications\/[^/]+\/read$/)) {
         const item = notifications.find(item => url.pathname.includes(`/${item._id}/`));
@@ -79,12 +97,14 @@ try {
     else if (url.pathname === '/api/users/doctors') data = [doctor];
     else if (url.pathname.endsWith('/schedule')) data = { workingHours: [{ day: 4, start: '09:00', end: '17:00' }], consultationDuration: 15, scheduleConfigured: true };
     else if (url.pathname === '/api/reports') data = { from: url.searchParams.get('from'), to: url.searchParams.get('to'), scope: role === 'Doctor' ? 'My consultations' : 'Clinic appointments', total: empty ? 0 : 5, statuses: { Pending: empty ? 0 : 2, Confirmed: empty ? 0 : 1, 'In Progress': empty ? 0 : 1, Completed: empty ? 0 : 1, Cancelled: 0, Declined: 0, 'No-show': 0 }, daily: [{ _id: '2026-10-01', total: 5, completed: 1 }], doctors: [{ _id: doctor._id, firstName: doctor.firstName, lastName: doctor.lastName, total: 4, completed: 1 }, { _id: null, total: 1, completed: 0 }] };
-    else if (url.pathname === '/api/users') data = [patient, doctor].map(user => ({ ...user, createdAt: '2026-01-01', contactNumber: '09171234567' }));
+    else if (url.pathname === '/api/users') data = directoryUsers;
+    else if (url.pathname === '/api/audit-logs') data = { logs: empty ? [] : auditLogs, total: empty ? 0 : auditLogs.length, page: 1, limit: 50 };
     else if (url.pathname === '/api/appointments') data = empty ? [] : appointments.filter(item => role !== 'Patient' || item.patient?._id === patient._id);
+    else if (url.pathname.match(/^\/api\/appointments\/[^/]+\/versions$/)) data = { notes: [], documents: [], notesRevision: 0 };
     else if (url.pathname === '/api/system/time') data = { currentTime: '2026-10-01T01:00:00Z', isOpen: true, isCustom: false, openTime: '08:30', closeTime: '17:00' };
     else if (url.pathname === '/api/slots') data = [{ _id: 'slot-1', doctor, date: '2026-10-01', startTime: '10:00', endTime: '10:30', status: 'Available' }];
     else if (url.pathname === '/api/walkins') data = walkIns.filter(row => !url.searchParams.get('status') || row.status === url.searchParams.get('status'));
-    else if (url.pathname === '/api/walkins/now-serving') data = { nowServing: empty ? null : { queueNumber: 11, status: 'In Progress' }, upcoming: empty ? [] : [{ queueNumber: 12, status: 'Waiting' }] };
+    else if (url.pathname === '/api/walkins/now-serving') data = { nowServing: empty ? null : { queueNumber: 'A-7', status: 'In Progress' }, serving: empty ? [] : [{ queueNumber: 'A-7', status: 'In Progress' }, { queueNumber: 11, status: 'In Progress' }], upcoming: empty ? [] : [{ queueNumber: 'A-8', status: 'Checked In' }, { queueNumber: 12, status: 'Waiting' }] };
     return request.respond({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data, date: '2026-10-01' }) });
   });
   const click = async (selector, text) => {
@@ -274,14 +294,25 @@ try {
         assert((await downloadRequest).url().includes('/appointments/appointment-0/documents/document-1/download'));
         await page.click('.modal-header button');
       } else if (role === 'Staff' || role === 'Doctor') {
+        if (role === 'Staff') {
+          const checkedIn = page.waitForResponse(response => response.request().method() === 'PATCH' && response.url().endsWith('/check-in'));
+          await click('td button', 'Check In');
+          await checkedIn;
+          await page.waitForSelector('.badge-Checked-In');
+          assert(mutations.at(-1).path.endsWith('/check-in'));
+          await check(`scheduled-arrival-${width}`);
+        }
         if (role === 'Doctor') {
-          await click('td button', 'Notes');
+          const started = page.waitForResponse(response => response.request().method() === 'PATCH' && response.url().endsWith('/start'));
+          await click('td button', 'Start consultation');
+          await started;
           await page.waitForSelector('.form-textarea');
+          assert(mutations.at(-1).path.endsWith('/start'));
           await check(`consultation-${width}`);
           const doctorDownload = page.waitForRequest(request => request.url().endsWith('/download'));
           await click('.modal-content button', 'Download');
           await doctorDownload;
-          assert((await actionDialog('button[title="Remove document"]', 'Delete document')).path.endsWith('/documents/document-1'));
+          assert((await actionDialog('button[title="Archive document"]', 'Archive document')).path.endsWith('/documents/document-1'));
           await click('.modal-footer button', 'Complete Consultation');
           await page.waitForSelector('.care-dialog[open]');
           await check(`complete-consultation-${width}`);
@@ -352,8 +383,30 @@ try {
         await page.waitForSelector('.modal-content');
         await check(`add-user-${width}`);
         await page.click('.modal-header button');
+        await click('tbody button', 'Edit account');
+        await page.waitForSelector('dialog[open] #account-status');
+        assert.equal(await page.$('dialog[open] input[name="password"]'), null);
+        await page.select('#account-role', 'Staff');
+        await page.select('#account-status', 'Deactivated');
+        await check(`edit-user-${width}`);
+        const saved = page.waitForResponse(response => response.request().method() === 'PATCH' && response.url().endsWith(`/users/${patient._id}`));
+        await click('dialog[open] button', 'Save changes');
+        await saved;
+        await page.waitForFunction(() => document.querySelector('tbody')?.textContent.includes('Deactivated'));
+        assert.equal(mutations.at(-1).body.role, 'Staff');
+        assert.equal(mutations.at(-1).body.status, 'Deactivated');
+        await check(`deactivated-user-${width}`);
+        await click('tbody button', 'Edit account');
+        await page.waitForSelector('dialog[open] #account-status');
+        assert.equal(await page.$eval('#account-status', element => element.value), 'Deactivated');
+        await page.select('#account-role', 'Patient');
+        await page.select('#account-status', 'Active');
+        await click('dialog[open] button', 'Save changes');
+        await page.waitForFunction(() => !document.querySelector('dialog[open]'));
         await click('.dashboard-tabs button', 'audit');
         await check(`audit-${width}`);
+        const auditText = await page.$eval('.table-container', element => element.textContent);
+        for (const text of ['User account created', 'Created Staff', 'Admin creation', 'Document deleted', 'Test record.pdf', 'Doctor slots generated', '2 requested windows', '2 total slots']) assert(auditText.includes(text), `Audit viewer missing ${text}`);
         empty = true;
         await page.reload();
         await page.waitForFunction(() => document.querySelector('tbody')?.textContent.includes('No appointments'));
@@ -418,6 +471,9 @@ try {
     }
     await page.goto(`${baseUrl}/#/display`);
     await page.waitForSelector('.cd-queue-number-large');
+    assert.equal(await page.$eval('.cd-queue-number-large', element => element.textContent), '#A-7');
+    const queueText = await page.$eval('.clinic-display', element => element.textContent);
+    assert(queueText.includes('#A-8') && queueText.includes('#12') && queueText.includes('Also in consultation: #11'));
     assert.equal(await page.$eval('.clinic-display', display => display.textContent.includes('Alex Santos') || display.textContent.includes('Maria Dela Cruz')), false);
     await check(`display-${width}`);
     empty = true;

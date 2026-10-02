@@ -16,6 +16,7 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { randomUUID } = require('node:crypto');
 const Appointment = require('../models/Appointment');
 
 const UPLOAD_ROOT = path.join(__dirname, '../../uploads');
@@ -68,6 +69,9 @@ const storage = multer.diskStorage({
       }
 
       // 2. Resolve Category Subfolder
+      if (req.body.type !== undefined && typeof req.body.type !== 'string') {
+        throw Object.assign(new Error('Document category must be text'), { statusCode: 400 });
+      }
       const rawType = (req.body.type || 'general').toLowerCase().trim();
       const categoryFolder = TYPE_FOLDER_MAP[rawType] || 'general';
 
@@ -90,7 +94,7 @@ const storage = multer.diskStorage({
     const ext = path.extname(file.originalname);
     const basename = path.basename(file.originalname, ext)
       .replace(/[^a-zA-Z0-9_-]/g, '_');
-    const uniqueName = `${Date.now()}_${basename}${ext}`;
+    const uniqueName = `${Date.now()}_${randomUUID()}_${basename}${ext}`;
     cb(null, uniqueName);
   },
 });

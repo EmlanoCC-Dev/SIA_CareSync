@@ -58,7 +58,7 @@ export default function DoctorDashboard() {
 
   const handleStartConsultation = async (id) => {
     try {
-      await api.checkInAppointment(id);
+      await api.startConsultation(id);
       fetchAppointments();
       const target = appointments.find((a) => a._id === id);
       if (target) {
@@ -109,6 +109,7 @@ export default function DoctorDashboard() {
 
   const inProgressCount = appointments.filter((a) => a.status === 'In Progress').length;
   const confirmedCount = appointments.filter((a) => a.status === 'Confirmed').length;
+  const waitingCount = appointments.filter((a) => a.status === 'Checked In').length;
   const completedCount = appointments.filter((a) => a.status === 'Completed').length;
 
   return (
@@ -137,6 +138,7 @@ export default function DoctorDashboard() {
           <div>
             <div className="stat-val">{confirmedCount}</div>
             <div className="stat-label">Confirmed appointments</div>
+            <div className="stat-label">{waitingCount} checked in and waiting</div>
           </div>
         </div>
 
@@ -203,6 +205,7 @@ export default function DoctorDashboard() {
                 <option value="">All Statuses</option>
                 <option value="In Progress">In Progress</option>
                 <option value="Confirmed">Confirmed</option>
+                <option value="Checked In">Checked In / Waiting</option>
                 <option value="Pending">Pending Approval</option>
                 <option value="Completed">Completed</option>
                 <option value="Declined">Declined</option>
@@ -258,17 +261,17 @@ export default function DoctorDashboard() {
                       </td>
                       <td style={{ textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                          {apt.status === 'Confirmed' && (
+                          {apt.status === 'Checked In' && (
                             <button
                               onClick={() => handleStartConsultation(apt._id)}
                               className="btn btn-primary btn-sm"
                               title="Start Consultation"
                             >
                               <PlayCircle size={14} />
-                              <span>Start</span>
+                              <span>Start consultation</span>
                             </button>
                           )}
-                          {(apt.status === 'In Progress' || apt.status === 'Confirmed') && (
+                          {(apt.status === 'In Progress' || apt.status === 'Checked In' || apt.status === 'Confirmed') && (
                             <button
                               onClick={() => openConsultation(apt)}
                               className="btn btn-teal btn-sm"
@@ -298,7 +301,7 @@ export default function DoctorDashboard() {
                               <span>Decline</span>
                             </button>
                           )}
-                          {['Pending', 'Confirmed'].includes(apt.status) && (
+                          {['Pending', 'Confirmed', 'Checked In'].includes(apt.status) && (
                             <button
                               onClick={() => handleCancel(apt._id)}
                               className="btn btn-danger btn-sm"
@@ -310,9 +313,10 @@ export default function DoctorDashboard() {
                           <button
                             onClick={() => openTimeline(apt)}
                             className="btn btn-secondary btn-sm"
-                            title="History"
+                            title="View appointment history and comments"
                           >
                             <History size={14} />
+                            <span>History &amp; comments</span>
                           </button>
                         </div>
                       </td>

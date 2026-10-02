@@ -1,19 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
-import { X, UserPlus, AlertCircle, CheckCircle2, ShieldCheck, Stethoscope, UserCog } from 'lucide-react';
+import { X, UserPlus, AlertCircle } from 'lucide-react';
 
-export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
+export default function AddUserModal({ isOpen, onClose, onUserAdded, user = null }) {
+  const dialog = useRef(null);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    email: user?.email || '',
     password: '',
-    role: 'Staff', // 'Staff' | 'Doctor'
-    contactNumber: '',
+    role: user?.role || 'Staff',
+    contactNumber: user?.contactNumber || '',
+    status: user?.status || 'Active',
     consultationDuration: 15,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  useEffect(() => {
+    if (isOpen && !dialog.current?.open) dialog.current?.showModal();
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -29,14 +34,17 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
     e.preventDefault();
     setError('');
 
-    if (formData.password.length < 6) {
+    if (!user && formData.password.length < 6) {
       setError('Password must be at least 6 characters');
       return;
     }
 
     setLoading(true);
     try {
-      const res = await api.createUser(formData);
+      const res = user ? await api.updateUser(user._id, {
+        firstName: formData.firstName, lastName: formData.lastName, email: formData.email,
+        role: formData.role, contactNumber: formData.contactNumber, status: formData.status,
+      }) : await api.createUser(formData);
       if (res.success) {
         onUserAdded && onUserAdded();
         onClose();
@@ -59,14 +67,14 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '520px', width: '90%' }}>
+    <dialog ref={dialog} className="care-dialog" aria-labelledby="account-form-title" onCancel={event => { if (loading) event.preventDefault(); else onClose(); }} style={{ padding: 0, border: 0, background: 'transparent', width: 'min(520px, 90vw)', maxHeight: '90vh' }}>
+      <div className="modal-content" style={{ width: '100%' }}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <UserPlus size={20} color="var(--primary)" />
-            <h3 style={{ margin: 0 }}>Add Doctor or Staff Account</h3>
+            <h3 id="account-form-title" style={{ margin: 0 }}>{user ? 'Edit account' : 'Add Doctor or Staff Account'}</h3>
           </div>
-          <button onClick={onClose} aria-label="Close account form" className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
+          <button onClick={onClose} disabled={loading} aria-label="Close account form" className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
             <X size={18} />
           </button>
         </div>
@@ -74,20 +82,21 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
         <form onSubmit={handleSubmit}>
           <div className="modal-body" style={{ maxHeight: '75vh', overflowY: 'auto' }}>
             {error && (
-              <div className="alert alert-error" style={{ marginBottom: '1rem' }}>
+              <div role="alert" className="alert alert-error" style={{ marginBottom: '1rem' }}>
                 <AlertCircle size={16} />
                 <span>{error}</span>
               </div>
             )}
 
             <div style={{ background: 'var(--bg-muted, rgba(0,0,0,0.02))', padding: '0.75rem 1rem', borderRadius: '6px', marginBottom: '1.25rem', border: '1px solid var(--border-color, #e5e7eb)', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Create operational accounts for clinical doctors and front-desk clinic staff.
+              {user ? 'Update account details and access. Deactivation keeps the account and its records.' : 'Create operational accounts for clinical doctors and front-desk clinic staff.'}
             </div>
 
             <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
               <div>
-                <label className="form-label">First Name</label>
+                <label className="form-label" htmlFor="account-first-name">First Name</label>
                 <input
+                  id="account-first-name"
                   type="text"
                   name="firstName"
                   className="form-input"
@@ -98,8 +107,9 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
                 />
               </div>
               <div>
-                <label className="form-label">Last Name</label>
+                <label className="form-label" htmlFor="account-last-name">Last Name</label>
                 <input
+                  id="account-last-name"
                   type="text"
                   name="lastName"
                   className="form-input"
@@ -112,8 +122,9 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
             </div>
 
             <div className="form-group" style={{ marginBottom: '1rem' }}>
-              <label className="form-label">Email Address</label>
+              <label className="form-label" htmlFor="account-email">Email Address</label>
               <input
+                id="account-email"
                 type="email"
                 name="email"
                 className="form-input"
@@ -124,9 +135,10 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
               />
             </div>
 
-            <div className="form-group" style={{ marginBottom: '1rem' }}>
-              <label className="form-label">Password</label>
+            {!user && <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" htmlFor="account-password">Password</label>
               <input
+                id="account-password"
                 type="password"
                 name="password"
                 className="form-input"
@@ -135,12 +147,13 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
                 onChange={handleChange}
                 required
               />
-            </div>
+            </div>}
 
             <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
               <div>
-                <label className="form-label">Account Role</label>
+                <label className="form-label" htmlFor="account-role">Account Role</label>
                 <select
+                  id="account-role"
                   name="role"
                   className="form-select"
                   value={formData.role}
@@ -148,11 +161,14 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
                 >
                   <option value="Staff">Staff (Clinic Reception)</option>
                   <option value="Doctor">Doctor (Attending Physician)</option>
+                  {user && <option value="Patient">Patient</option>}
+                  {user && <option value="Admin">Admin</option>}
                 </select>
               </div>
               <div>
-                <label className="form-label">Contact Number</label>
+                <label className="form-label" htmlFor="account-contact">Contact Number</label>
                 <input
+                  id="account-contact"
                   type="tel"
                   name="contactNumber"
                   className="form-input"
@@ -164,12 +180,21 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
             </div>
 
             {/* Doctor Consultation Slot Duration */}
-            {formData.role === 'Doctor' && (
+            {user && <div className="form-group">
+              <label className="form-label" htmlFor="account-status">Account status</label>
+              <select id="account-status" name="status" className="form-select" value={formData.status} onChange={handleChange}>
+                <option value="Active">Active</option>
+                <option value="Deactivated">Deactivated</option>
+              </select>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Deactivated accounts cannot sign in or continue using existing sessions.</p>
+            </div>}
+            {!user && formData.role === 'Doctor' && (
               <div className="form-group" style={{ marginBottom: '1rem', background: 'rgba(59, 130, 246, 0.05)', padding: '0.75rem', borderRadius: '6px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-                <label className="form-label" style={{ fontWeight: 600, color: 'var(--primary)' }}>
+                <label className="form-label" htmlFor="account-duration" style={{ fontWeight: 600, color: 'var(--primary)' }}>
                   Default Consultation Duration (min)
                 </label>
                 <select
+                  id="account-duration"
                   name="consultationDuration"
                   className="form-select"
                   value={formData.consultationDuration}
@@ -188,7 +213,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
           </div>
 
           <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid var(--border-color, #e5e7eb)' }}>
-            <button type="button" onClick={onClose} className="btn btn-secondary">
+            <button type="button" onClick={onClose} disabled={loading} className="btn btn-secondary">
               Cancel
             </button>
             <button
@@ -198,11 +223,11 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
               style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
             >
               <UserPlus size={16} />
-              <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
+              <span>{loading ? 'Saving...' : user ? 'Save changes' : 'Create Account'}</span>
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </dialog>
   );
 }

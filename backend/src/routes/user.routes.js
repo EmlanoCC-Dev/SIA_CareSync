@@ -20,6 +20,7 @@ router.get('/me', userController.getMe);
 router.get('/doctors', userController.getDoctors);
 router.get('/', authorize('Admin'), userController.listUsers);
 router.post('/', authorize('Admin'), userController.createUser);
+router.patch('/:id', authorize('Admin'), userController.updateUser);
 router.get('/:id/schedule', authorize('Staff', 'Admin', 'Doctor'), userController.schedule);
 router.patch('/:id/schedule', authorize('Staff', 'Admin', 'Doctor'), userController.schedule);
 

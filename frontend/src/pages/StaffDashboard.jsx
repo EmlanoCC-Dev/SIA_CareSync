@@ -71,6 +71,11 @@ export default function StaffDashboard() {
     }
   };
 
+  const handleStartConsultation = async (id) => {
+    try { await api.startConsultation(id); await fetchAppointments(); }
+    catch (err) { await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to start consultation' }); }
+  };
+
   const handleNoShow = async (id) => {
     const reason = await showDialog({ kind: 'prompt', title: 'Mark as no-show', message: 'This will mark the patient as absent and free the appointment slot.', confirmText: 'Mark no-show', defaultValue: 'Patient did not arrive for scheduled slot', danger: true });
     if (reason === null) return;
@@ -110,6 +115,7 @@ export default function StaffDashboard() {
 
   const pendingCount = appointments.filter((a) => a.status === 'Pending').length;
   const confirmedCount = appointments.filter((a) => a.status === 'Confirmed').length;
+  const waitingCount = appointments.filter((a) => a.status === 'Checked In').length;
   const inProgressCount = appointments.filter((a) => a.status === 'In Progress').length;
   const completedCount = appointments.filter((a) => a.status === 'Completed').length;
 
@@ -151,6 +157,7 @@ export default function StaffDashboard() {
           <div>
             <div className="stat-val">{confirmedCount}</div>
             <div className="stat-label">Confirmed / Scheduled</div>
+            <div className="stat-label">{waitingCount} checked in and waiting</div>
           </div>
         </div>
 
@@ -218,6 +225,7 @@ export default function StaffDashboard() {
                 <option value="">All Statuses</option>
                 <option value="Pending">Pending (Needs Approval)</option>
                 <option value="Confirmed">Confirmed</option>
+                <option value="Checked In">Checked In / Waiting</option>
                 <option value="In Progress">In Progress</option>
                 <option value="Completed">Completed</option>
                 <option value="Declined">Declined</option>
@@ -322,7 +330,8 @@ export default function StaffDashboard() {
                               </button>
                             </>
                           )}
-                          {(apt.status === 'Confirmed' || apt.status === 'In Progress') && (
+                          {apt.status === 'Checked In' && <button className="btn btn-primary btn-sm" onClick={() => handleStartConsultation(apt._id)}>Start consultation</button>}
+                          {apt.status === 'In Progress' && (
                             <button
                               onClick={() => handleComplete(apt._id)}
                               className="btn btn-teal btn-sm"
@@ -332,7 +341,7 @@ export default function StaffDashboard() {
                               <span>Complete</span>
                             </button>
                           )}
-                          {['Pending', 'Confirmed'].includes(apt.status) && (
+                          {['Pending', 'Confirmed', 'Checked In'].includes(apt.status) && (
                             <button
                               onClick={() => handleCancel(apt._id)}
                               className="btn btn-danger btn-sm"
@@ -344,9 +353,10 @@ export default function StaffDashboard() {
                           <button
                             onClick={() => openTimeline(apt)}
                             className="btn btn-secondary btn-sm"
-                            title="View Version Timeline"
+                            title="View appointment history and comments"
                           >
                             <History size={14} />
+                            <span>History &amp; comments</span>
                           </button>
                         </div>
                       </td>

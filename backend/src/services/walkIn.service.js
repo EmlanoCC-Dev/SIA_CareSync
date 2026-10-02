@@ -135,7 +135,9 @@ async function updateStatus(walkInId, status, actor) {
   }
   if (!from[status].includes(walkIn.status)) throw fail(`Cannot change ${walkIn.status} to ${status}`, 409);
   const linked = walkIn.status !== 'Waiting';
-  const expectedAppointment = walkIn.status === 'In Progress' ? 'In Progress' : 'Confirmed';
+  // Keep previously checked-in walk-ins with Confirmed appointments usable after upgrade.
+  const expectedAppointment = walkIn.status === 'In Progress' ? 'In Progress'
+    : walkIn.status === 'Checked In' && appointment?.status === 'Checked In' ? 'Checked In' : 'Confirmed';
   const expectedSlot = walkIn.status === 'In Progress' ? 'In Progress' : 'Reserved-Confirmed';
   if (linked && (!appointment || !slot || recordId(appointment.walkIn) !== recordId(walkIn._id) ||
       recordId(appointment.slot) !== recordId(slot._id) || recordId(slot.appointment) !== recordId(appointment._id) ||
@@ -148,7 +150,7 @@ async function updateStatus(walkInId, status, actor) {
   if (!await WalkIn.findOneAndUpdate(claim, { $set: { status } }, { new: true })) {
     throw fail('Walk-in changed; refresh before retrying', 409);
   }
-  const appointmentStatus = status === 'Left' ? 'Cancelled' : status === 'Checked In' ? 'Confirmed' : status;
+  const appointmentStatus = status === 'Left' ? 'Cancelled' : status;
   const slotStatus = status === 'Left' ? 'Available' : status;
   const history = { status: appointmentStatus, changedBy: actor._id || actor.id, changedAt: new Date(), remarks: `Walk-in queue: ${status}` };
   let changedAppointment, changedSlot;
@@ -183,8 +185,9 @@ async function updateStatus(walkInId, status, actor) {
   }
   const data = { walkIn: { ...walkIn.toObject(), status }, appointment: changedAppointment, performedBy: actor._id || actor.id, targetModel: 'WalkIn', targetId: walkIn._id, previousStatus: walkIn.status, status };
   emitter.emit(EVENTS.WALKIN_STATUS_UPDATED, data);
-  if (linked && status !== 'Checked In') {
-    const event = status === 'Left' ? EVENTS.APPOINTMENT_CANCELLED : status === 'Completed' ? EVENTS.APPOINTMENT_COMPLETED : EVENTS.APPOINTMENT_CHECKED_IN;
+  if (linked) {
+    const event = status === 'Left' ? EVENTS.APPOINTMENT_CANCELLED : status === 'Completed' ? EVENTS.APPOINTMENT_COMPLETED
+      : status === 'Checked In' ? EVENTS.APPOINTMENT_CHECKED_IN : EVENTS.APPOINTMENT_STARTED;
     emitter.emit(event, { appointment: changedAppointment, performedBy: data.performedBy, targetModel: 'Appointment', previousStatus: expectedAppointment, reason: status === 'Left' ? 'Walk-in patient left' : undefined });
     if (status === 'Left') emitter.emit(EVENTS.SLOT_FREED, { slot: changedSlot, previousStatus: expectedSlot, reason: 'Walk-in patient left', performedBy: data.performedBy, targetModel: 'Slot' });
   }
@@ -310,14 +313,13 @@ async function getNowServing(upcomingCount = 5) {
   const todayEnd = new Date(now);
   todayEnd.setHours(23, 59, 59, 999);
 
-  const [currentlyServing, upcoming] = await Promise.all([
+  const [currentlyServing, upcoming, scheduled] = await Promise.all([
     // Currently being served (In Progress)
     WalkIn.find({
       status: 'In Progress',
       createdAt: { $gte: todayStart, $lte: todayEnd },
     })
-      .sort({ queueNumber: 1 })
-      .limit(1),
+      .sort({ queueNumber: 1 }),
 
     // Next in line (Waiting or Slot Assigned)
     WalkIn.find({
@@ -325,12 +327,26 @@ async function getNowServing(upcomingCount = 5) {
       createdAt: { $gte: todayStart, $lte: todayEnd },
     })
       .sort({ queueNumber: 1 })
-      .limit(upcomingCount),
+      .populate('assignedSlot', 'startTime'),
+    Appointment.find({ walkIn: null, date: parseDateOnly(formatDateKey(now)),
+      status: { $in: ['Checked In', 'In Progress'] }, queueNumber: { $ne: null } })
+      .select('queueNumber status checkedInAt timeSlot'),
   ]);
 
+  const scheduledEntries = scheduled.map(entry => ({ queueNumber: `A-${entry.queueNumber}`, status: entry.status,
+    time: entry.timeSlot?.slice(0, 5) || '23:59', arrived: +new Date(entry.checkedInAt) || 0 }));
+  const serving = [...currentlyServing.map(entry => ({ queueNumber: entry.queueNumber, status: entry.status })),
+    ...scheduledEntries.filter(entry => entry.status === 'In Progress').map(({ queueNumber, status }) => ({ queueNumber, status }))];
+  const waiting = [...upcoming.map(entry => ({ queueNumber: entry.queueNumber, status: entry.status,
+    time: entry.assignedSlot?.startTime || '23:59', arrived: +new Date(entry.createdAt) || 0 })),
+    ...scheduledEntries.filter(entry => entry.status === 'Checked In')]
+    .sort((a, b) => a.time.localeCompare(b.time) || a.arrived - b.arrived || String(a.queueNumber).localeCompare(String(b.queueNumber)))
+    .slice(0, upcomingCount).map(({ queueNumber, status }) => ({ queueNumber, status }));
+
   return {
-    nowServing: currentlyServing[0] ? { queueNumber: currentlyServing[0].queueNumber, status: currentlyServing[0].status } : null,
-    upcoming: upcoming.map(entry => ({ queueNumber: entry.queueNumber, status: entry.status })),
+    nowServing: serving[0] || null,
+    serving,
+    upcoming: waiting,
     updatedAt: now.toISOString(),
     isOpen: isClinicOpen(now),
   };

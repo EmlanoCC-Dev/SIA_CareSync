@@ -51,9 +51,9 @@ function _normalizeDate(date) {
  * @param {string} [customEnd]
  * @returns {Array} Created (or existing) Slot documents
  */
-async function generateSlotsForDoctor(doctorId, date, customDuration = null, customStart = null, customEnd = null) {
+async function generateSlotsForDoctor(doctorId, date, customDuration = null, customStart = null, customEnd = null, { actorId = null, source = 'System' } = {}) {
   const doctor = await User.findById(doctorId);
-  if (!doctor || doctor.role !== 'Doctor') {
+  if (!doctor || doctor.role !== 'Doctor' || doctor.status === 'Deactivated') {
     const err = new Error('Doctor not found');
     err.statusCode = 404;
     throw err;
@@ -131,9 +131,16 @@ async function generateSlotsForDoctor(doctorId, date, customDuration = null, cus
     }
   }
 
-  return Slot.find({ doctor: doctorId, date: normalizedDate })
+  const slots = await Slot.find({ doctor: doctorId, date: normalizedDate })
     .populate('doctor', 'firstName lastName email contactNumber')
     .sort({ startTime: 1 });
+  emitter.emit(EVENTS.SLOTS_GENERATED, {
+    performedBy: actorId, targetModel: 'User', targetId: doctor._id,
+    doctor: { _id: doctor._id, firstName: doctor.firstName, lastName: doctor.lastName },
+    generation: { date: normalizedDate, startTime: _formatTime(startMinutes), endTime: _formatTime(endMinutes),
+      duration, requestedSlots: slotDefs.length, totalSlots: slots.length, source },
+  });
+  return slots;
 }
 
 // Saved plans survive partial bulk writes; retries only insert missing rows and preserve bookings/blocks.
@@ -167,8 +174,10 @@ async function materializePlan(plan) {
  * Get available slots for a doctor on a date.
  * Auto-generates slots if none exist yet (on-demand generation).
  */
-async function getAvailableSlots(doctorId, date) {
+async function getAvailableSlots(doctorId, date, actorId = null) {
   const normalizedDate = _normalizeDate(date);
+  const doctor = await User.findById(doctorId);
+  if (!doctor || doctor.role !== 'Doctor' || doctor.status === 'Deactivated') return [];
 
   // Check if slots exist for this doctor+date
   const existingCount = await Slot.countDocuments({
@@ -178,7 +187,7 @@ async function getAvailableSlots(doctorId, date) {
 
   // Generate on-demand if none exist
   if (existingCount === 0) {
-    await generateSlotsForDoctor(doctorId, date);
+    await generateSlotsForDoctor(doctorId, date, null, null, null, { actorId, source: 'On-demand' });
   }
 
   const slots = await Slot.find({
@@ -196,7 +205,7 @@ async function getAvailableSlots(doctorId, date) {
 /**
  * Get all slots for a doctor on a date (any status).
  */
-async function getAllSlots(doctorId, date) {
+async function getAllSlots(doctorId, date, actorId = null) {
   const normalizedDate = _normalizeDate(date);
 
   const existingCount = await Slot.countDocuments({
@@ -205,7 +214,7 @@ async function getAllSlots(doctorId, date) {
   });
 
   if (existingCount === 0) {
-    await generateSlotsForDoctor(doctorId, date);
+    await generateSlotsForDoctor(doctorId, date, null, null, null, { actorId, source: 'On-demand' });
   }
 
   return Slot.find({
@@ -220,9 +229,9 @@ async function getAllSlots(doctorId, date) {
  * Get all slots for all doctors on a date (or filtered by status).
  * Auto-generates default slots for any doctors missing slots on that date.
  */
-async function getAllSlotsForDate(date, status = null) {
+async function getAllSlotsForDate(date, status = null, actorId = null) {
   const normalizedDate = _normalizeDate(date);
-  const doctors = await User.find({ role: 'Doctor' });
+  const doctors = await User.find({ role: 'Doctor', status: { $ne: 'Deactivated' } });
 
   // Auto-generate for each doctor if none exist yet
   for (const doc of doctors) {
@@ -231,7 +240,7 @@ async function getAllSlotsForDate(date, status = null) {
       date: normalizedDate,
     });
     if (existingCount === 0) {
-      await generateSlotsForDoctor(doc._id, date);
+      await generateSlotsForDoctor(doc._id, date, null, null, null, { actorId, source: 'On-demand' });
     }
   }
 
@@ -241,11 +250,11 @@ async function getAllSlotsForDate(date, status = null) {
   }
 
   const slots = await Slot.find(query)
-    .populate('doctor', 'firstName lastName email contactNumber')
+    .populate('doctor', 'firstName lastName email contactNumber role status')
     .sort({ startTime: 1 });
 
   if (status === 'Available') {
-    return slots.filter((slot) => !isDateTimePassed(slot.date, slot.startTime, 'start'));
+    return slots.filter((slot) => slot.doctor?.role === 'Doctor' && slot.doctor.status !== 'Deactivated' && !isDateTimePassed(slot.date, slot.startTime, 'start'));
   }
 
   return slots;
@@ -281,6 +290,10 @@ async function reserveSlot(slotId, appointmentId, operationId = null) {
     const err = new Error(`Slot is not available (current status: "${slot.status}")`);
     err.statusCode = 409;
     throw err;
+  }
+  const doctor = await User.findById(slot.doctor);
+  if (!doctor || doctor.role !== 'Doctor' || doctor.status === 'Deactivated') {
+    throw Object.assign(new Error('This doctor is unavailable for new appointments'), { statusCode: 409 });
   }
   if (isDateTimePassed(slot.date, slot.startTime, 'start')) {
     const err = new Error('Cannot reserve a time slot that has already passed');
@@ -324,10 +337,10 @@ async function confirmSlot(slotId) {
 }
 
 /**
- * Free a slot — returns it to Available.
+ * Release a reservation to Available, or No-show for an expired missed visit.
  * Clears the appointment reference and emits SLOT_FREED.
  */
-async function freeSlot(slotId, reason, expectedAppointmentId = null) {
+async function freeSlot(slotId, reason, expectedAppointmentId = null, releasedStatus = 'Available') {
   const slot = await Slot.findById(slotId);
   if (!slot) {
     const err = new Error('Slot not found');
@@ -347,7 +360,7 @@ async function freeSlot(slotId, reason, expectedAppointmentId = null) {
 
   const freed = await Slot.findOneAndUpdate(
     { _id: slotId, status: previousStatus, appointment: slot.appointment },
-    { $set: { status: 'Available', appointment: null, reservationOperation: null } }, { new: true }
+    { $set: { status: releasedStatus, appointment: null, reservationOperation: null } }, { new: true }
   );
   if (!freed) throw Object.assign(new Error('Slot changed before it could be released'), { statusCode: 409 });
 
@@ -360,50 +373,6 @@ async function freeSlot(slotId, reason, expectedAppointmentId = null) {
   });
 
   return freed;
-}
-
-/**
- * Start a slot (check-in).
- * Reserved-Confirmed → In Progress
- */
-async function startSlot(slotId) {
-  const slot = await Slot.findById(slotId);
-  if (!slot) {
-    const err = new Error('Slot not found');
-    err.statusCode = 404;
-    throw err;
-  }
-  if (slot.status !== 'Reserved-Confirmed') {
-    const err = new Error(`Cannot start slot with status "${slot.status}"`);
-    err.statusCode = 400;
-    throw err;
-  }
-
-  slot.status = 'In Progress';
-  await slot.save();
-  return slot;
-}
-
-/**
- * Complete a slot.
- * In Progress → Completed
- */
-async function completeSlot(slotId) {
-  const slot = await Slot.findById(slotId);
-  if (!slot) {
-    const err = new Error('Slot not found');
-    err.statusCode = 404;
-    throw err;
-  }
-  if (slot.status !== 'In Progress') {
-    const err = new Error(`Cannot complete slot with status "${slot.status}"`);
-    err.statusCode = 400;
-    throw err;
-  }
-
-  slot.status = 'Completed';
-  await slot.save();
-  return slot;
 }
 
 async function updateStatus(slotId, status, actor) {
@@ -441,6 +410,4 @@ module.exports = {
   reserveSlot,
   confirmSlot,
   freeSlot,
-  startSlot,
-  completeSlot,
 };

@@ -62,10 +62,10 @@ async function protect(req, res, next) {
 
     // Attach user to request
     const user = await User.findById(decoded.id);
-    if (!user || !ROLES.includes(user.role)) {
+    if (!user || user.status === 'Deactivated' || !ROLES.includes(user.role)) {
       return res.status(401).json({
         success: false,
-        message: 'User belonging to this token no longer exists',
+        message: 'Account is unavailable or deactivated',
       });
     }
 

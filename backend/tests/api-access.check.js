@@ -47,6 +47,15 @@ async function main() {
     return { _id: id(50), toObject: () => ({ _id: id(50), ...values }) };
   });
   stub(Appointment, 'findById', key => query(appointments.get(String(key)) || null));
+  stub(Appointment, 'findOneAndUpdate', async (filter, update) => {
+    const row = appointments.get(String(filter._id));
+    if (!row || (filter.status !== undefined && row.status !== filter.status)) return null;
+    if (filter.consultationNotes !== undefined && row.consultationNotes !== filter.consultationNotes) return null;
+    Object.assign(row, update.$set);
+    if (update.$push?.statusHistory) row.statusHistory.push(update.$push.statusHistory);
+    if (update.$push?.noteVersions) (row.noteVersions ||= []).push(...update.$push.noteVersions.$each);
+    return row;
+  });
   stub(Appointment, 'find', filters => query(filters.status ? [] : [...appointments.values()].filter(item =>
     (!filters.patient || item.patient === filters.patient) && (!filters.doctor || item.doctor === filters.doctor))));
   const slots = [
@@ -143,7 +152,8 @@ async function main() {
   assert.equal(appointments.get(appointmentId).consultationNotes, 'Allowed notes');
   await expect(`${own}/documents`, doctor, 400, 'PATCH', { documents: [{ ...appointments.get(appointmentId).documents[0], url: '/uploads/someone-elses-file.txt' }] });
   await expect(`${own}/documents`, doctor, 400, 'PATCH', { consultationNotes: { $set: 'bad' } });
-  await expect(`${own}/check-in`, doctor, 200, 'PATCH');
+  await expect(`${own}/check-in`, doctor, 400, 'PATCH'); // Future-day check-in must not start consultation.
+  await expect(`${own}/start`, doctor, 409, 'PATCH'); // Arrival is required first.
   await expect(`${own}/cancel`, patient, 200, 'PATCH', { reason: 'Own appointment' });
 
   const beforeUploads = await fs.readdir(UPLOAD_ROOT);

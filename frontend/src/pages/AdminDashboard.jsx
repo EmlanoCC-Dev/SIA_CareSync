@@ -22,6 +22,7 @@ export default function AdminDashboard() {
   const [userRoleFilter, setUserRoleFilter] = useState('');
   const [userSearch, setUserSearch] = useState('');
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -191,7 +192,7 @@ export default function AdminDashboard() {
                       {apt.status === 'Pending' && !apt.slot && !apt.walkIn && <button className="btn btn-primary btn-sm" onClick={() => setAssignment(apt)}>Assign doctor &amp; slot</button>}
                       <button onClick={() => openTimeline(apt)} className="btn btn-secondary btn-sm">
                         <History size={14} />
-                        <span>Timeline</span>
+                        <span>History &amp; comments</span>
                       </button>
                     </td>
                   </tr>
@@ -264,14 +265,16 @@ export default function AdminDashboard() {
                   <th>Name</th>
                   <th>Email</th>
                   <th>Role</th>
+                  <th>Status</th>
                   <th>Contact</th>
                   <th>Registered Date</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
+                    <td colSpan={7} style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
                       No users match the selected role or search criteria.
                     </td>
                   </tr>
@@ -285,8 +288,10 @@ export default function AdminDashboard() {
                       <td>
                         <span className={`role-badge role-${u.role}`}>{u.role}</span>
                       </td>
+                      <td><span className={`badge badge-${u.status === 'Deactivated' ? 'Cancelled' : 'Completed'}`}>{u.status || 'Active'}</span></td>
                       <td>{u.contactNumber || '—'}</td>
                       <td>{new Date(u.createdAt).toLocaleDateString()}</td>
+                      <td><button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditingUser(u)} aria-label={`Edit ${u.firstName} ${u.lastName}`}>Edit account</button></td>
                     </tr>
                   ))
                 )}
@@ -299,8 +304,10 @@ export default function AdminDashboard() {
       {/* Add Doctor / Staff User Modal */}
       <AssignSlotModal isOpen={!!assignment} appointment={assignment} onClose={() => setAssignment(null)} onAssigned={loadData} />
       <AddUserModal
-        isOpen={isAddUserModalOpen}
-        onClose={() => setIsAddUserModalOpen(false)}
+        key={editingUser?._id || 'new-account'}
+        isOpen={isAddUserModalOpen || !!editingUser}
+        user={editingUser}
+        onClose={() => { setIsAddUserModalOpen(false); setEditingUser(null); }}
         onUserAdded={loadData}
       />
 

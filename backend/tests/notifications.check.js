@@ -67,6 +67,11 @@ async function main() {
   await emit(EVENTS.APPOINTMENT_CANCELLED, { appointment, reason: 'PRIVATE_CANCEL_REASON' });
   await emit(EVENTS.APPOINTMENT_NO_SHOW, { appointment });
   await emit(EVENTS.APPOINTMENT_CHECKED_IN, { appointment });
+  assert.equal(rows.at(-1).type, 'PATIENT_ARRIVED');
+  assert(!rows.at(-1).message.includes('now in progress'));
+  await emit(EVENTS.APPOINTMENT_STARTED, { appointment });
+  assert.equal(rows.at(-1).type, 'PATIENT_READY');
+  assert(rows.at(-1).message.includes('now in progress'));
   await emit(EVENTS.APPOINTMENT_COMPLETED, { appointment });
   const walkIn = { queueNumber: 8, name: 'PRIVATE_WALKIN_NAME' };
   await emit(EVENTS.WALKIN_SLOT_ASSIGNED, { appointment: { ...appointment, patient: null }, walkIn, slot: { doctor: doctor._id, startTime: '10:00', endTime: '10:15' } });

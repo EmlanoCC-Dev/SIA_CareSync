@@ -49,7 +49,7 @@ async function createUser(req, res, next) {
       role: role || 'Staff',
       contactNumber,
       consultationDuration: consultationDuration ? Number(consultationDuration) : 15,
-    });
+    }, req.user._id || req.user.id);
     res.status(201).json({
       success: true,
       data: result.user,
@@ -136,5 +136,10 @@ async function schedule(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { register, login, getMe, getDoctors, listUsers, createUser, schedule };
+async function updateUser(req, res, next) {
+  try { res.json({ success: true, data: await userService.updateUser(req.params.id, req.user, req.body) }); }
+  catch (err) { next(err); }
+}
+
+module.exports = { register, login, getMe, getDoctors, listUsers, createUser, updateUser, schedule };
 

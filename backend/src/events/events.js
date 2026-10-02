@@ -10,6 +10,10 @@
  */
 
 const EVENTS = {
+  USER_CREATED: 'user.created',
+  USER_UPDATED: 'user.updated',
+  DOCUMENT_DELETED: 'document.deleted',
+  SLOTS_GENERATED: 'slot.generated',
   // ── Module 2: Appointment ──────────────────────────────
   APPOINTMENT_BOOKED: 'appointment.booked',
   APPOINTMENT_ASSIGNED: 'appointment.assigned',
@@ -20,6 +24,7 @@ const EVENTS = {
   APPOINTMENT_CANCELLED: 'appointment.cancelled',
   APPOINTMENT_NO_SHOW: 'appointment.noShow',
   APPOINTMENT_CHECKED_IN: 'appointment.checkedIn',
+  APPOINTMENT_STARTED: 'appointment.started',
   APPOINTMENT_COMPLETED: 'appointment.completed',
 
   // ── Slot lifecycle ─────────────────────────────────────
@@ -41,7 +46,7 @@ const EVENTS = {
   DOCUMENT_UPLOADED: 'document.uploaded',
   DOCUMENT_VERIFIED: 'document.verified',
 
-  // ── Module 6: Comment/Feedback (placeholder) ───────────
+  // Module 6: Appointment comments and patient replies
   COMMENT_ADDED: 'comment.added',
 };
 

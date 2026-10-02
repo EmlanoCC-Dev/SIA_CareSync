@@ -10,5 +10,6 @@ export default function AppointmentPatientDetails({ appointment }) {
     <strong>{name}</strong>
     {contact && <div className="appointment-patient-contact">{contact}</div>}
     {walkIn && <div className="appointment-visit-source">Walk-in{walkIn.queueNumber != null ? ` · Queue #${walkIn.queueNumber}` : ''}</div>}
+    {!walkIn && appointment.queueNumber != null && <div className="appointment-visit-source">Scheduled · Queue #A-{appointment.queueNumber}</div>}
   </div>;
 }

@@ -45,6 +45,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    status: { type: String, enum: ['Active', 'Deactivated'], default: 'Active' },
 
     // ── Doctor-specific fields (only relevant when role === 'Doctor') ──
     consultationDuration: {

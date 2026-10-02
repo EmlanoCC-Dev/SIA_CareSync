@@ -1,7 +1,18 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import AppointmentComments from './AppointmentComments';
+import VersionHistory from './VersionHistory';
 import { X, History, Clock, User, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
 export default function StatusTimelineModal({ isOpen, onClose, appointment }) {
+  const dialog = useRef(null);
+  useEffect(() => {
+    if (!isOpen || !appointment) return;
+    const node = dialog.current;
+    node.showModal();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { node.close(); document.body.style.overflow = previousOverflow; };
+  }, [isOpen, appointment?._id]);
   if (!isOpen || !appointment) return null;
 
   const history = appointment.statusHistory || [];
@@ -20,14 +31,14 @@ export default function StatusTimelineModal({ isOpen, onClose, appointment }) {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
+      <dialog ref={dialog} className="modal-content care-dialog appointment-details-dialog" aria-labelledby="appointment-details-title"
+        onCancel={event => { event.preventDefault(); onClose(); }}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <History size={20} color="var(--primary)" />
-            <h3>Appointment status history</h3>
+            <h3 id="appointment-details-title">Appointment details</h3>
           </div>
-          <button onClick={onClose} aria-label="Close appointment history" className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
+          <button onClick={onClose} aria-label="Close appointment details" className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
             <X size={18} />
           </button>
         </div>
@@ -47,6 +58,9 @@ export default function StatusTimelineModal({ isOpen, onClose, appointment }) {
               Reason: {appointment.reason}
             </div>
           </div>
+
+          <AppointmentComments key={appointment._id} appointmentId={appointment._id} />
+          <VersionHistory key={`versions-${appointment._id}`} appointmentId={appointment._id} />
 
           <h4 style={{ fontSize: '0.9rem', marginBottom: '1rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Transition Timeline
@@ -87,7 +101,6 @@ export default function StatusTimelineModal({ isOpen, onClose, appointment }) {
             Close
           </button>
         </div>
-      </div>
-    </div>
+      </dialog>
   );
 }

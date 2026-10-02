@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import { useDialog } from '../context/DialogContext';
 import { useAuth } from '../context/AuthContext';
 import BookAppointmentModal from '../components/BookAppointmentModal';
 import StatusTimelineModal from '../components/StatusTimelineModal';
+import VersionHistory from '../components/VersionHistory';
 import { PlusCircle, Calendar, Clock, User, AlertCircle, History, XCircle, CheckCircle2 } from 'lucide-react';
 
 export default function PatientDashboard() {
@@ -54,6 +55,15 @@ export default function PatientDashboard() {
 
   const [notesOpen, setNotesOpen] = useState(false);
   const [selectedNotesApt, setSelectedNotesApt] = useState(null);
+  const recordDialog = useRef(null);
+  useEffect(() => {
+    if (!notesOpen || !selectedNotesApt) return;
+    const node = recordDialog.current;
+    node.showModal();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { node.close(); document.body.style.overflow = previousOverflow; };
+  }, [notesOpen, selectedNotesApt?._id]);
 
   const openNotes = (apt) => {
     setSelectedNotesApt(apt);
@@ -62,7 +72,7 @@ export default function PatientDashboard() {
 
   // Stats calculation
   const pendingCount = appointments.filter((a) => a.status === 'Pending').length;
-  const confirmedCount = appointments.filter((a) => ['Confirmed', 'In Progress'].includes(a.status)).length;
+  const confirmedCount = appointments.filter((a) => ['Confirmed', 'Checked In', 'In Progress'].includes(a.status)).length;
   const completedCount = appointments.filter((a) => a.status === 'Completed').length;
 
   return (
@@ -202,10 +212,11 @@ export default function PatientDashboard() {
                         <span className="status-dot"></span>
                         {apt.status}
                       </span>
+                      {apt.queueNumber != null && <div className="appointment-visit-source">Your queue ticket: #A-{apt.queueNumber}</div>}
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'inline-flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                        {(apt.consultationNotes || (apt.documents && apt.documents.length > 0)) && (
+                        {(apt.consultationNotes || apt.notesRevision > 0 || (apt.documents && apt.documents.length > 0)) && (
                           <button
                             onClick={() => openNotes(apt)}
                             className="btn btn-teal btn-sm"
@@ -217,12 +228,12 @@ export default function PatientDashboard() {
                         <button
                           onClick={() => openTimeline(apt)}
                           className="btn btn-secondary btn-sm"
-                          title="View Status History"
+                          title="View appointment history and comments"
                         >
                           <History size={14} />
-                          <span>History</span>
+                          <span>History &amp; comments</span>
                         </button>
-                        {['Pending', 'Confirmed'].includes(apt.status) && (
+                        {['Pending', 'Confirmed', 'Checked In'].includes(apt.status) && (
                           <button
                             onClick={() => handleCancel(apt._id)}
                             className="btn btn-danger btn-sm"
@@ -258,10 +269,10 @@ export default function PatientDashboard() {
 
       {/* Patient Medical Notes Modal */}
       {notesOpen && selectedNotesApt && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '560px' }}>
+          <dialog ref={recordDialog} className="modal-content care-dialog" style={{ width: 'min(560px, calc(100% - 32px))' }}
+            aria-labelledby="patient-record-title" onCancel={event => { event.preventDefault(); setNotesOpen(false); }}>
             <div className="modal-header">
-              <h3>Doctor's Consultation Record</h3>
+              <h3 id="patient-record-title">Doctor's Consultation Record</h3>
               <button onClick={() => setNotesOpen(false)} aria-label="Close medical record" className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
                 ✕
               </button>
@@ -335,15 +346,14 @@ export default function PatientDashboard() {
                   </div>
                 </div>
               )}
+              <VersionHistory key={selectedNotesApt._id} appointmentId={selectedNotesApt._id} />
             </div>
-
             <div className="modal-footer">
               <button type="button" onClick={() => setNotesOpen(false)} className="btn btn-secondary">
                 Close
               </button>
             </div>
-          </div>
-        </div>
+          </dialog>
       )}
       <footer className="workspace-footer"><span>CareSync · Patient portal</span><span>Appointments &amp; consultation records</span></footer>
     </main>

@@ -54,6 +54,7 @@ button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 .role-Admin { background: var(--indigo-light); color: var(--indigo); }
 .badge-Pending, .badge-Waiting { background: var(--amber-light); color: var(--amber); }
 .badge-Confirmed, .badge-Reserved, .badge-Reserved-Confirmed, .badge-Reserved-Tentative, .badge-Slot-Assigned, .badge-Slot\ Assigned { background: var(--indigo-light); color: var(--indigo); }
+.badge-Checked-In { background: var(--amber-light); color: var(--amber); }
 .badge-In-Progress, .badge-In\ Progress { background: var(--primary-light); color: var(--primary-hover); }
 .badge-Completed, .badge-Available, .badge-Checked-In, .badge-Checked\ In { background: var(--emerald-light); color: #1e6947; }
 .badge-Cancelled, .badge-Declined { background: var(--rose-light); color: var(--rose); }
@@ -81,6 +82,32 @@ td strong { font-size: 13px; } tr:last-child td { border-bottom: 0; } tbody tr:h
 .modal-footer { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--border); background: #f7faf9; }
 .care-dialog { width: min(480px, calc(100% - 32px)); margin: auto; padding: 0; color: var(--text-main); }
 .care-dialog::backdrop { background: rgb(13 35 36 / 48%); }
+.appointment-details-dialog { width: min(580px, calc(100% - 32px)); }
+.appointment-comments { padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.appointment-comments-heading, .appointment-comment-actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.appointment-comments-heading h4 { display: flex; align-items: center; gap: 8px; font-size: 16px; }
+.appointment-comments-hint { font-size: 12px; color: var(--text-muted); margin: 8px 0; }
+.appointment-comments-empty { padding: 16px; margin: 16px 0; border-radius: 8px; background: var(--bg-muted); color: var(--text-muted); font-size: 13px; }
+.appointment-comments-list { list-style: none; padding: 0; margin: 16px 0; display: grid; gap: 12px; }
+.appointment-comments-list li { padding: 16px; background: var(--bg-muted); border: 1px solid var(--border); border-radius: 8px; min-width: 0; }
+.appointment-comment-meta { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 12px; }
+.appointment-comment-meta time, .appointment-comment-role { color: var(--text-muted); }
+.appointment-comment-role { margin-left: 8px; }
+.appointment-comment-message { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 8px; font-size: 13px; }
+.appointment-comment-actions { margin-top: 8px; }
+.record-versions { margin-top: 24px; padding: 24px 0; border-top: 1px solid var(--border); overflow-wrap: anywhere; }
+.record-versions-heading, .record-version-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.record-versions-heading h4 { display: flex; align-items: center; gap: 8px; font-size: 16px; }
+.record-version-meta { color: var(--text-muted); font-size: 12px; margin: 8px 0; }
+.record-version-group { margin-top: 16px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; }
+.record-version-group summary { cursor: pointer; padding: 8px 0; font-size: 13px; font-weight: 650; }
+.record-version-group summary:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+.record-version-entry { padding: 16px; margin-top: 12px; border-radius: 8px; background: var(--bg-muted); font-size: 13px; }
+.record-version-content { white-space: pre-wrap; margin-top: 12px; }
+.record-replacement-notice { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px; margin-bottom: 16px; background: var(--primary-light); border-radius: 8px; font-size: 12px; }
+.consultation-document-row { flex-wrap: wrap; gap: 12px; overflow-wrap: anywhere; }
+.consultation-document-row > div:first-child { min-width: 0; flex: 1 1 200px; }
+.consultation-document-actions { flex-wrap: wrap; }
 .care-dialog-heading { display: flex; align-items: center; gap: 12px; color: var(--primary); min-width: 0; }
 .care-dialog-heading.is-danger { color: var(--rose); }
 .care-dialog-message { color: var(--text-muted); font-size: 13px; overflow-wrap: anywhere; }

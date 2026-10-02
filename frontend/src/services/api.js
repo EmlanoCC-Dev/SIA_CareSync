@@ -60,6 +60,7 @@ export const api = {
   getDoctors: () => request('/users/doctors'),
   getUsers: (role) => request(`/users${role ? `?role=${role}` : ''}`),
   createUser: (userData) => request('/users', { method: 'POST', body: userData }),
+  updateUser: (id, userData) => request(`/users/${encodeURIComponent(id)}`, { method: 'PATCH', body: userData }),
   getDoctorSchedule: (id) => request(`/users/${id}/schedule`),
   updateDoctorSchedule: (id, data) => request(`/users/${id}/schedule`, { method: 'PATCH', body: data }),
   getReports: (params) => request(`/reports?${new URLSearchParams(params)}`),
@@ -76,18 +77,24 @@ export const api = {
     return request(`/appointments${queryString ? `?${queryString}` : ''}`);
   },
   getAppointmentById: (id) => request(`/appointments/${id}`),
+  getAppointmentVersions: (id) => request(`/appointments/${encodeURIComponent(id)}/versions`),
+  getAppointmentComments: (id) => request(`/appointments/${encodeURIComponent(id)}/comments`),
+  addAppointmentComment: (id, message) => request(`/appointments/${encodeURIComponent(id)}/comments`, { method: 'POST', body: { message } }),
   createAppointment: (appointmentData) => request('/appointments', { method: 'POST', body: appointmentData }),
   approveAppointment: (id) => request(`/appointments/${id}/approve`, { method: 'PATCH' }),
   assignAppointmentSlot: (id, slotId) => request(`/appointments/${id}/assign`, { method: 'PATCH', body: { slotId } }),
   declineAppointment: (id, reason) => request(`/appointments/${id}/decline`, { method: 'PATCH', body: { reason } }),
   checkInAppointment: (id) => request(`/appointments/${id}/check-in`, { method: 'PATCH' }),
+  startConsultation: (id) => request(`/appointments/${id}/start`, { method: 'PATCH' }),
   noShowAppointment: (id, reason) => request(`/appointments/${id}/no-show`, { method: 'PATCH', body: { reason } }),
   cancelAppointment: (id, reason) => request(`/appointments/${id}/cancel`, { method: 'PATCH', body: { reason } }),
   uploadDocuments: (id, data) => request(`/appointments/${id}/documents`, { method: 'PATCH', body: data }),
   uploadAppointmentFile: (id, formData) => request(`/appointments/${id}/upload`, { method: 'POST', body: formData }),
-  deleteAppointmentDocument: (id, docId) => request(`/appointments/${id}/documents/${docId}`, { method: 'DELETE' }),
-  downloadAppointmentDocument: async (id, doc) => {
-    const blob = await request(`/appointments/${encodeURIComponent(id)}/documents/${encodeURIComponent(doc._id)}/download`, { responseType: 'blob' });
+  replaceAppointmentDocument: (id, docId, formData) => request(`/appointments/${encodeURIComponent(id)}/documents/${encodeURIComponent(docId)}/replace`, { method: 'POST', body: formData }),
+  deleteAppointmentDocument: (id, docId, version) => request(`/appointments/${id}/documents/${docId}`, { method: 'DELETE', body: { version } }),
+  downloadAppointmentDocument: async (id, doc, version) => {
+    const history = version === undefined ? '' : `/versions/${encodeURIComponent(version)}`;
+    const blob = await request(`/appointments/${encodeURIComponent(id)}/documents/${encodeURIComponent(doc._id)}${history}/download`, { responseType: 'blob' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;

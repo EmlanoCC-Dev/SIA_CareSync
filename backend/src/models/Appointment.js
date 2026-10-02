@@ -2,11 +2,11 @@
  * Appointment Model
  * ─────────────────
  * Module 2: Appointment Module
- * Module 4: Version Tracking (via statusHistory sub-document)
+ * Module 4: Version Tracking (status and consultation content snapshots)
  * Layer:    Data Access
  *
  * Full lifecycle statuses:
- *   Pending → Confirmed → In Progress → Completed
+ *   Pending → Confirmed → Checked In → In Progress → Completed
  *           → Declined  (staff/doctor rejects while Pending)
  *           → Cancelled (patient/doctor cancels after Confirmed)
  *           → No-show   (patient didn't show up)
@@ -21,6 +21,7 @@ const mongoose = require('mongoose');
 const APPOINTMENT_STATUSES = [
   'Pending',
   'Confirmed',
+  'Checked In',
   'Declined',
   'In Progress',
   'Completed',
@@ -54,6 +55,26 @@ const statusHistorySchema = new mongoose.Schema(
 );
 
 // ── Sub-schema: Uploaded Document ────────────────────────
+const documentVersionSchema = new mongoose.Schema({
+  version: { type: Number, required: true },
+  filename: { type: String, required: true, trim: true },
+  url: { type: String, required: true, trim: true },
+  type: { type: String, trim: true },
+  uploadedAt: { type: Date, default: null },
+  uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  uploaderName: { type: String, default: null },
+  uploaderRole: { type: String, default: null },
+}, { _id: false });
+
+const noteVersionSchema = new mongoose.Schema({
+  version: { type: Number, required: true },
+  notes: { type: String, default: '' },
+  savedAt: { type: Date, default: null },
+  savedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  authorName: { type: String, default: null },
+  authorRole: { type: String, default: null },
+}, { _id: false });
+
 const documentSchema = new mongoose.Schema(
   {
     filename: {
@@ -72,8 +93,16 @@ const documentSchema = new mongoose.Schema(
     },
     uploadedAt: {
       type: Date,
-      default: Date.now,
+      default: null,
     },
+    version: { type: Number, default: 1 },
+    uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    uploaderName: { type: String, default: null },
+    uploaderRole: { type: String, default: null },
+    versions: [documentVersionSchema],
+    archivedAt: { type: Date, default: null },
+    archivedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    archivedByName: { type: String, default: null },
   },
   { _id: true }
 );
@@ -142,14 +171,19 @@ const appointmentSchema = new mongoose.Schema(
       trim: true,
     },
     documents: [documentSchema],
+    notesRevision: { type: Number, default: 0 },
+    noteVersions: [noteVersionSchema],
+    archivedDocuments: [documentSchema],
 
-    // Module 6: Comment/Feedback (placeholder field)
+    // Legacy single remark; discussions are stored in AppointmentComment.
     remarks: {
       type: String,
       trim: true,
     },
 
-    // Module 8: Queue position (placeholder)
+    // Scheduled arrival tickets have their own A- prefix on the public board.
+    queueDay: { type: String },
+    checkedInAt: { type: Date },
     queueNumber: {
       type: Number,
       default: null,
@@ -174,6 +208,9 @@ appointmentSchema.index({ patient: 1, date: -1 });
 appointmentSchema.index({ status: 1, date: 1 });
 appointmentSchema.index({ slot: 1 });
 appointmentSchema.index({ walkIn: 1 });
+appointmentSchema.index({ queueDay: 1, queueNumber: 1 }, {
+  unique: true, name: 'unique_scheduled_daily_ticket', partialFilterExpression: { queueDay: { $type: 'string' } },
+});
 
 module.exports = mongoose.model('Appointment', appointmentSchema);
 module.exports.APPOINTMENT_STATUSES = APPOINTMENT_STATUSES;
