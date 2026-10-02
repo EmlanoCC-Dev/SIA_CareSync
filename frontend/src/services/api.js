@@ -63,6 +63,9 @@ export const api = {
   getDoctorSchedule: (id) => request(`/users/${id}/schedule`),
   updateDoctorSchedule: (id, data) => request(`/users/${id}/schedule`, { method: 'PATCH', body: data }),
   getReports: (params) => request(`/reports?${new URLSearchParams(params)}`),
+  getNotifications: (params = {}) => request(`/notifications?${new URLSearchParams(params)}`),
+  readNotification: (id) => request(`/notifications/${encodeURIComponent(id)}/read`, { method: 'PATCH' }),
+  readAllNotifications: () => request('/notifications/read-all', { method: 'PATCH' }),
 
   // ── Appointments ──
   getAppointments: (params = {}) => {

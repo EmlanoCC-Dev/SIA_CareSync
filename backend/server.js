@@ -42,6 +42,7 @@ async function start() {
   await Promise.all([
     require('./src/models/WalkIn').init(), require('./src/models/Slot').init(),
     require('./src/models/SlotPlan').init(), require('./src/models/AssignmentRecovery').init(),
+    require('./src/models/Notification').init(),
   ]);
   if (await require('./src/models/AssignmentRecovery').countDocuments({ state: 'pending' })) {
     throw new Error('Interrupted assignments need reconciliation. Stop clinic writers and run node backend/scripts/recover-assignments.js --offline before starting.');

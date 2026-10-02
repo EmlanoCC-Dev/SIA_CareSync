@@ -54,6 +54,7 @@ router.use('/walkins', walkInRoutes);
 router.use('/slots', slotRoutes);
 router.use('/system', systemRoutes);
 router.use('/reports', require('./report.routes'));
+router.use('/notifications', require('./notification.routes'));
 router.use((_req, res) => res.status(404).json({ success: false, message: 'API endpoint not found' }));
 
 module.exports = router;

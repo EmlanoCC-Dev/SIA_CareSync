@@ -64,6 +64,30 @@
 .auth-panel-icon { display: grid; place-items: center; width: 52px; height: 52px; background: white; color: var(--primary); border: 1px solid var(--border); border-radius: 12px; }
 .auth-register .auth-form-panel { min-height: 640px; }
 /* Reporting and recurring schedules reuse the clinic workspace controls. */
+/* Care updates use the same quiet mint emphasis as the visit journey. */
+.notification-trigger .notification-count { margin-left: auto; padding: 2px 8px; border-radius: 999px; background: var(--primary-light); color: var(--primary-hover); font-size: 11px; font-variant-numeric: tabular-nums; }
+.notification-unavailable { color: var(--text-muted); font-weight: 700; }
+.notification-dialog { color: var(--text-main); background: var(--bg-surface); }
+.notification-dialog .modal-body { max-height: 65dvh; overflow-y: auto; }
+.notification-dialog .page-eyebrow { margin-bottom: 4px; }
+.notification-controls { margin: 0; padding: 0; border: 0; min-width: 0; }
+.notification-toolbar, .notification-filters, .notification-item-heading, .notification-item-footer, .notification-pagination { display: flex; align-items: center; gap: 8px; }
+.notification-toolbar, .notification-item-footer, .notification-pagination { justify-content: space-between; flex-wrap: wrap; }
+.notification-toolbar { gap: 12px; margin-bottom: 20px; }
+.notification-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.notification-list li { padding: 16px; border: 1px solid var(--border); border-radius: 12px; }
+.notification-list li.is-unread { background: var(--primary-light); border-color: rgb(8 127 117 / 20%); }
+.notification-item-heading { justify-content: space-between; align-items: flex-start; }
+.notification-item-heading h4 { font-size: 13px; margin: 0; }
+.notification-list p { font-size: 13px; margin: 8px 0 12px; overflow-wrap: anywhere; }
+.notification-new { flex-shrink: 0; color: var(--primary-hover); font-size: 10px; font-weight: 700; }
+.notification-item-footer time, .notification-pagination span { color: var(--text-muted); font-size: 11px; }
+.notification-dialog .notification-item-footer time { display: block; padding: 0; }
+.notification-empty { display: grid; justify-items: center; gap: 8px; padding: 32px 12px; text-align: center; color: var(--text-muted); font-size: 13px; }
+.notification-empty svg { color: var(--primary); }
+.notification-empty h4 { color: var(--text-main); margin: 0; }
+.notification-pagination { margin-top: 20px; }
+@media (max-width: 640px) { .notification-dialog .modal-header, .notification-dialog .modal-body { padding: 16px; } }
 .workspace-note { color: var(--text-muted); font-size: 13px; margin: 8px 0 16px; }
 .assignment-dialog { position: fixed; inset: 0; margin: auto; padding: 0; width: min(600px, 92vw); max-height: 90dvh; border: 1px solid var(--border); }
 .assignment-dialog::backdrop { background: rgb(24 58 59 / 40%); }

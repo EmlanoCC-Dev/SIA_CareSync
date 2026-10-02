@@ -89,6 +89,7 @@ async function main() {
     ['slots', require('../src/routes/slot.routes')], ['walkins', require('../src/routes/walkIn.routes')],
     ['reports', require('../src/routes/report.routes')], ['audit-logs', require('../src/routes/auditLog.routes')],
     ['system', require('../src/routes/system.routes')],
+    ['notifications', require('../src/routes/notification.routes')],
   ];
   const publicRoutes = new Set(['POST /api/users/login', 'POST /api/users/register', 'GET /api/system/time', 'GET /api/walkins/now-serving']);
   let privateRoutes = 0;

@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useDialog } from '../context/DialogContext';
 import { api } from '../services/api';
 import SystemTimeModal from './SystemTimeModal';
+import NotificationInbox from './NotificationInbox';
 import { LogOut, Tv, Clock } from 'lucide-react';
 import logoSource from '../assets/landing-logo.png';
 
@@ -39,6 +40,7 @@ export default function Navbar() {
         </div>
 
         <div className="navbar-tools">
+          {user && <NotificationInbox key={user._id} />}
           {/* System Time & Clinic Operating Status */}
           {systemTimeStatus && <time dateTime={systemTimeStatus.currentTime} style={{ fontSize: '0.85rem' }}>
             {new Date(systemTimeStatus.currentTime).toLocaleDateString([], { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
