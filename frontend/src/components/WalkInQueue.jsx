@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import { useDialog } from '../context/DialogContext';
 import AddWalkInModal from './AddWalkInModal';
@@ -10,6 +10,11 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
   const [walkIns, setWalkIns] = useState([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
+  const [error, setError] = useState('');
+  const [updating, setUpdating] = useState(false);
+  const requestVersion = useRef(0);
+  const currentFilter = useRef(statusFilter);
+  currentFilter.current = statusFilter;
   
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -18,26 +23,28 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
 
   useEffect(() => {
     fetchWalkIns();
-  }, [statusFilter]);
+    return () => { requestVersion.current++; };
+  }, [statusFilter, doctorId]);
 
   const fetchWalkIns = async () => {
+    const version = ++requestVersion.current;
     setLoading(true);
+    setError('');
     try {
-      const date = new Date().toISOString().split('T')[0];
-      const res = await api.getWalkIns({ status: statusFilter || undefined, date });
+      const res = await api.getWalkIns({ status: currentFilter.current || undefined });
+      if (version !== requestVersion.current) return;
       if (res.success && res.data) {
-        let filtered = Array.isArray(res.data) ? res.data : [];
-        if (doctorId && statusFilter !== 'Waiting') {
-          filtered = filtered.filter(w => !w.assignedSlot || w.assignedSlot.doctor === doctorId);
-        }
-        setWalkIns(filtered);
+        setWalkIns(Array.isArray(res.data) ? res.data : []);
       } else {
         setWalkIns([]);
       }
     } catch (err) {
-      console.error('Failed to load walk-ins:', err);
+      if (version === requestVersion.current) {
+        setWalkIns([]);
+        setError(err.message || 'Failed to load walk-ins');
+      }
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
   };
 
@@ -47,11 +54,15 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
   };
 
   const handleUpdateStatus = async (id, status) => {
+    if (updating) return;
+    setUpdating(true);
     try {
       await api.updateWalkInStatus(id, status);
-      fetchWalkIns();
+      await fetchWalkIns();
     } catch (err) {
       await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to update status' });
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -66,6 +77,7 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <select 
             className="form-select" 
+            aria-label="Filter walk-ins by status"
             style={{ width: 'auto', padding: '0.35rem 0.75rem' }}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -90,7 +102,8 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
         </div>
       </div>
 
-      <div className="table-container">
+      {error && <p role="alert">{error}</p>}
+      <div className="table-container" aria-busy={loading}>
         <table>
           <thead>
             <tr>
@@ -102,10 +115,10 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
             </tr>
           </thead>
           <tbody>
-            {walkIns.length === 0 ? (
+            {loading || error || walkIns.length === 0 ? (
               <tr>
                 <td colSpan={5} style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-                  {loading ? 'Loading queue...' : 'Queue is empty for today.'}
+                  {loading ? 'Loading queue...' : error ? 'Queue could not be loaded.' : 'No walk-ins match this view today.'}
                 </td>
               </tr>
             ) : (
@@ -143,7 +156,7 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
                     )}
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
+                    <fieldset disabled={updating} style={{ display: 'inline-flex', gap: '0.35rem', border: 0, padding: 0, margin: 0 }}>
                       {isStaff && walkIn.status === 'Waiting' && (
                         <button 
                           className="btn btn-primary btn-sm"
@@ -188,7 +201,7 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
                           <AlertTriangle size={14} /> Left
                         </button>
                       )}
-                    </div>
+                    </fieldset>
                   </td>
                 </tr>
               ))

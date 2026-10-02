@@ -28,6 +28,7 @@ function registerAuditHandlers() {
     { event: EVENTS.SLOT_FREED, action: 'SLOT_FREED' },
     { event: EVENTS.WALKIN_ADDED, action: 'WALKIN_ADDED' },
     { event: EVENTS.WALKIN_SLOT_ASSIGNED, action: 'WALKIN_SLOT_ASSIGNED' },
+    { event: EVENTS.WALKIN_STATUS_UPDATED, action: 'WALKIN_STATUS_UPDATED' },
     { event: EVENTS.REVISION_REQUESTED, action: 'REVISION_REQUESTED' },
     { event: EVENTS.PATIENT_CHECKED_IN, action: 'PATIENT_CHECKED_IN' },
     { event: EVENTS.DOCUMENT_UPLOADED, action: 'DOCUMENT_UPLOADED' },

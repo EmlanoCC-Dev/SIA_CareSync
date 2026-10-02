@@ -8,6 +8,9 @@ const jwt = require('jsonwebtoken');
 const User = require('../src/models/User');
 const Slot = require('../src/models/Slot');
 const Appointment = require('../src/models/Appointment');
+const SlotPlan = require('../src/models/SlotPlan');
+const AssignmentRecovery = require('../src/models/AssignmentRecovery');
+const recovery = require('../src/services/assignmentRecovery.service');
 const userService = require('../src/services/user.service');
 const slotService = require('../src/services/slot.service');
 const appointmentService = require('../src/services/appointment.service');
@@ -26,6 +29,7 @@ const patient = { _id: ids.patient, id: ids.patient, role: 'Patient' };
 const users = new Map([[ids.doctor, doctor], [ids.staff, staff], [ids.patient, patient]]);
 const slots = new Map();
 const appointments = new Map();
+const plans = new Map();
 const original = [];
 const stub = (model, method, fn) => { original.push([model, method, model[method]]); model[method] = fn; };
 const query = data => ({ populate() { return this; }, sort() { return this; }, then(resolve, reject) { return Promise.resolve(data).then(resolve, reject); } });
@@ -39,6 +43,20 @@ const listeners = [EVENTS.APPOINTMENT_ASSIGNED, EVENTS.SCHEDULE_UPDATED, EVENTS.
 
 async function main() {
   setCustomTime('2026-10-01T08:00:00');
+  stub(recovery, 'begin', async values => ({ _id: 'isolated-operation', ...values }));
+  stub(recovery, 'finish', async () => {});
+  stub(AssignmentRecovery, 'updateOne', async () => {});
+  stub(SlotPlan, 'updateOne', async (filter, update) => {
+    if (!plans.has(filter._id)) plans.set(filter._id, { _id: filter._id, ...update.$setOnInsert });
+  });
+  stub(SlotPlan, 'findById', async key => plans.get(key));
+  stub(SlotPlan, 'findOneAndUpdate', async (filter, update) => {
+    const plan = plans.get(filter._id);
+    if (plan.revision !== filter.revision) return null;
+    plan.revision++;
+    plan.slots.push(...update.$push.slots.$each);
+    return plan;
+  });
   stub(User, 'findById', id => Promise.resolve(users.get(String(id)) || null));
   stub(Slot, 'find', filters => query([...slots.values()].filter(slot => String(slot.doctor) === String(filters.doctor) && +slot.date === +filters.date)));
   stub(Slot, 'findById', id => query(slots.get(String(id)) || null));
@@ -57,7 +75,7 @@ async function main() {
   });
   stub(Slot, 'updateOne', async (filter, update) => {
     const slot = slots.get(String(filter._id));
-    if (slot?.status === filter.status && slot.appointment === filter.appointment) Object.assign(slot, update.$set);
+    if ((filter.status?.$in?.includes(slot?.status) || slot?.status === filter.status) && slot.appointment === filter.appointment) Object.assign(slot, update.$set);
   });
   stub(Appointment, 'findById', async id => appointments.get(String(id)) || null);
   stub(Appointment, 'findOneAndUpdate', async (filter, update) => {

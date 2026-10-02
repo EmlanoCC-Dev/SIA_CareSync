@@ -21,7 +21,7 @@ async function create(req, res, next) {
       });
     }
 
-    const walkIn = await walkInService.addToHoldingList({ name, contactNumber });
+    const walkIn = await walkInService.addToHoldingList({ name, contactNumber, actorId: req.user._id });
     res.status(201).json({ success: true, data: walkIn });
   } catch (err) {
     next(err);
@@ -34,12 +34,18 @@ async function create(req, res, next) {
  */
 async function list(req, res, next) {
   try {
-    const { view } = req.query;
+    const { view, status, date } = req.query;
+    if (view !== undefined && !['holding', 'today'].includes(view)) {
+      return res.status(400).json({ success: false, message: 'Invalid walk-in list view' });
+    }
+    if (view === 'holding' && status !== undefined && status !== 'Waiting') {
+      return res.status(400).json({ success: false, message: 'The holding list only contains Waiting entries' });
+    }
     let walkIns;
     if (view === 'holding') {
-      walkIns = await walkInService.getHoldingList();
+      walkIns = await walkInService.getHoldingList({ date });
     } else {
-      walkIns = await walkInService.getTodayWalkIns();
+      walkIns = await walkInService.getTodayWalkIns({ status, date });
     }
     if (req.user.role === 'Doctor') {
       const doctorId = recordId(req.user._id || req.user.id);
@@ -75,4 +81,11 @@ async function assignSlot(req, res, next) {
   }
 }
 
-module.exports = { create, list, getNowServing, assignSlot };
+async function updateStatus(req, res, next) {
+  try {
+    const walkIn = await walkInService.updateStatus(req.params.id, req.body.status, req.user);
+    res.json({ success: true, data: walkIn });
+  } catch (err) { next(err); }
+}
+
+module.exports = { create, list, getNowServing, assignSlot, updateStatus };

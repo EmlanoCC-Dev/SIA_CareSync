@@ -57,6 +57,7 @@ const slotSchema = new mongoose.Schema(
       ref: 'Appointment',
       default: null,
     },
+    reservationOperation: { type: mongoose.Schema.Types.ObjectId, default: null },
   },
   {
     timestamps: true,

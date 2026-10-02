@@ -28,6 +28,7 @@ const EVENTS = {
   // ── Walk-in Queue ──────────────────────────────────────
   WALKIN_ADDED: 'walkIn.added',
   WALKIN_SLOT_ASSIGNED: 'walkIn.slotAssigned',
+  WALKIN_STATUS_UPDATED: 'walkIn.statusUpdated',
 
   // ── Module 5: Review & Approval Workflow ───────────────
   REVISION_REQUESTED: 'appointment.revisionRequested',

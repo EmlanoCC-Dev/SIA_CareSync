@@ -18,6 +18,8 @@ const emitter = require('../events/emitter');
 const EVENTS = require('../events/events');
 const { isDateTimePassed, parseDateOnly } = require('../utils/timeHelper');
 const { getNow } = require('../config/systemTime');
+const recovery = require('./assignmentRecovery.service');
+const mongoose = require('mongoose');
 
 /**
  * Automatically update missed / passed appointments to 'No-show'.
@@ -27,12 +29,14 @@ async function autoMarkNoShows() {
   try {
     const pendingOrConfirmed = await Appointment.find({
       status: { $in: ['Pending', 'Confirmed'] },
-    }).populate('slot');
+    }).populate('slot').populate('walkIn');
 
     const now = getNow();
     const updated = [];
 
     for (const app of pendingOrConfirmed) {
+      // Arrival is separate from starting the consultation in the walk-in queue.
+      if (app.walkIn?.status === 'Checked In') continue;
       const slotTime = app.slot ? `${app.slot.startTime}-${app.slot.endTime}` : app.timeSlot;
       const slotDate = app.slot ? app.slot.date : app.date;
 
@@ -50,7 +54,7 @@ async function autoMarkNoShows() {
         await app.save();
 
         if (app.walkIn) {
-          await WalkIn.findByIdAndUpdate(app.walkIn, { status: 'Left' });
+          await WalkIn.findByIdAndUpdate(app.walkIn._id || app.walkIn, { status: 'Left' });
         }
 
         emitter.emit(EVENTS.APPOINTMENT_NO_SHOW, {
@@ -102,7 +106,13 @@ async function create({ patientId, doctorId, date, timeSlot, slotId, reason }) {
     throw err;
   }
 
-  const appointment = await Appointment.create({
+  const appointmentId = new mongoose.Types.ObjectId();
+  const operation = slotId ? await recovery.begin({ kind: 'booking', appointment: appointmentId, slot: slotId }) : null;
+  let appointment;
+  try {
+    if (slotId) await slotService.reserveSlot(slotId, appointmentId, operation._id);
+    appointment = await Appointment.create({
+    _id: appointmentId,
     patient: patientId,
     doctor: resolvedDoctorId,
     slot: slotId || null,
@@ -119,15 +129,11 @@ async function create({ patientId, doctorId, date, timeSlot, slotId, reason }) {
     ],
   });
 
-  // Reserve slot if linked
-  if (slotId) {
-    try {
-      await slotService.reserveSlot(slotId, appointment._id);
-    } catch (err) {
-      await Appointment.deleteOne({ _id: appointment._id });
-      throw err;
-    }
+  } catch (err) {
+    if (operation) await recovery.onFailure(operation, err);
+    throw err;
   }
+  if (operation) await recovery.finish(operation);
 
   // ★ Event-Driven: emit booking event
   emitter.emit(EVENTS.APPOINTMENT_BOOKED, {
@@ -217,7 +223,7 @@ async function decline(appointmentId, userId, reason) {
 
   // Free linked slot
   if (appointment.slot) {
-    await slotService.freeSlot(appointment.slot, `Declined: ${reason}`);
+    await slotService.freeSlot(appointment.slot, `Declined: ${reason}`, appointment._id);
   }
 
   // ★ Event-Driven: emit decline event
@@ -260,7 +266,7 @@ async function cancel(appointmentId, userId, reason) {
 
   // Free linked slot
   if (appointment.slot) {
-    await slotService.freeSlot(appointment.slot, `Cancelled: ${reason || 'User cancelled'}`);
+    await slotService.freeSlot(appointment.slot, `Cancelled: ${reason || 'User cancelled'}`, appointment._id);
   }
 
   // If this was a walk-in, update walkIn status
@@ -307,7 +313,7 @@ async function noShow(appointmentId, userId, reason) {
 
   // Free linked slot
   if (appointment.slot) {
-    await slotService.freeSlot(appointment.slot, 'Patient marked No-show');
+    await slotService.freeSlot(appointment.slot, 'Patient marked No-show', appointment._id);
   }
 
   if (appointment.walkIn) {
@@ -570,9 +576,11 @@ async function assignSlot(appointmentId, slotId, staffId) {
   if (new Date(appointment.date).toISOString().slice(0, 10) !== new Date(slot.date).toISOString().slice(0, 10)) {
     throw Object.assign(new Error('Choose a slot on the requested appointment date'), { statusCode: 400 });
   }
-  const reserved = await slotService.reserveSlot(slotId, appointment._id);
+  const operation = await recovery.begin({ kind: 'flex', appointment: appointment._id, slot: slotId });
+  let reserved;
   let assigned;
   try {
+    reserved = await slotService.reserveSlot(slotId, appointment._id, operation._id);
     assigned = await Appointment.findOneAndUpdate(
       { _id: appointmentId, status: 'Pending', slot: null, walkIn: null, date: appointment.date },
       { $set: { slot: reserved._id, doctor: reserved.doctor, date: reserved.date,
@@ -583,11 +591,9 @@ async function assignSlot(appointmentId, slotId, staffId) {
     );
     if (!assigned) throw Object.assign(new Error('This request was changed or assigned already. Refresh and try again.'), { statusCode: 409 });
   } catch (err) {
-    // ponytail: compensating rollback; use a MongoDB transaction if cross-record atomicity is required.
-    await Slot.updateOne({ _id: slotId, appointment: appointment._id, status: 'Reserved-Tentative' },
-      { $set: { status: 'Available', appointment: null } });
-    throw err;
+    await recovery.onFailure(operation, err);
   }
+  await recovery.finish(operation);
   emitter.emit(EVENTS.APPOINTMENT_ASSIGNED, { appointment: assigned, performedBy: staffId, targetModel: 'Appointment' });
   return assigned;
 }

@@ -40,6 +40,7 @@ const walkInSchema = new mongoose.Schema(
       type: Number,
       required: [true, 'Queue number is required'],
     },
+    queueDay: { type: String, required() { return this.isNew; } },
     status: {
       type: String,
       enum: WALKIN_STATUSES,
@@ -65,6 +66,10 @@ const walkInSchema = new mongoose.Schema(
 // Queue ordering — most recent day's walk-ins sorted by number
 walkInSchema.index({ status: 1, createdAt: 1 });
 walkInSchema.index({ queueNumber: 1, createdAt: -1 });
+// Existing records without queueDay remain readable; new registrations use this constraint.
+walkInSchema.index({ queueDay: 1, queueNumber: 1 }, {
+  unique: true, name: 'unique_daily_ticket', partialFilterExpression: { queueDay: { $type: 'string' } },
+});
 
 // ── Export status enum for reuse ─────────────────────────
 module.exports = mongoose.model('WalkIn', walkInSchema);

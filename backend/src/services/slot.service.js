@@ -11,6 +11,7 @@
 
 const Slot = require('../models/Slot');
 const User = require('../models/User');
+const SlotPlan = require('../models/SlotPlan');
 const emitter = require('../events/emitter');
 const EVENTS = require('../events/events');
 const { isDateTimePassed, parseDateOnly, validateTimeWindow } = require('../utils/timeHelper');
@@ -103,22 +104,47 @@ async function generateSlotsForDoctor(doctorId, date, customDuration = null, cus
   }
 
   if (slotDefs.length > 0) {
-    // ponytail: overlap checks precede writes; serialize per-doctor generation if concurrent custom generation is needed.
     const existing = await Slot.find({ doctor: doctorId, date: normalizedDate });
-    for (const candidate of slotDefs) {
-      if (existing.some(slot => candidate.startTime < slot.endTime && candidate.endTime > slot.startTime &&
-          (candidate.startTime !== slot.startTime || candidate.endTime !== slot.endTime))) {
-        throw Object.assign(new Error('Generated times overlap existing slots. Use the existing time windows or choose a different date.'), { statusCode: 409 });
+    const planId = `${doctorId}:${normalizedDate.toISOString().slice(0, 10)}`;
+    // _id uniqueness plus revision compare-and-set also protects separate API processes.
+    try {
+      await SlotPlan.updateOne({ _id: planId }, { $setOnInsert: { doctor: doctorId, date: normalizedDate,
+        revision: 0, slots: existing.map(({ startTime, endTime }) => ({ startTime, endTime })) } }, { upsert: true });
+    } catch (err) { if (err.code !== 11000) throw err; }
+    for (;;) {
+      let plan = await SlotPlan.findById(planId);
+      const windows = [...plan.slots, ...existing];
+      for (const candidate of slotDefs) {
+        if (windows.some(slot => candidate.startTime < slot.endTime && candidate.endTime > slot.startTime &&
+            (candidate.startTime !== slot.startTime || candidate.endTime !== slot.endTime))) {
+          throw Object.assign(new Error('Generated times overlap existing slots. Use the existing time windows or choose a different date.'), { statusCode: 409 });
+        }
       }
+      const additions = slotDefs.filter(candidate => !plan.slots.some(slot => slot.startTime === candidate.startTime && slot.endTime === candidate.endTime));
+      if (additions.length) {
+        plan = await SlotPlan.findOneAndUpdate({ _id: planId, revision: plan.revision },
+          { $push: { slots: { $each: additions } }, $inc: { revision: 1 } }, { new: true });
+        if (!plan) continue;
+      }
+      await materializePlan(plan);
+      break;
     }
-    // Bulk upsert: only create slots that don't already exist
-    const ops = slotDefs.map((s) => ({
+  }
+
+  return Slot.find({ doctor: doctorId, date: normalizedDate })
+    .populate('doctor', 'firstName lastName email contactNumber')
+    .sort({ startTime: 1 });
+}
+
+// Saved plans survive partial bulk writes; retries only insert missing rows and preserve bookings/blocks.
+async function materializePlan(plan) {
+    const ops = plan.slots.map((s) => ({
       updateOne: {
-        filter: { doctor: doctorId, date: normalizedDate, startTime: s.startTime },
+        filter: { doctor: plan.doctor, date: plan.date, startTime: s.startTime },
         update: {
           $setOnInsert: {
-            doctor: doctorId,
-            date: normalizedDate,
+            doctor: plan.doctor,
+            date: plan.date,
             startTime: s.startTime,
             endTime: s.endTime,
             status: 'Available',
@@ -129,13 +155,12 @@ async function generateSlotsForDoctor(doctorId, date, customDuration = null, cus
       },
     }));
 
-    await Slot.bulkWrite(ops);
-  }
-
-  // Return all slots for this doctor+date
-  return Slot.find({ doctor: doctorId, date: normalizedDate })
-    .populate('doctor', 'firstName lastName email contactNumber')
-    .sort({ startTime: 1 });
+    if (!ops.length) return;
+    try { await Slot.bulkWrite(ops, { ordered: false }); }
+    catch (err) {
+      if (err.code !== 11000) throw err;
+      await Slot.bulkWrite(ops, { ordered: false }); // A concurrent identical upsert won an index race.
+    }
 }
 
 /**
@@ -245,7 +270,7 @@ async function getById(slotId) {
  * Reserve a slot (tentative).
  * Available → Reserved-Tentative
  */
-async function reserveSlot(slotId, appointmentId) {
+async function reserveSlot(slotId, appointmentId, operationId = null) {
   const slot = await Slot.findById(slotId);
   if (!slot) {
     const err = new Error('Slot not found');
@@ -265,7 +290,7 @@ async function reserveSlot(slotId, appointmentId) {
 
   const reserved = await Slot.findOneAndUpdate(
     { _id: slotId, status: 'Available', appointment: null },
-    { $set: { status: 'Reserved-Tentative', appointment: appointmentId } },
+    { $set: { status: 'Reserved-Tentative', appointment: appointmentId, reservationOperation: operationId } },
     { new: true }
   );
   if (!reserved) {
@@ -302,7 +327,7 @@ async function confirmSlot(slotId) {
  * Free a slot — returns it to Available.
  * Clears the appointment reference and emits SLOT_FREED.
  */
-async function freeSlot(slotId, reason) {
+async function freeSlot(slotId, reason, expectedAppointmentId = null) {
   const slot = await Slot.findById(slotId);
   if (!slot) {
     const err = new Error('Slot not found');
@@ -311,25 +336,30 @@ async function freeSlot(slotId, reason) {
   }
 
   const previousStatus = slot.status;
+  if (expectedAppointmentId && String(slot.appointment) !== String(expectedAppointmentId)) {
+    throw Object.assign(new Error('This slot is no longer reserved for the appointment being released'), { statusCode: 409 });
+  }
   if (['Completed'].includes(previousStatus)) {
     const err = new Error(`Cannot free a slot with status "${previousStatus}"`);
     err.statusCode = 400;
     throw err;
   }
 
-  slot.status = 'Available';
-  slot.appointment = null;
-  await slot.save();
+  const freed = await Slot.findOneAndUpdate(
+    { _id: slotId, status: previousStatus, appointment: slot.appointment },
+    { $set: { status: 'Available', appointment: null, reservationOperation: null } }, { new: true }
+  );
+  if (!freed) throw Object.assign(new Error('Slot changed before it could be released'), { statusCode: 409 });
 
   // ★ Event-Driven: emit slot freed — triggers walk-in auto-assignment
   emitter.emit(EVENTS.SLOT_FREED, {
-    slot,
+    slot: freed,
     previousStatus,
     reason: reason || 'Slot freed',
     targetModel: 'Slot',
   });
 
-  return slot;
+  return freed;
 }
 
 /**
@@ -401,6 +431,7 @@ async function updateStatus(slotId, status, actor) {
 }
 
 module.exports = {
+  materializePlan,
   updateStatus,
   generateSlotsForDoctor,
   getAvailableSlots,

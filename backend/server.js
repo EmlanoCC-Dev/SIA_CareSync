@@ -11,6 +11,7 @@ const { connectDB } = require('./src/config/db');
 const env = require('./src/config/env');
 const { registerAllHandlers } = require('./src/events/handlers/notification.handler');
 const { registerAuditHandlers } = require('./src/events/handlers/auditLog.handler');
+const { registerSlotFreedHandler } = require('./src/events/handlers/slotFreed.handler');
 const routes = require('./src/routes');
 const { errorHandler } = require('./src/middleware/errorHandler');
 const app = express();
@@ -38,10 +39,21 @@ app.use(errorHandler);
 async function start() {
   // 1. Connect to MongoDB
   await connectDB();
+  await Promise.all([
+    require('./src/models/WalkIn').init(), require('./src/models/Slot').init(),
+    require('./src/models/SlotPlan').init(), require('./src/models/AssignmentRecovery').init(),
+  ]);
+  if (await require('./src/models/AssignmentRecovery').countDocuments({ state: 'pending' })) {
+    throw new Error('Interrupted assignments need reconciliation. Stop clinic writers and run node backend/scripts/recover-assignments.js --offline before starting.');
+  }
+  for (const plan of await require('./src/models/SlotPlan').find()) {
+    await require('./src/services/slot.service').materializePlan(plan);
+  }
 
   // 2. Register event-driven handlers (Module 7 & 9)
   registerAllHandlers();
   registerAuditHandlers();
+  registerSlotFreedHandler();
 
   // 3. Listen
   const PORT = env.PORT;
