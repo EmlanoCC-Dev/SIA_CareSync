@@ -20,11 +20,16 @@ const appointments = ['Pending', 'Confirmed', 'In Progress', 'Completed'].map((s
   statusHistory: [{ status, changedAt: '2026-10-01T01:00:00Z', remarks: 'Updated by the care team' }],
 }));
 appointments.push({ _id: 'flexible-appointment', patient, doctor: null, slot: null, status: 'Pending', date: '2026-10-01', timeSlot: '09:00 - 09:30 AM', reason: 'Flexible consultation', statusHistory: [] });
+appointments.push({ _id: 'walkin-appointment', patient: null, walkIn: { _id: 'walkin-visit', name: 'Sofia Cruz', contactNumber: '09181234567', queueNumber: 41 }, doctor, slot: 'walkin-slot', status: 'No-show', date: '2026-10-01', timeSlot: '09:00–09:15', reason: 'Walk-in consultation', statusHistory: [] });
+appointments.push({ _id: 'missing-patient-details', patient: null, walkIn: 'unavailable-walkin-reference', doctor, status: 'No-show', date: '2026-10-01', timeSlot: '09:15–09:30', reason: 'Walk-in consultation', statusHistory: [] });
 let role = null;
 let empty = false;
 const errors = [];
 const mutations = [];
 let failNextMutation = false;
+let walkIns = [];
+let notifications = [];
+let failNextNotificationGet = false;
 try {
   const page = await browser.newPage();
   await (await page.createCDPSession()).send('Browser.setDownloadBehavior', { behavior: 'deny' });
@@ -37,6 +42,13 @@ try {
   page.on('request', request => {
     const url = new URL(request.url());
     if (!url.pathname.startsWith('/api/')) return request.continue();
+    if (url.pathname.startsWith('/api/notifications')) {
+      assert.equal(request.headers().authorization, 'Bearer ui-smoke-mock', 'Notifications must send the login token');
+      if (request.method() === 'GET' && failNextNotificationGet) {
+        failNextNotificationGet = false;
+        return request.respond({ status: 503, contentType: 'application/json', body: JSON.stringify({ message: 'Notifications are temporarily unavailable.' }) });
+      }
+    }
     if (url.pathname.endsWith('/download')) {
       assert.equal(request.headers().authorization, 'Bearer ui-smoke-mock', 'Medical downloads must send the login token');
       return request.respond({ status: 200, contentType: 'application/pdf', body: 'Mock PDF download' });
@@ -47,17 +59,31 @@ try {
         failNextMutation = false;
         return request.respond({ status: 400, contentType: 'application/json', body: JSON.stringify({ message: 'Mock action failed. Please try again.' }) });
       }
+      if (url.pathname.match(/^\/api\/walkins\/[^/]+\/status$/)) {
+        const row = walkIns.find(row => url.pathname.includes(`/${row._id}/`));
+        row.status = JSON.parse(request.postData()).status;
+      }
+      if (url.pathname === '/api/notifications/read-all') notifications.forEach(item => { item.readAt ||= new Date().toISOString(); });
+      else if (url.pathname.match(/^\/api\/notifications\/[^/]+\/read$/)) {
+        const item = notifications.find(item => url.pathname.includes(`/${item._id}/`));
+        item.readAt ||= new Date().toISOString();
+      }
     }
     let data = [];
-    if (url.pathname === '/api/users/me') data = { ...patient, role, _id: role === 'Doctor' ? doctor._id : patient._id };
+    if (url.pathname === '/api/notifications') {
+      const filtered = notifications.filter(item => url.searchParams.get('unread') !== 'true' || !item.readAt);
+      const pageNumber = Number(url.searchParams.get('page') || 1);
+      data = { items: filtered.slice((pageNumber - 1) * 20, pageNumber * 20), total: filtered.length, unreadCount: notifications.filter(item => !item.readAt).length, page: pageNumber, pageSize: 20 };
+    }
+    else if (url.pathname === '/api/users/me') data = { ...patient, role, _id: role === 'Doctor' ? doctor._id : patient._id };
     else if (url.pathname === '/api/users/doctors') data = [doctor];
     else if (url.pathname.endsWith('/schedule')) data = { workingHours: [{ day: 4, start: '09:00', end: '17:00' }], consultationDuration: 15, scheduleConfigured: true };
     else if (url.pathname === '/api/reports') data = { from: url.searchParams.get('from'), to: url.searchParams.get('to'), scope: role === 'Doctor' ? 'My consultations' : 'Clinic appointments', total: empty ? 0 : 5, statuses: { Pending: empty ? 0 : 2, Confirmed: empty ? 0 : 1, 'In Progress': empty ? 0 : 1, Completed: empty ? 0 : 1, Cancelled: 0, Declined: 0, 'No-show': 0 }, daily: [{ _id: '2026-10-01', total: 5, completed: 1 }], doctors: [{ _id: doctor._id, firstName: doctor.firstName, lastName: doctor.lastName, total: 4, completed: 1 }, { _id: null, total: 1, completed: 0 }] };
     else if (url.pathname === '/api/users') data = [patient, doctor].map(user => ({ ...user, createdAt: '2026-01-01', contactNumber: '09171234567' }));
-    else if (url.pathname === '/api/appointments') data = empty ? [] : appointments;
+    else if (url.pathname === '/api/appointments') data = empty ? [] : appointments.filter(item => role !== 'Patient' || item.patient?._id === patient._id);
     else if (url.pathname === '/api/system/time') data = { currentTime: '2026-10-01T01:00:00Z', isOpen: true, isCustom: false, openTime: '08:30', closeTime: '17:00' };
     else if (url.pathname === '/api/slots') data = [{ _id: 'slot-1', doctor, date: '2026-10-01', startTime: '10:00', endTime: '10:30', status: 'Available' }];
-    else if (url.pathname === '/api/walkins') data = [{ _id: 'walkin-1', name: 'Maria Dela Cruz', queueNumber: 12, status: 'Waiting', contactNumber: '09171234567' }];
+    else if (url.pathname === '/api/walkins') data = walkIns.filter(row => !url.searchParams.get('status') || row.status === url.searchParams.get('status'));
     else if (url.pathname === '/api/walkins/now-serving') data = { nowServing: empty ? null : { queueNumber: 11, status: 'In Progress' }, upcoming: empty ? [] : [{ queueNumber: 12, status: 'Waiting' }] };
     return request.respond({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data, date: '2026-10-01' }) });
   });
@@ -137,11 +163,62 @@ try {
     await page.waitForSelector('dialog', { hidden: true });
     for (const nextRole of ['Patient', 'Doctor', 'Staff', 'Admin']) {
       role = nextRole;
+      notifications = Array.from({ length: 25 }, (_, index) => ({ _id: `notification-${index}`, title: index === 0 ? (role === 'Doctor' ? 'Appointment request assigned' : role === 'Patient' ? 'Appointment request received' : 'New appointment request') : 'Appointment confirmed',
+        message: index === 0 ? 'An appointment request for Oct 2, 2026, 10:00–10:15 is pending clinic review.' : 'The appointment for Oct 2, 2026, 10:00–10:15 has been confirmed.',
+        createdAt: '2026-10-02T02:00:00Z', readAt: index < 2 ? null : '2026-10-02T02:05:00Z' }));
+      walkIns = ['Waiting', 'Slot Assigned', 'Checked In', 'In Progress'].map((status, index) => ({
+        _id: `walkin-${index + 1}`, name: `Maria Dela Cruz ${index + 1}`, queueNumber: 12 + index, status,
+        contactNumber: '09171234567', assignedSlot: index ? { startTime: '10:00', endTime: '10:30', doctor } : null,
+      })).filter(row => role !== 'Doctor' || ['Checked In', 'In Progress'].includes(row.status));
       await page.evaluate(() => localStorage.setItem('caresync_token', 'ui-smoke-mock'));
       await page.reload();
       await page.waitForSelector('.dashboard-page');
       await page.waitForFunction(() => document.querySelector('tbody tr'));
       await check(`${role.toLowerCase()}-${width}`);
+      if (role !== 'Patient') {
+        const cells = await page.$$eval('.appointment-patient-details', elements => elements.map(element => element.textContent));
+        assert(cells.some(text => text.includes('Sofia Cruz') && text.includes('09181234567') && text.includes('Walk-in · Queue #41')), `${role}: walk-in identity missing`);
+        assert(cells.some(text => text.includes('Alex Santos') && text.includes('alex@example.com') && !text.includes('Walk-in')), `${role}: registered patient display changed`);
+        assert(cells.some(text => text.includes('Patient details unavailable') && !text.includes('undefined')), `${role}: missing patient identity must be explicit`);
+        await check(`walkin-appointment-identity-${role.toLowerCase()}-${width}`);
+      } else assert(!(await page.evaluate(() => document.querySelector('.dashboard-page').textContent)).includes('Sofia Cruz'), 'Walk-in records must not appear in another patient portal');
+      await page.waitForFunction(() => document.querySelector('.notification-count')?.textContent === '2');
+      await page.click('.notification-trigger');
+      await page.waitForSelector('.notification-dialog[open] .notification-list li');
+      assert(await page.evaluate(() => document.activeElement.closest('.notification-dialog') !== null), 'Inbox must contain keyboard focus');
+      assert(await page.evaluate(() => document.querySelector('.notification-item-footer time').getBoundingClientRect().height > 0), 'Notification timestamps must remain visible on mobile');
+      await check(`notifications-${role.toLowerCase()}-${width}`);
+      await click('.notification-filters button', 'Unread');
+      await page.waitForFunction(() => document.querySelectorAll('.notification-list li').length === 2);
+      failNextMutation = true;
+      await click('.notification-item-footer button', 'Mark as read');
+      await page.waitForSelector('.notification-dialog [role="alert"]');
+      assert.equal(notifications.filter(item => !item.readAt).length, 2, 'Failed read must retain unread status');
+      await click('.notification-dialog [role="alert"] button', 'Retry');
+      await page.waitForSelector('.notification-dialog [role="alert"]', { hidden: true });
+      await click('.notification-item-footer button', 'Mark as read');
+      await page.waitForFunction(() => document.querySelectorAll('.notification-list li').length === 1);
+      await click('.notification-toolbar button', 'Mark all as read');
+      await page.waitForFunction(() => document.querySelector('.notification-empty')?.textContent.includes('caught up'));
+      assert.equal(notifications.filter(item => !item.readAt).length, 0);
+      await check(`notifications-unread-empty-${role.toLowerCase()}-${width}`);
+      await click('.notification-filters button', 'All');
+      await page.waitForFunction(() => document.querySelectorAll('.notification-list li').length === 20);
+      await click('.notification-pagination button', 'Next');
+      await page.waitForFunction(() => document.querySelectorAll('.notification-list li').length === 5);
+      await click('.notification-pagination button', 'Previous');
+      await page.waitForFunction(() => document.querySelectorAll('.notification-list li').length === 20);
+      await page.keyboard.press('Escape');
+      await page.waitForSelector('.notification-dialog', { hidden: true });
+      assert(await page.evaluate(() => document.activeElement.classList.contains('notification-trigger')), 'Inbox dismissal must restore trigger focus');
+      failNextNotificationGet = true;
+      await page.click('.notification-trigger');
+      await page.waitForSelector('.notification-dialog [role="alert"]');
+      await check(`notifications-unavailable-${role.toLowerCase()}-${width}`);
+      await click('.notification-dialog [role="alert"] button', 'Retry');
+      await page.waitForSelector('.notification-dialog [role="alert"]', { hidden: true });
+      await page.click('[aria-label="Close notifications"]');
+      await page.waitForSelector('.notification-dialog', { hidden: true });
       await page.click('button[title="Clinic clock and operating hours"]');
       await page.waitForSelector('.system-time-modal');
       assert.equal(!!await page.$('.system-time-modal form'), role === 'Admin', `${role}: clock editing must be Admin-only`);
@@ -247,6 +324,25 @@ try {
           await page.waitForSelector('.modal-content');
           await check(`walkin-form-${width}`);
           await page.click('.modal-header button');
+        }
+        const actions = role === 'Staff' ? [['Check In', 'Checked In'], ['Left', 'Left']] : [['Start Session', 'In Progress'], ['Complete', 'Completed']];
+        for (const [label, status] of actions) {
+          const before = mutations.length;
+          const response = page.waitForResponse(response => response.request().method() === 'PATCH' && response.url().match(/\/walkins\/[^/]+\/status$/));
+          await click('td button', label);
+          await response;
+          await page.waitForFunction(() => !document.querySelector('.table-container[aria-busy="true"]') && !document.querySelector('fieldset[disabled]'));
+          assert.equal(mutations.length, before + 1);
+          assert(mutations.at(-1).path.match(/^\/api\/walkins\/[^/]+\/status$/));
+          assert.equal(mutations.at(-1).body.status, status);
+          await page.select('select[aria-label="Filter walk-ins by status"]', status);
+          await page.waitForFunction(status => {
+            const badges = [...document.querySelectorAll('tbody .badge')];
+            return badges.length > 0 && badges.every(badge => badge.textContent.trim() === status);
+          }, {}, status);
+          await check(`${role.toLowerCase()}-queue-${status.replaceAll(' ', '-')}-${width}`);
+          await page.select('select[aria-label="Filter walk-ins by status"]', '');
+          await page.waitForFunction(() => !document.querySelector('.table-container[aria-busy="true"]'));
         }
       } else {
         await click('.dashboard-tabs button', 'User Directory');
