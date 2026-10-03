@@ -2,6 +2,7 @@
 // Real HTTP routes/auth and event handlers, isolated models; no live patient data.
 const assert = require('node:assert/strict');
 process.env.NODE_ENV = 'production';
+process.env.EMAIL_ENABLED = 'false'; // Isolated checks never send real email.
 process.env.JWT_SECRET = 'isolated-notifications-check-secret-for-tests';
 const jwt = require('jsonwebtoken');
 const User = require('../src/models/User');

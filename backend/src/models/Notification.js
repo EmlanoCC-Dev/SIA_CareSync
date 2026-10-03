@@ -7,6 +7,13 @@ const notificationSchema = new mongoose.Schema({
   title: { type: String, required: true, maxlength: 120 },
   message: { type: String, required: true, maxlength: 600 },
   readAt: { type: Date, default: null },
+  emailDelivery: {
+    status: { type: String, enum: ['disabled', 'pending', 'sent', 'failed', 'skipped'], default: 'disabled' },
+    attemptedAt: { type: Date, default: null },
+    sentAt: { type: Date, default: null },
+    messageId: { type: String, default: null },
+    errorCode: { type: String, default: null },
+  },
 }, { timestamps: true });
 notificationSchema.index({ user: 1, createdAt: -1, _id: -1 });
 notificationSchema.index({ user: 1, readAt: 1 });

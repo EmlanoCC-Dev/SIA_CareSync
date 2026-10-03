@@ -1,6 +1,7 @@
 // Run: node backend/tests/comments.check.js — real routes/services/events, isolated models; no MongoDB.
 const assert = require('node:assert/strict');
 process.env.NODE_ENV = 'production';
+process.env.EMAIL_ENABLED = 'false'; // Isolated checks never send real email.
 process.env.JWT_SECRET = 'isolated-comments-check-secret-for-tests';
 const jwt = require('jsonwebtoken');
 const User = require('../src/models/User');
