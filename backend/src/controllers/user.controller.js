@@ -9,6 +9,7 @@
  */
 
 const userService = require('../services/user.service');
+const otpService = require('../services/otp.service');
 
 /**
  * POST /api/users/register
@@ -16,7 +17,7 @@ const userService = require('../services/user.service');
  */
 async function register(req, res, next) {
   try {
-    const { firstName, lastName, email, password, contactNumber } = req.body;
+    const { firstName, lastName, email, password, contactNumber, otp } = req.body;
     const result = await userService.register({
       firstName,
       lastName,
@@ -24,6 +25,7 @@ async function register(req, res, next) {
       password,
       role: 'Patient', // Public registration is strictly for Patients
       contactNumber,
+      otp,
     });
     res.status(201).json({
       success: true,
@@ -141,5 +143,18 @@ async function updateUser(req, res, next) {
   catch (err) { next(err); }
 }
 
-module.exports = { register, login, getMe, getDoctors, listUsers, createUser, updateUser, schedule };
+async function registrationOtp(req, res, next) {
+  try { res.json({ success: true, data: await otpService.requestRegistrationOtp(req.body.email) }); }
+  catch (err) { next(err); }
+}
+async function passwordOtp(req, res, next) {
+  try { res.status(202).json({ success: true, data: await otpService.requestPasswordOtp(req.body.email) }); }
+  catch (err) { next(err); }
+}
+async function resetPassword(req, res, next) {
+  try { res.json({ success: true, data: await userService.resetPassword(req.body) }); }
+  catch (err) { next(err); }
+}
+
+module.exports = { register, login, getMe, getDoctors, listUsers, createUser, updateUser, schedule, registrationOtp, passwordOtp, resetPassword };
 

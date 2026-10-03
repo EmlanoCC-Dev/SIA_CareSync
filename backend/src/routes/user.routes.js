@@ -8,11 +8,15 @@
 const { Router } = require('express');
 const userController = require('../controllers/user.controller');
 const { authorize } = require('../middleware/auth');
+const otpRateLimit = require('../middleware/otpRateLimit');
 
 const router = Router();
 
 // Public routes
-router.post('/register', userController.register);
+router.post('/register/otp', otpRateLimit, userController.registrationOtp);
+router.post('/register', otpRateLimit, userController.register);
+router.post('/password/otp', otpRateLimit, userController.passwordOtp);
+router.post('/password/reset', otpRateLimit, userController.resetPassword);
 router.post('/login', userController.login);
 
 // Protected routes

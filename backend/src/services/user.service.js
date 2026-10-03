@@ -16,6 +16,8 @@ const emitter = require('../events/emitter');
 const EVENTS = require('../events/events');
 const mongoose = require('mongoose');
 const Appointment = require('../models/Appointment');
+const bcrypt = require('bcryptjs');
+const otpService = require('./otp.service');
 
 /**
  * Register a new user.
@@ -24,24 +26,38 @@ const Appointment = require('../models/Appointment');
  */
 async function register(userData, actorId = null) {
   if (!userData || typeof userData.email !== 'string' || !userData.email.trim() ||
-      typeof userData.password !== 'string' || userData.password.length < 6) {
-    throw Object.assign(new Error('Provide an email and a password of at least six characters'), { statusCode: 400 });
+      typeof userData.password !== 'string' || userData.password.length < 6 || Buffer.byteLength(userData.password) > 72) {
+    throw Object.assign(new Error('Provide an email and a password of at least six characters and at most 72 bytes'), { statusCode: 400 });
   }
+  for (const field of ['firstName', 'lastName']) {
+    if (typeof userData[field] !== 'string' || !userData[field].trim() || userData[field].length > 100) {
+      throw Object.assign(new Error('Provide a first and last name of at most 100 characters'), { statusCode: 400 });
+    }
+  }
+  const email = otpService.normalizeEmail(userData.email);
   // Check for duplicate email
-  const existing = await User.findOne({ email: userData.email });
+  const existing = await User.findOne({ email });
   if (existing) {
     const err = new Error('Email already registered');
     err.statusCode = 409;
     throw err;
   }
 
-  const user = await User.create(userData);
+  if (!actorId) await otpService.consumeOtp('register', email, userData.otp);
+  const { otp, ...account } = userData;
+  let user;
+  try {
+    user = await User.create({ ...account, email, emailVerifiedAt: actorId ? null : new Date() });
+  } catch (err) {
+    if (err.code === 11000) throw Object.assign(new Error('Email already registered'), { statusCode: 409 });
+    throw err;
+  }
 
   // Strip password from response
   const userObj = user.toObject();
   delete userObj.password;
 
-  const token = _signToken(user._id);
+  const token = _signToken(user._id, user.tokenVersion || 0);
   emitter.emit(EVENTS.USER_CREATED, {
     performedBy: actorId || user._id, targetModel: 'User', targetId: user._id,
     creationMethod: actorId ? 'Admin creation' : 'Self-registration',
@@ -60,7 +76,7 @@ async function login(email, password) {
   if (typeof email !== 'string' || !email.trim() || typeof password !== 'string' || !password) {
     throw Object.assign(new Error('Email and password must be non-empty text'), { statusCode: 400 });
   }
-  const user = await User.findOne({ email }).select('+password');
+  const user = await User.findOne({ email: otpService.normalizeEmail(email) }).select('+password');
   if (!user) {
     const err = new Error('Invalid credentials');
     err.statusCode = 401;
@@ -80,7 +96,7 @@ async function login(email, password) {
   const userObj = user.toObject();
   delete userObj.password;
 
-  const token = _signToken(user._id);
+  const token = _signToken(user._id, user.tokenVersion || 0);
   return { user: userObj, token };
 }
 
@@ -127,8 +143,7 @@ async function updateUser(userId, actor, data) {
     changes[field] = data[field].trim();
   }
   if (changes.email !== undefined) {
-    changes.email = changes.email.toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(changes.email)) throw Object.assign(new Error('Provide a valid email'), { statusCode: 400 });
+    changes.email = otpService.normalizeEmail(changes.email);
   }
   if (changes.role && !['Patient', 'Doctor', 'Staff', 'Admin'].includes(changes.role)) throw Object.assign(new Error('Invalid role'), { statusCode: 400 });
   if (changes.status && !['Active', 'Deactivated'].includes(changes.status)) throw Object.assign(new Error('Invalid account status'), { statusCode: 400 });
@@ -137,8 +152,9 @@ async function updateUser(userId, actor, data) {
     throw Object.assign(new Error('You cannot deactivate your own account or remove your own Admin role'), { statusCode: 400 });
   }
   const user = await getById(userId);
+  if (changes.email && changes.email !== user.email) changes.emailVerifiedAt = null;
   if (user.role === 'Doctor' && changes.role && changes.role !== 'Doctor' &&
-      await Appointment.exists({ doctor: userId, status: { $in: ['Pending', 'Confirmed', 'In Progress'] } })) {
+      await Appointment.exists({ doctor: userId, status: { $in: ['Pending', 'Needs correction', 'Confirmed', 'Checked In', 'In Progress'] } })) {
     throw Object.assign(new Error('Resolve this doctor’s open appointments before changing their role'), { statusCode: 409 });
   }
   let updated;
@@ -155,10 +171,28 @@ async function updateUser(userId, actor, data) {
 
 // ── Private helpers ──────────────────────────────────────
 
-function _signToken(userId) {
-  return jwt.sign({ id: userId }, env.JWT_SECRET, {
+function _signToken(userId, version = 0) {
+  return jwt.sign({ id: userId, version }, env.JWT_SECRET, {
     expiresIn: env.JWT_EXPIRES_IN,
   });
+}
+
+async function resetPassword({ email: value, otp, password }) {
+  const email = otpService.normalizeEmail(value);
+  if (typeof password !== 'string' || password.length < 6 || Buffer.byteLength(password) > 72) {
+    throw Object.assign(new Error('Password must have at least six characters and at most 72 bytes'), { statusCode: 400 });
+  }
+  const challenge = await otpService.consumeOtp('password', email, otp);
+  if (!challenge.user) throw Object.assign(new Error('Invalid or expired password change request'), { statusCode: 400 });
+  const version = challenge.tokenVersion || 0;
+  const filter = { _id: challenge.user, email, status: { $ne: 'Deactivated' },
+    ...(version === 0 ? { $or: [{ tokenVersion: 0 }, { tokenVersion: { $exists: false } }] } : { tokenVersion: version }),
+  };
+  const updated = await User.findOneAndUpdate(filter,
+    { $set: { password: await bcrypt.hash(password, 10) }, $inc: { tokenVersion: 1 } }, { new: true, runValidators: true });
+  if (!updated) throw Object.assign(new Error('Account details changed. Request a new verification code.'), { statusCode: 409 });
+  emitter.emit(EVENTS.USER_UPDATED, { performedBy: updated._id, targetModel: 'User', targetId: updated._id, changes: { passwordChanged: true } });
+  return { message: 'Password changed. Sign in again with your new password.' };
 }
 
 async function getSchedule(doctorId, actor) {
@@ -196,5 +230,5 @@ async function updateSchedule(doctorId, actor, { workingHours, consultationDurat
   return doctor;
 }
 
-module.exports = { register, login, getById, getDoctors, listUsers, updateUser, getSchedule, updateSchedule };
+module.exports = { register, login, getById, getDoctors, listUsers, updateUser, getSchedule, updateSchedule, resetPassword };
 

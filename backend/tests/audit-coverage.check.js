@@ -13,6 +13,7 @@ const emitter = require('../src/events/emitter');
 const { registerAuditHandlers } = require('../src/events/handlers/auditLog.handler');
 const slotService = require('../src/services/slot.service');
 const app = require('../server');
+const otpService = require('../src/services/otp.service');
 
 const id = n => n.toString(16).padStart(24, '0');
 const actor = (n, role) => ({ _id: id(n), id: id(n), role, firstName: 'Dummy', lastName: role, workingHours: [], consultationDuration: 15 });
@@ -81,6 +82,8 @@ async function main() {
   await call('/users', null, 401, 'POST', accountData);
   await call('/users', staff, 403, 'POST', accountData);
   assert.equal(rows.length, 0);
+  // OTP verification is covered in otp.check.js; isolate the user-creation audit here.
+  stub(otpService, 'consumeOtp', async () => ({}));
   const self = (await call('/users/register', null, 201, 'POST', accountData)).data;
   assert.equal(rows.at(-1).action, 'USER_CREATED');
   assert.equal(rows.at(-1).performedBy, self.user._id);

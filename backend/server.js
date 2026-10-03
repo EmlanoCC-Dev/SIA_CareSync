@@ -45,6 +45,7 @@ async function start() {
     require('./src/models/Notification').init(),
     require('./src/models/Appointment').init(),
     require('./src/models/AppointmentComment').init(),
+    require('./src/models/EmailOtp').init(),
   ]);
   if (await require('./src/models/AssignmentRecovery').countDocuments({ state: 'pending' })) {
     throw new Error('Interrupted assignments need reconciliation. Stop clinic writers and run node backend/scripts/recover-assignments.js --offline before starting.');

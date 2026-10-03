@@ -30,6 +30,7 @@ const { protect } = require('../middleware/auth');
 // Exact public exceptions; every other API request requires a verified login.
 const publicRequests = new Set([
   'POST /users/login', 'POST /users/register',
+  'POST /users/register/otp', 'POST /users/password/otp', 'POST /users/password/reset',
   'GET /system/time', 'HEAD /system/time',
   'GET /walkins/now-serving', 'HEAD /walkins/now-serving',
 ]);

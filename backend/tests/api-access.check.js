@@ -15,6 +15,7 @@ const WalkIn = require('../src/models/WalkIn');
 const { UPLOAD_ROOT } = require('../src/middleware/upload');
 const { getOperatingStatus, setCustomTime } = require('../src/config/systemTime');
 const app = require('../server');
+const otpService = require('../src/services/otp.service');
 
 const id = n => n.toString(16).padStart(24, '0');
 const actor = (n, role) => ({ _id: id(n), id: id(n), role, workingHours: [], consultationDuration: 15 });
@@ -100,7 +101,8 @@ async function main() {
     ['system', require('../src/routes/system.routes')],
     ['notifications', require('../src/routes/notification.routes')],
   ];
-  const publicRoutes = new Set(['POST /api/users/login', 'POST /api/users/register', 'GET /api/system/time', 'GET /api/walkins/now-serving']);
+  const publicRoutes = new Set(['POST /api/users/login', 'POST /api/users/register', 'POST /api/users/register/otp',
+    'POST /api/users/password/otp', 'POST /api/users/password/reset', 'GET /api/system/time', 'GET /api/walkins/now-serving']);
   let privateRoutes = 0;
   for (const [prefix, router] of routers) for (const layer of router.stack) {
     if (!layer.route) continue;
@@ -220,6 +222,11 @@ async function main() {
   await expect('/api/appointments?status[$ne]=Cancelled', patient, 400);
   await expect('/api/slots?date=2099-01-01&date=2099-01-02', patient, 400);
   await expect('/api/users/login', null, 400, 'POST', { email: { $ne: null }, password: 'anything' });
+  await expect('/api/users/register', null, 400, 'POST', { firstName: 'Dummy', lastName: 'Patient',
+    email: 'dummy@example.test', password: 'dummy-password', role: 'Admin' });
+  assert.equal(registeredRole, undefined, 'Public registration without an OTP must not create an account');
+  // OTP validity/races are exercised by otp.check.js; this check verifies public role restrictions after verification.
+  stub(otpService, 'consumeOtp', async () => ({}));
   await expect('/api/users/register', null, 201, 'POST', { firstName: 'Dummy', lastName: 'Patient',
     email: 'dummy@example.test', password: 'dummy-password', role: 'Admin' });
   assert.equal(registeredRole, 'Patient', 'Public registration must ignore caller-supplied privileged roles');
