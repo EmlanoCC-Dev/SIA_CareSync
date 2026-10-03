@@ -21,7 +21,8 @@ const { parseDateOnly } = require('../src/utils/timeHelper');
 const emitter = require('../src/events/emitter');
 const EVENTS = require('../src/events/events');
 const live = process.argv.includes('--live');
-const database = `caresync_concurrency_check_${randomUUID().replaceAll('-', '')}`;
+// Keep the unique test name below the configured cluster's reported 38-byte limit.
+const database = `cs_test_${randomUUID().replaceAll('-', '').slice(0, 24)}`;
 const originals = [];
 let appFailure, slotFailure, finishFailure, bulkFailure, liveConnected = false;
 const models = [User, WalkIn, Slot, Appointment, SlotPlan, AssignmentRecovery];
@@ -237,7 +238,7 @@ main().catch(err => { console.error(live && !liveConnected ? 'Live MongoDB verif
   setCustomTime(null);
   emitter.removeAllListeners();
   if (liveConnected) {
-    assert(database.startsWith('caresync_concurrency_check_') && mongoose.connection.name === database);
+    assert(/^cs_test_[a-f\d]{24}$/.test(database) && mongoose.connection.name === database);
     await mongoose.connection.dropDatabase();
   }
   await mongoose.disconnect();
