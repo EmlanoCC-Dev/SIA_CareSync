@@ -43,6 +43,18 @@ function registerAllHandlers() {
   ]));
   listen(EVENTS.APPOINTMENT_DECLINED, ({ appointment: app }) =>
     notify(app, app.patient, 'APPOINTMENT_DECLINED', 'Appointment request declined', `Your request for ${visit(app)} was declined. Open its history for details.`));
+  listen(EVENTS.REVISION_REQUESTED, ({ appointment: app }) =>
+    notify(app, app.patient, 'CORRECTION_REQUESTED', 'Appointment needs correction',
+      `The clinic requested changes to your booking for ${visit(app)}. Open History & comments to read the explanation and resubmit.`));
+  listen(EVENTS.APPOINTMENT_RESUBMITTED, async ({ appointment: app }) => {
+    const direct = deliver([notify(app, app.doctor, 'APPOINTMENT_RESUBMITTED', 'Appointment resubmitted',
+      `A corrected request for ${visit(app)} is ready for review.`)]);
+    try {
+      const reviewers = await User.find({ role: { $in: ['Staff', 'Admin'] }, status: { $ne: 'Deactivated' } }).select('_id');
+      await deliver(reviewers.map(user => notify(app, user._id, 'APPOINTMENT_RESUBMITTED', 'Appointment resubmitted',
+        `A patient corrected their request for ${visit(app)}. Review it in Appointments.`)));
+    } finally { await direct; }
+  });
   listen(EVENTS.APPOINTMENT_CANCELLED, ({ appointment: app }) => deliver([
     notify(app, app.patient, 'CANCELLATION', 'Appointment cancelled', `Your appointment for ${visit(app)} was cancelled. Open its history for details.`),
     notify(app, app.doctor, 'DOCTOR_APPOINTMENT_CANCELLED', 'Appointment cancelled', `The appointment for ${visit(app)} was cancelled.`),

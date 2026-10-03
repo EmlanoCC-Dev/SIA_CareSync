@@ -37,6 +37,7 @@ const EVENTS = {
 
   // ── Module 5: Review & Approval Workflow ───────────────
   REVISION_REQUESTED: 'appointment.revisionRequested',
+  APPOINTMENT_RESUBMITTED: 'appointment.resubmitted',
 
   // ── Module 8: Queue ────────────────────────────────────
   PATIENT_CHECKED_IN: 'queue.patientCheckedIn',

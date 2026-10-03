@@ -31,6 +31,8 @@ router.patch('/:id/assign', authorize('Staff', 'Admin'), appointmentController.a
 
 // Staff/Admin approves pending appointment
 router.patch('/:id/approve', authorize('Staff', 'Admin'), appointmentController.approve);
+router.patch('/:id/request-correction', authorize('Staff', 'Admin'), appointmentController.requestCorrection);
+router.patch('/:id/resubmit', authorize('Patient'), appointmentController.resubmit);
 
 // Staff, Admin, or Doctor declines pending appointment (reason required)
 router.patch('/:id/decline', authorize('Staff', 'Admin', 'Doctor'), appointmentController.decline);

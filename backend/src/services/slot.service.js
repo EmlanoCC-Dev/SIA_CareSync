@@ -318,7 +318,7 @@ async function reserveSlot(slotId, appointmentId, operationId = null) {
  * Confirm a reserved slot.
  * Reserved-Tentative → Reserved-Confirmed
  */
-async function confirmSlot(slotId) {
+async function confirmSlot(slotId, appointmentId) {
   const slot = await Slot.findById(slotId);
   if (!slot) {
     const err = new Error('Slot not found');
@@ -331,9 +331,10 @@ async function confirmSlot(slotId) {
     throw err;
   }
 
-  slot.status = 'Reserved-Confirmed';
-  await slot.save();
-  return slot;
+  const confirmed = await Slot.findOneAndUpdate({ _id: slotId, status: 'Reserved-Tentative', appointment: appointmentId },
+    { $set: { status: 'Reserved-Confirmed' } }, { new: true, runValidators: true });
+  if (!confirmed) throw Object.assign(new Error('The reservation changed. Refresh and try again.'), { statusCode: 409 });
+  return confirmed;
 }
 
 /**

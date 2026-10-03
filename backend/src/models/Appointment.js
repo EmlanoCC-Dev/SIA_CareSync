@@ -20,6 +20,7 @@ const mongoose = require('mongoose');
 // ── Full status enum ─────────────────────────────────────
 const APPOINTMENT_STATUSES = [
   'Pending',
+  'Needs correction',
   'Confirmed',
   'Checked In',
   'Declined',
@@ -164,6 +165,19 @@ const appointmentSchema = new mongoose.Schema(
 
     // Module 4: Version Tracking — full history of status changes
     statusHistory: [statusHistorySchema],
+    bookingRevision: { type: Number, default: 0 },
+    bookingHistory: [{
+      _id: false,
+      revision: { type: Number, required: true },
+      action: { type: String, enum: ['Correction requested', 'Resubmitted'], required: true },
+      previousReason: { type: String, required: true },
+      reason: { type: String, required: true },
+      explanation: { type: String, default: '' },
+      changedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+      actorName: { type: String, required: true },
+      actorRole: { type: String, required: true },
+      changedAt: { type: Date, required: true },
+    }],
 
     // ── Consultation data (filled by doctor during/after visit) ──
     consultationNotes: {

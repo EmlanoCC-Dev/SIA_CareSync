@@ -11,6 +11,15 @@ const path = require('node:path');
 const mongoose = require('mongoose');
 const { UPLOAD_ROOT } = require('../middleware/upload');
 
+async function requestCorrection(req, res, next) {
+  try { res.json({ success: true, data: await appointmentService.requestCorrection(req.params.id, req.user, req.body) }); }
+  catch (err) { next(err); }
+}
+async function resubmit(req, res, next) {
+  try { res.json({ success: true, data: await appointmentService.resubmit(req.params.id, req.user, req.body) }); }
+  catch (err) { next(err); }
+}
+
 /**
  * POST /api/appointments
  * Book a new appointment (patient).
@@ -287,6 +296,8 @@ async function addComment(req, res, next) {
 }
 
 module.exports = {
+  requestCorrection,
+  resubmit,
   getVersions,
   listComments,
   addComment,

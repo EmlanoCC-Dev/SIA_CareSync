@@ -30,7 +30,7 @@ const mongoose = require('mongoose');
 async function autoMarkNoShows() {
   try {
     const pendingOrConfirmed = await Appointment.find({
-      status: { $in: ['Pending', 'Confirmed', 'No-show'] },
+      status: { $in: ['Pending', 'Needs correction', 'Confirmed', 'No-show'] },
     }).populate('slot').populate('walkIn');
 
     const now = getNow();
@@ -174,27 +174,32 @@ async function approve(appointmentId, staffId) {
     throw Object.assign(new Error('Assign a doctor and time slot before approving this request'), { statusCode: 400 });
   }
 
-  appointment.status = 'Confirmed';
-  appointment.statusHistory.push({
-    status: 'Confirmed',
-    changedBy: staffId,
-    remarks: 'Approved by staff',
-  });
-  await appointment.save();
-
-  // If linked to a slot, transition slot to Reserved-Confirmed
-  if (appointment.slot) {
-    await slotService.confirmSlot(appointment.slot);
+  const approved = await Appointment.findOneAndUpdate(
+    { ...bookingMatch(appointment), status: 'Pending' },
+    { $set: { status: 'Confirmed' }, $push: { statusHistory: {
+      status: 'Confirmed', changedBy: staffId, changedAt: getNow(), remarks: 'Approved by staff',
+    } } }, { new: true, runValidators: true }
+  );
+  if (!approved) throw Object.assign(new Error('This request changed. Refresh before approving.'), { statusCode: 409 });
+  try {
+    await slotService.confirmSlot(approved.slot, approved._id);
+  } catch (err) {
+    // A database acknowledgement failure may follow a committed slot confirmation.
+    // Only undo an approval when the reservation was explicitly rejected.
+    if (![400, 404, 409].includes(err.statusCode)) throw err;
+    await Appointment.findOneAndUpdate({ ...bookingMatch(approved), status: 'Confirmed' },
+      { $set: { status: 'Pending' }, $pop: { statusHistory: 1 } }, { new: true });
+    throw err;
   }
 
   // ★ Event-Driven: emit approval event (notifies BOTH patient and doctor)
   emitter.emit(EVENTS.APPOINTMENT_APPROVED, {
-    appointment,
+    appointment: approved,
     performedBy: staffId,
     targetModel: 'Appointment',
   });
 
-  return appointment;
+  return approved;
 }
 
 /**
@@ -202,7 +207,7 @@ async function approve(appointmentId, staffId) {
  * Transitions status: Pending → Declined, frees slot, emits slot.freed
  */
 async function decline(appointmentId, userId, reason) {
-  if (!reason || !reason.trim()) {
+  if (typeof reason !== 'string' || !reason.trim()) {
     const err = new Error('Reason is required when declining an appointment');
     err.statusCode = 400;
     throw err;
@@ -220,14 +225,13 @@ async function decline(appointmentId, userId, reason) {
     throw err;
   }
 
-  appointment.status = 'Declined';
-  appointment.declineReason = reason;
-  appointment.statusHistory.push({
-    status: 'Declined',
-    changedBy: userId,
-    remarks: reason,
-  });
-  await appointment.save();
+  const declined = await Appointment.findOneAndUpdate(
+    { ...bookingMatch(appointment), status: 'Pending' },
+    { $set: { status: 'Declined', declineReason: reason.trim() }, $push: { statusHistory: {
+      status: 'Declined', changedBy: userId, changedAt: getNow(), remarks: reason.trim(),
+    } } }, { new: true, runValidators: true }
+  );
+  if (!declined) throw Object.assign(new Error('This request changed. Refresh before declining.'), { statusCode: 409 });
 
   // Free linked slot
   if (appointment.slot) {
@@ -236,14 +240,89 @@ async function decline(appointmentId, userId, reason) {
 
   // ★ Event-Driven: emit decline event
   emitter.emit(EVENTS.APPOINTMENT_DECLINED, {
-    appointment,
+    appointment: declined,
     performedBy: userId,
     reason,
     targetModel: 'Appointment',
   });
 
-  return appointment;
+  return declined;
 }
+
+// Include the revision so a Pending -> correction -> Pending cycle invalidates stale reviews.
+// Legacy records have no revision until their first correction.
+function bookingMatch(appointment) {
+  return { _id: appointment._id, slot: appointment.slot || null, doctor: appointment.doctor || null,
+    date: appointment.date, reason: appointment.reason,
+    bookingRevision: appointment.bookingRevision || { $in: [null, 0] } };
+}
+
+async function reviseBooking(appointmentId, actor, data, resubmitting) {
+  const appointment = await Appointment.findById(appointmentId);
+  if (!appointment) throw Object.assign(new Error('Appointment not found'), { statusCode: 404 });
+  assertAppointmentAccess(appointment, actor);
+  if (!(resubmitting ? actor.role === 'Patient' : ['Staff', 'Admin'].includes(actor.role))) {
+    throw Object.assign(new Error('You cannot perform this booking action'), { statusCode: 403 });
+  }
+  if (appointment.walkIn || !appointment.patient) {
+    throw Object.assign(new Error('Corrections are available for patient bookings only'), { statusCode: 409 });
+  }
+  const allowedFields = resubmitting ? ['reason', 'bookingRevision'] : ['explanation', 'bookingRevision'];
+  if (Object.keys(data).some(field => !allowedFields.includes(field))) {
+    throw Object.assign(new Error('Only the booking reason can be corrected; doctor, date, slot and clinical records are fixed'), { statusCode: 400 });
+  }
+  const text = resubmitting ? data.reason : data.explanation;
+  if (typeof text !== 'string' || !text.trim() || text.trim().length > 2000) {
+    throw Object.assign(new Error(`${resubmitting ? 'Reason for visit' : 'Correction explanation'} must contain 1 to 2000 characters`), { statusCode: 400 });
+  }
+  const previousStatus = resubmitting ? 'Needs correction' : 'Pending';
+  if (!Number.isSafeInteger(data.bookingRevision) || data.bookingRevision < 0) {
+    throw Object.assign(new Error('A valid booking revision is required'), { statusCode: 400 });
+  }
+  if (appointment.status !== previousStatus || data.bookingRevision !== (appointment.bookingRevision || 0)) {
+    throw Object.assign(new Error('This request changed. Refresh its history before continuing.'), { statusCode: 409 });
+  }
+  if (resubmitting && text.trim() === appointment.reason) {
+    throw Object.assign(new Error('Update the reason for visit before resubmitting'), { statusCode: 400 });
+  }
+  if (isDateTimePassed(appointment.date, appointment.timeSlot, 'start')) {
+    throw Object.assign(new Error('This appointment time has passed. Cancel it or contact the clinic to book a new visit.'), { statusCode: 409 });
+  }
+  if (appointment.slot) {
+    const slot = await Slot.findById(appointment.slot);
+    if (!slot || slot.status !== 'Reserved-Tentative' || recordId(slot.appointment) !== recordId(appointment) ||
+        recordId(slot.doctor) !== recordId(appointment.doctor) ||
+        new Date(slot.date).toISOString().slice(0, 10) !== new Date(appointment.date).toISOString().slice(0, 10) ||
+        appointment.timeSlot !== `${slot.startTime}-${slot.endTime}` || isDateTimePassed(slot.date, slot.startTime, 'start')) {
+      throw Object.assign(new Error('The original reservation is no longer valid. Contact the clinic.'), { statusCode: 409 });
+    }
+  }
+  const changedAt = getNow();
+  const changedBy = actor._id || actor.id;
+  const revision = data.bookingRevision + 1;
+  const status = resubmitting ? 'Pending' : 'Needs correction';
+  const action = resubmitting ? 'Resubmitted' : 'Correction requested';
+  const reason = resubmitting ? text.trim() : appointment.reason;
+  const updated = await Appointment.findOneAndUpdate(
+    { ...bookingMatch(appointment), patient: appointment.patient, status: previousStatus, walkIn: null },
+    { $set: { status, reason, bookingRevision: revision }, $push: {
+      bookingHistory: { revision, action, previousReason: appointment.reason, reason,
+        explanation: resubmitting ? '' : text.trim(), changedBy, changedAt,
+        actorName: [actor.firstName, actor.lastName].filter(Boolean).join(' ') || actor.role, actorRole: actor.role },
+      statusHistory: { status, changedBy, changedAt, remarks: action },
+    } }, { new: true, runValidators: true }
+  );
+  if (!updated) throw Object.assign(new Error('This request changed. Refresh its history before continuing.'), { statusCode: 409 });
+  emitter.emit(resubmitting ? EVENTS.APPOINTMENT_RESUBMITTED : EVENTS.REVISION_REQUESTED, {
+    appointment: { _id: updated._id, patient: updated.patient, doctor: updated.doctor, date: updated.date, timeSlot: updated.timeSlot },
+    performedBy: changedBy, bookingRevision: revision, fromStatus: previousStatus, toStatus: status,
+    changedFields: resubmitting ? ['reason', 'status'] : ['status'],
+  });
+  return updated;
+}
+
+const requestCorrection = (id, actor, data) => reviseBooking(id, actor, data, false);
+const resubmit = (id, actor, data) => reviseBooking(id, actor, data, true);
 
 /**
  * Cancel an appointment (Patient or Doctor action).
@@ -751,6 +830,8 @@ async function addComment(appointmentId, actor, message) {
 }
 
 module.exports = {
+  requestCorrection,
+  resubmit,
   getVersions,
   getDocumentVersion,
   listComments,
