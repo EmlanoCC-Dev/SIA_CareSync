@@ -16,6 +16,7 @@ export default function App() {
   const [authView, setAuthView] = useState('landing'); // 'landing' | 'login' | 'register'
   const [hash, setHash] = useState(window.location.hash);
   const authDialog = useRef(null);
+  useEffect(() => { if (user) setAuthView('login'); }, [user]);
 
 
   // Listen for hash changes so the display route works

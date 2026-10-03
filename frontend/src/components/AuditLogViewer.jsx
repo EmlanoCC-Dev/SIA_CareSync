@@ -22,6 +22,7 @@ const ACTION_LABELS = {
   WALKIN_ADDED: 'Walk-in patient added',
   WALKIN_SLOT_ASSIGNED: 'Walk-in slot assigned',
   REVISION_REQUESTED: 'Revision requested',
+  APPOINTMENT_RESUBMITTED: 'Appointment resubmitted',
   PATIENT_CHECKED_IN: 'Patient checked in',
   DOCUMENT_UPLOADED: 'Document uploaded',
   DOCUMENT_VERIFIED: 'Document verified',
@@ -86,6 +87,7 @@ export default function AuditLogViewer() {
     return (
       <div style={{ fontSize: '0.8rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+          {changes.bookingRevision && <div>Booking revision {changes.bookingRevision} · {changes.fromStatus} → {changes.toStatus}</div>}
           {changes.user && <div><strong>{[changes.user.firstName, changes.user.lastName].filter(Boolean).join(' ') || 'User account'}</strong> · {changes.user.role} · {changes.creationMethod}</div>}
           {log.action === 'USER_UPDATED' && <div>{Object.entries(changes.changes || {}).map(([field, value]) => `${formatLabel(field)}: ${value}`).join(' · ')}</div>}
           {changes.document && <div>{changes.archived ? 'Archived attachment' : changes.operation || 'Removed attachment'}: <strong>{changes.document.filename || 'Document'}</strong>{changes.document.version ? ` · Version ${changes.document.version}` : ''}</div>}

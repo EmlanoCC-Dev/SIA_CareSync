@@ -49,6 +49,7 @@ Use white cards over the pale canvas, lightly tinted inset inputs, and solid col
 | Table | 13px body; 10px uppercase headers with `.075em` tracking; headers 13px 16px padding; cells 18px 16px; pale header surface |
 | Dialog | 16px radius; 20px 24px header, 24px body, 16px 24px footer; fit within viewport and scroll content |
 | Record version history | Native details groups with 12px padding and 8px radius; read-only 16px inset snapshot cards; author/time metadata at 12px; explicit current/previous/archived labels and protected version download actions |
+| Email delivery feedback | Green confirmation banner after a confirmed signup-code send; neutral acknowledgement for password requests; inbox status badges at 12px with icon/text, green sent, amber pending and rose failed, plus a sent timestamp visible on desktop/mobile |
 | Slot chip | Minimum 52px high; 10px 6px padding; 8px radius; 11px/600; teal selection; clearly disabled unavailable slots |
 
 ## Layout and focal points

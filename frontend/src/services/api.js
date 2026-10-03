@@ -56,6 +56,9 @@ export const api = {
   // ── Auth ──
   login: (email, password) => request('/users/login', { method: 'POST', body: { email, password } }),
   register: (userData) => request('/users/register', { method: 'POST', body: userData }),
+  requestRegistrationOtp: (email) => request('/users/register/otp', { method: 'POST', body: { email } }),
+  requestPasswordOtp: (email) => request('/users/password/otp', { method: 'POST', body: { email } }),
+  resetPassword: (data) => request('/users/password/reset', { method: 'POST', body: data }),
   getMe: () => request('/users/me'),
   getDoctors: () => request('/users/doctors'),
   getUsers: (role) => request(`/users${role ? `?role=${role}` : ''}`),
@@ -82,6 +85,8 @@ export const api = {
   addAppointmentComment: (id, message) => request(`/appointments/${encodeURIComponent(id)}/comments`, { method: 'POST', body: { message } }),
   createAppointment: (appointmentData) => request('/appointments', { method: 'POST', body: appointmentData }),
   approveAppointment: (id) => request(`/appointments/${id}/approve`, { method: 'PATCH' }),
+  requestAppointmentCorrection: (id, explanation, bookingRevision) => request(`/appointments/${id}/request-correction`, { method: 'PATCH', body: { explanation, bookingRevision } }),
+  resubmitAppointment: (id, reason, bookingRevision) => request(`/appointments/${id}/resubmit`, { method: 'PATCH', body: { reason, bookingRevision } }),
   assignAppointmentSlot: (id, slotId) => request(`/appointments/${id}/assign`, { method: 'PATCH', body: { slotId } }),
   declineAppointment: (id, reason) => request(`/appointments/${id}/decline`, { method: 'PATCH', body: { reason } }),
   checkInAppointment: (id) => request(`/appointments/${id}/check-in`, { method: 'PATCH' }),

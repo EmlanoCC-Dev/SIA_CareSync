@@ -189,6 +189,7 @@ export default function AdminDashboard() {
                       </span>
                     </td>
                     <td style={{ textAlign: 'right' }}>
+                      {apt.status === 'Pending' && !apt.walkIn && <button className="btn btn-secondary btn-sm" onClick={() => openTimeline(apt)}>Request correction</button>}
                       {apt.status === 'Pending' && !apt.slot && !apt.walkIn && <button className="btn btn-primary btn-sm" onClick={() => setAssignment(apt)}>Assign doctor &amp; slot</button>}
                       <button onClick={() => openTimeline(apt)} className="btn btn-secondary btn-sm">
                         <History size={14} />
@@ -315,6 +316,7 @@ export default function AdminDashboard() {
         isOpen={timelineOpen}
         onClose={() => setTimelineOpen(false)}
         appointment={selectedAppointment}
+        onUpdated={loadData}
       />
       <footer className="workspace-footer"><span>CareSync · Administration</span><span>Care team &amp; clinic oversight</span></footer>
     </main>

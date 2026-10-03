@@ -52,7 +52,7 @@ button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 .role-Patient, .role-Doctor { background: var(--primary-light); color: var(--primary-hover); }
 .role-Staff { background: var(--amber-light); color: var(--amber); }
 .role-Admin { background: var(--indigo-light); color: var(--indigo); }
-.badge-Pending, .badge-Waiting { background: var(--amber-light); color: var(--amber); }
+.badge-Pending, .badge-Waiting, .badge-Needs-correction { background: var(--amber-light); color: var(--amber); }
 .badge-Confirmed, .badge-Reserved, .badge-Reserved-Confirmed, .badge-Reserved-Tentative, .badge-Slot-Assigned, .badge-Slot\ Assigned { background: var(--indigo-light); color: var(--indigo); }
 .badge-Checked-In { background: var(--amber-light); color: var(--amber); }
 .badge-In-Progress, .badge-In\ Progress { background: var(--primary-light); color: var(--primary-hover); }
@@ -95,7 +95,7 @@ td strong { font-size: 13px; } tr:last-child td { border-bottom: 0; } tbody tr:h
 .appointment-comment-role { margin-left: 8px; }
 .appointment-comment-message { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 8px; font-size: 13px; }
 .appointment-comment-actions { margin-top: 8px; }
-.record-versions { margin-top: 24px; padding: 24px 0; border-top: 1px solid var(--border); overflow-wrap: anywhere; }
+.record-versions, .booking-corrections { margin-top: 24px; padding: 24px 0; border-top: 1px solid var(--border); overflow-wrap: anywhere; }
 .record-versions-heading, .record-version-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .record-versions-heading h4 { display: flex; align-items: center; gap: 8px; font-size: 16px; }
 .record-version-meta { color: var(--text-muted); font-size: 12px; margin: 8px 0; }
@@ -104,6 +104,8 @@ td strong { font-size: 13px; } tr:last-child td { border-bottom: 0; } tbody tr:h
 .record-version-group summary:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
 .record-version-entry { padding: 16px; margin-top: 12px; border-radius: 8px; background: var(--bg-muted); font-size: 13px; }
 .record-version-content { white-space: pre-wrap; margin-top: 12px; }
+.booking-corrections form { display: grid; gap: 12px; margin-top: 16px; }
+.booking-corrections form .btn { justify-self: start; }
 .record-replacement-notice { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px; margin-bottom: 16px; background: var(--primary-light); border-radius: 8px; font-size: 12px; }
 .consultation-document-row { flex-wrap: wrap; gap: 12px; overflow-wrap: anywhere; }
 .consultation-document-row > div:first-child { min-width: 0; flex: 1 1 200px; }
@@ -119,3 +121,21 @@ td strong { font-size: 13px; } tr:last-child td { border-bottom: 0; } tbody tr:h
 .timeline-item { position: relative; margin-bottom: 24px; } .timeline-dot { position: absolute; left: -28px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: var(--primary); border: 3px solid white; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } } @keyframes scaleUp { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: scale(1); } }
 @keyframes spin { to { transform: rotate(360deg); } } .spin { animation: spin 1s linear infinite; }
+/* Email verification reuses the clinical form and dialog controls. */
+.password-change-form { display: flex; flex-direction: column; gap: 12px; }
+.otp-code { font-variant-numeric: tabular-nums; letter-spacing: .18em; }
+.otp-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; color: var(--text-muted); }
+.otp-actions small { flex: 1 1 160px; }
+.auth-recovery { margin-top: 16px; width: 100%; }
+.email-send-notice, .email-request-notice { align-items: flex-start; overflow-wrap: anywhere; }
+.email-send-notice svg, .email-request-notice svg { flex-shrink: 0; margin-top: 2px; }
+.email-request-notice { background: var(--primary-light); color: var(--text-main); border: 1px solid var(--border); margin-bottom: 0; }
+.notification-email-status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; color: var(--text-muted); }
+.notification-email-status > span { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px; background: var(--bg-muted); }
+.notification-email-status.is-sent > span { background: var(--emerald-light); color: var(--emerald); }
+.notification-email-status.is-pending > span { background: var(--amber-light); color: var(--amber); }
+.notification-email-status.is-failed > span { background: var(--rose-light); color: var(--rose); }
+.notification-email-status small { flex-basis: 100%; }
+.notification-dialog .notification-email-status time { display: block; }
+dialog.password-dialog { width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 0; color: var(--text-main); border: 1px solid var(--border); overflow: auto; }
+dialog.password-dialog::backdrop { background: rgb(13 35 36 / 48%); }

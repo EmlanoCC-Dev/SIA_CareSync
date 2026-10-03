@@ -224,6 +224,7 @@ export default function StaffDashboard() {
               >
                 <option value="">All Statuses</option>
                 <option value="Pending">Pending (Needs Approval)</option>
+                <option value="Needs correction">Needs correction (Waiting for patient)</option>
                 <option value="Confirmed">Confirmed</option>
                 <option value="Checked In">Checked In / Waiting</option>
                 <option value="In Progress">In Progress</option>
@@ -291,6 +292,7 @@ export default function StaffDashboard() {
                         <div style={{ display: 'inline-flex', gap: '0.35rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                           {apt.status === 'Pending' && (
                             <>
+                              {!apt.walkIn && <button className="btn btn-secondary btn-sm" onClick={() => openTimeline(apt)}>Request correction</button>}
                               <button
                                 onClick={() => handleApprove(apt._id)}
                                 className="btn btn-success btn-sm"
@@ -341,7 +343,7 @@ export default function StaffDashboard() {
                               <span>Complete</span>
                             </button>
                           )}
-                          {['Pending', 'Confirmed', 'Checked In'].includes(apt.status) && (
+                          {['Pending', 'Needs correction', 'Confirmed', 'Checked In'].includes(apt.status) && (
                             <button
                               onClick={() => handleCancel(apt._id)}
                               className="btn btn-danger btn-sm"
@@ -379,6 +381,7 @@ export default function StaffDashboard() {
         isOpen={timelineOpen}
         onClose={() => setTimelineOpen(false)}
         appointment={selectedAppointment}
+        onUpdated={fetchAppointments}
       />
       <footer className="workspace-footer"><span>CareSync · Front desk</span><span>Appointments, arrivals &amp; walk-ins</span></footer>
     </main>

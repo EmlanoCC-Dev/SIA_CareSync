@@ -1,6 +1,28 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Bell, Check, X } from 'lucide-react';
+import { Bell, Check, CheckCircle2, Clock, Mail, AlertCircle, X } from 'lucide-react';
 import { api } from '../services/api';
+
+const emailStatuses = {
+  sent: { label: 'Email sent', Icon: CheckCircle2, hint: 'Accepted by Gmail. Check your inbox or spam folder.' },
+  pending: { label: 'Email delivery pending', Icon: Clock, hint: 'The email delivery result has not been recorded yet.' },
+  failed: { label: 'Email delivery failed', Icon: AlertCircle, hint: 'This update is saved here. Contact the clinic if you need help.' },
+  disabled: { label: 'Email unavailable', Icon: Mail, hint: 'Email was disabled when this update was created.' },
+  skipped: { label: 'Email not sent', Icon: Mail, hint: 'This update is saved in your inbox.' },
+};
+
+function EmailDeliveryStatus({ delivery }) {
+  if (!delivery) return null; // Older inbox entries have no recorded email result.
+  const inAppOnly = delivery.errorCode === 'IN_APP_ONLY';
+  const status = inAppOnly ? { label: 'In-app only', Icon: Bell, hint: 'This update does not use email.' } : emailStatuses[delivery.status];
+  if (!status) return null;
+  const Icon = status.Icon;
+  const sentAt = delivery.status === 'sent' && delivery.sentAt && new Date(delivery.sentAt);
+  return <div className={`notification-email-status is-${inAppOnly ? 'in-app' : delivery.status}`}>
+    <span title={status.hint}><Icon size={14} aria-hidden="true" />{status.label}</span>
+    {sentAt && Number.isFinite(sentAt.getTime()) && <time dateTime={sentAt.toISOString()}>{sentAt.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time>}
+    {delivery.status === 'failed' && <small>{status.hint}</small>}
+  </div>;
+}
 
 export default function NotificationInbox() {
   const dialog = useRef(null);
@@ -109,6 +131,7 @@ export default function NotificationInbox() {
               <button type="button" className={`btn btn-sm ${unread ? 'btn-primary' : 'btn-secondary'}`} aria-pressed={unread} onClick={() => { setUnread(true); setPage(1); }}>Unread ({data.unreadCount})</button>
             </div>
             <button type="button" className="btn btn-secondary btn-sm" disabled={!data.unreadCount || loading} onClick={() => markRead()}><Check size={14} />Mark all as read</button>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={loading} onClick={() => load()}>Refresh</button>
           </div>
           {error && <div className="alert alert-error" role="alert">{error}<button type="button" className="btn btn-secondary btn-sm" onClick={() => load()}>Retry</button></div>}
           {loading && !data.items.length ? <p className="notification-empty" role="status">Loading your updates…</p> :
@@ -117,6 +140,7 @@ export default function NotificationInbox() {
               {data.items.map(item => <li key={item._id} className={item.readAt ? '' : 'is-unread'}>
                 <div className="notification-item-heading"><h4>{item.title}</h4>{!item.readAt && <span className="notification-new">Unread</span>}</div>
                 <p>{item.message}</p>
+                <EmailDeliveryStatus delivery={item.emailDelivery} />
                 <div className="notification-item-footer">
                   <time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</time>
                   {!item.readAt && <button type="button" className="btn btn-secondary btn-sm" onClick={() => markRead(item._id)}>Mark as read</button>}

@@ -233,7 +233,8 @@ export default function PatientDashboard() {
                           <History size={14} />
                           <span>History &amp; comments</span>
                         </button>
-                        {['Pending', 'Confirmed', 'Checked In'].includes(apt.status) && (
+                        {apt.status === 'Needs correction' && <button className="btn btn-primary btn-sm" onClick={() => openTimeline(apt)}>Edit &amp; resubmit</button>}
+                        {['Pending', 'Needs correction', 'Confirmed', 'Checked In'].includes(apt.status) && (
                           <button
                             onClick={() => handleCancel(apt._id)}
                             className="btn btn-danger btn-sm"
@@ -265,6 +266,7 @@ export default function PatientDashboard() {
         isOpen={timelineOpen}
         onClose={() => setTimelineOpen(false)}
         appointment={selectedAppointment}
+        onUpdated={fetchAppointments}
       />
 
       {/* Patient Medical Notes Modal */}

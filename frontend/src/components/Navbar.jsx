@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useDialog } from '../context/DialogContext';
 import { api } from '../services/api';
 import SystemTimeModal from './SystemTimeModal';
 import NotificationInbox from './NotificationInbox';
-import { LogOut, Tv, Clock } from 'lucide-react';
+import PasswordChangeForm from './PasswordChangeForm';
+import { LogOut, Tv, Clock, KeyRound, X } from 'lucide-react';
 import logoSource from '../assets/landing-logo.png';
 
 export default function Navbar() {
@@ -12,6 +13,14 @@ export default function Navbar() {
   const showDialog = useDialog();
   const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
   const [systemTimeStatus, setSystemTimeStatus] = useState(null);
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const passwordDialog = useRef(null);
+  useEffect(() => {
+    if (!passwordOpen || !passwordDialog.current) return;
+    const previousFocus = document.activeElement;
+    passwordDialog.current.showModal();
+    return () => previousFocus?.focus();
+  }, [passwordOpen]);
 
   const fetchTime = async () => {
     try {
@@ -98,6 +107,9 @@ export default function Navbar() {
                 </div>
                 <span className={`role-badge role-${user.role}`}>{user.role}</span>
               </div>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setPasswordOpen(true)}>
+                <KeyRound size={16} /><span>Change password</span>
+              </button>
               <button
                 onClick={async () => {
                   if (await showDialog({ kind: 'confirm', title: 'Sign out', message: 'Are you sure you want to sign out?', confirmText: 'Sign out', cancelText: 'Stay signed in' })) logout();
@@ -118,6 +130,12 @@ export default function Navbar() {
         onTimeChanged={fetchTime}
         canEdit={user?.role === 'Admin'}
       />
+      {passwordOpen && <dialog ref={passwordDialog} className="modal-content password-dialog" aria-labelledby="password-dialog-title" onCancel={() => setPasswordOpen(false)}>
+        <div className="modal-header"><h2 id="password-dialog-title">Change password</h2>
+          <button type="button" className="btn btn-secondary btn-sm" aria-label="Close password change" onClick={() => setPasswordOpen(false)}><X size={18} /></button>
+        </div>
+        <div className="modal-body"><PasswordChangeForm initialEmail={user.email} fixedEmail onComplete={() => setPasswordOpen(false)} /></div>
+      </dialog>}
     </header>
   );
 }

@@ -207,6 +207,7 @@ export default function DoctorDashboard() {
                 <option value="Confirmed">Confirmed</option>
                 <option value="Checked In">Checked In / Waiting</option>
                 <option value="Pending">Pending Approval</option>
+                <option value="Needs correction">Needs correction</option>
                 <option value="Completed">Completed</option>
                 <option value="Declined">Declined</option>
                 <option value="Cancelled">Cancelled</option>
@@ -301,7 +302,7 @@ export default function DoctorDashboard() {
                               <span>Decline</span>
                             </button>
                           )}
-                          {['Pending', 'Confirmed', 'Checked In'].includes(apt.status) && (
+                          {['Pending', 'Needs correction', 'Confirmed', 'Checked In'].includes(apt.status) && (
                             <button
                               onClick={() => handleCancel(apt._id)}
                               className="btn btn-danger btn-sm"
@@ -345,6 +346,7 @@ export default function DoctorDashboard() {
         isOpen={timelineOpen}
         onClose={() => setTimelineOpen(false)}
         appointment={selectedAppointment}
+        onUpdated={fetchAppointments}
       />
       <footer className="workspace-footer"><span>CareSync · Clinical workspace</span><span>Schedule, queue &amp; patient care</span></footer>
     </main>

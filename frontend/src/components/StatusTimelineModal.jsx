@@ -1,9 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import BookingCorrections from './BookingCorrections';
 import AppointmentComments from './AppointmentComments';
 import VersionHistory from './VersionHistory';
 import { X, History, Clock, User, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
-export default function StatusTimelineModal({ isOpen, onClose, appointment }) {
+export default function StatusTimelineModal({ isOpen, onClose, appointment: initialAppointment, onUpdated }) {
+  const [appointment, setAppointment] = useState(initialAppointment);
+  useEffect(() => { setAppointment(initialAppointment); }, [initialAppointment, isOpen]);
   const dialog = useRef(null);
   useEffect(() => {
     if (!isOpen || !appointment) return;
@@ -59,6 +62,7 @@ export default function StatusTimelineModal({ isOpen, onClose, appointment }) {
             </div>
           </div>
 
+          <BookingCorrections key={appointment._id} appointment={appointment} onUpdated={updated => { setAppointment(updated); onUpdated?.(); }} />
           <AppointmentComments key={appointment._id} appointmentId={appointment._id} />
           <VersionHistory key={`versions-${appointment._id}`} appointmentId={appointment._id} />
 
