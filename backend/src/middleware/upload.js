@@ -18,6 +18,9 @@ const path = require('path');
 const fs = require('fs');
 const { randomUUID } = require('node:crypto');
 const Appointment = require('../models/Appointment');
+const { pipeline } = require('node:stream');
+const env = require('../config/env');
+const { getBucket, discardUpload } = require('../services/fileStorage.service');
 
 const UPLOAD_ROOT = path.join(__dirname, '../../uploads');
 
@@ -109,11 +112,32 @@ const fileFilter = (req, file, cb) => {
   cb(null, true);
 };
 
+const gridfsStorage = {
+  _handleFile(req, file, callback) {
+    let stream;
+    try {
+      stream = getBucket().openUploadStream(file.originalname, { metadata: { appointment: req.params.id } });
+      pipeline(file.stream, stream, error => {
+        if (error) {
+          discardUpload({ storageId: stream.id }).catch(() => {}).finally(() => callback(error));
+          return;
+        }
+        callback(null, { storageId: stream.id, storageUrl: `/uploads/gridfs/${stream.id}`,
+          filename: file.originalname, size: stream.gridFSFile.length });
+      });
+    } catch (error) { callback(error); }
+  },
+  _removeFile(_req, file, callback) { discardUpload(file).then(() => callback(null), callback); },
+};
+
 const upload = multer({
-  storage,
+  storage: env.UPLOAD_STORAGE === 'gridfs' ? gridfsStorage : storage,
   fileFilter,
   limits: {
     fileSize: 25 * 1024 * 1024, // 25 MB max
+    files: 1,
+    fields: 5,
+    fieldSize: 4096,
   },
 });
 

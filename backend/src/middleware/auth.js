@@ -61,7 +61,9 @@ async function protect(req, res, next) {
     if (!mongoose.isObjectIdOrHexString(decoded.id)) throw new Error('Invalid token subject');
 
     // Attach user to request
-    const user = await User.findById(decoded.id);
+    let user;
+    try { user = await User.findById(decoded.id); }
+    catch (err) { return next(err); } // A database outage does not invalidate a login token.
     if (!user || user.status === 'Deactivated' || !ROLES.includes(user.role) ||
         (decoded.version ?? 0) !== (user.tokenVersion || 0)) {
       return res.status(401).json({

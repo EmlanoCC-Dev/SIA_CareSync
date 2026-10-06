@@ -6,6 +6,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 process.env.NODE_ENV = 'production';
+process.env.UPLOAD_STORAGE = 'local';
 process.env.JWT_SECRET = 'isolated-api-access-check-secret-for-tests';
 const jwt = require('jsonwebtoken');
 const User = require('../src/models/User');

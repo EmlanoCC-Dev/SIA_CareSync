@@ -10,6 +10,9 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const mongoose = require('mongoose');
 const { UPLOAD_ROOT } = require('../middleware/upload');
+const { getBucket, gridfsId, discardUpload } = require('../services/fileStorage.service');
+const Appointment = require('../models/Appointment');
+const { pipeline } = require('node:stream');
 
 async function requestCorrection(req, res, next) {
   try { res.json({ success: true, data: await appointmentService.requestCorrection(req.params.id, req.user, req.body) }); }
@@ -145,7 +148,7 @@ async function uploadFile(req, res, next) {
       throw Object.assign(new Error('Document title and category must be text'), { statusCode: 400 });
     }
     const version = req.body.version === undefined ? undefined : (/^[1-9]\d*$/.test(req.body.version) ? Number(req.body.version) : NaN);
-    const fileUrl = `${req.uploadRelativePath}/${req.file.filename}`;
+    const fileUrl = req.file.storageUrl || `${req.uploadRelativePath}/${req.file.filename}`;
     const filename = title && title.trim() ? title.trim() : req.file.originalname;
 
     const result = await appointmentService.attachFile(req.params.id, req.user, {
@@ -160,6 +163,16 @@ async function uploadFile(req, res, next) {
       appointment: result.appointment,
     });
   } catch (err) {
+    if (req.file) {
+      // A failed acknowledgement may follow a committed database write. Never
+      // delete a file still referenced by a current or historical document.
+      const url = req.file.storageUrl || `${req.uploadRelativePath}/${req.file.filename}`;
+      try {
+        const referenced = await Appointment.exists({ $or: ['documents.url', 'documents.versions.url',
+          'archivedDocuments.url', 'archivedDocuments.versions.url'].map(field => ({ [field]: url })) });
+        if (!referenced) await discardUpload(req.file);
+      } catch { console.error('[Upload] Could not check or clean an unattached file'); }
+    }
     next(err);
   }
 }
@@ -192,6 +205,17 @@ async function downloadDocument(req, res, next) {
       : req.appointment.documents.find(doc => String(doc._id) === req.params.docId);
     if (!document || typeof document.url !== 'string' || !document.url.startsWith('/uploads/')) {
       throw Object.assign(new Error('Uploaded document not found'), { statusCode: 404 });
+    }
+    const storedId = gridfsId(document.url);
+    if (storedId) {
+      const bucket = getBucket();
+      const file = await bucket.find({ _id: storedId }).next();
+      if (!file) throw Object.assign(new Error('Uploaded document not found'), { statusCode: 404 });
+      res.attachment(path.basename(document.filename));
+      res.set({ 'Content-Type': 'application/octet-stream', 'Content-Length': String(file.length),
+        'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' });
+      pipeline(bucket.openDownloadStream(storedId), res, err => { if (err) next(err); });
+      return;
     }
     const candidate = path.resolve(UPLOAD_ROOT, document.url.slice('/uploads/'.length));
     const inside = (root, file) => {

@@ -9,10 +9,11 @@ import DoctorDashboard from './pages/DoctorDashboard';
 import StaffDashboard from './pages/StaffDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import ClinicDisplayScreen from './pages/ClinicDisplayScreen';
+import LoadError from './components/LoadError';
 import { Activity, CalendarCheck, X } from 'lucide-react';
 
 export default function App() {
-  const { user, loading } = useAuth();
+  const { user, loading, sessionError, retrySession, logout } = useAuth();
   const [authView, setAuthView] = useState('landing'); // 'landing' | 'login' | 'register'
   const [hash, setHash] = useState(window.location.hash);
   const authDialog = useRef(null);
@@ -37,14 +38,17 @@ export default function App() {
     return <ClinicDisplayScreen />;
   }
 
-  if (loading) {
+  if (loading || sessionError) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)' }}>
-        <div style={{ textAlign: 'center' }}>
+        <div style={{ textAlign: 'center', maxWidth: '420px', padding: '24px' }}>
           <div className="brand-icon" style={{ width: '48px', height: '48px', margin: '0 auto 1rem', borderRadius: '12px' }}>
             <Activity size={28} />
           </div>
-          <p style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Loading CareSync...</p>
+          {sessionError ? <div className="session-error">
+            <LoadError message={sessionError} onRetry={retrySession} loading={loading} />
+            <button type="button" className="btn btn-secondary" onClick={logout}>Return to sign in</button>
+          </div> : <p style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Loading CareSync...</p>}
         </div>
       </div>
     );

@@ -1,0 +1,41 @@
+# Optional Render Blueprint. All credentials are supplied in Render, never here.
+services:
+  - type: web
+    name: caresync-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NODE_ENV
+        value: production
+      - key: TZ
+        value: Asia/Manila
+      - key: TRUST_PROXY
+        value: "1"
+      - key: UPLOAD_STORAGE
+        value: gridfs
+      - key: EMAIL_ENABLED
+        value: "true"
+      - key: EMAIL_TRANSPORT
+        value: gmail-api
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGO_URI
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: GMAIL_CLIENT_ID
+        sync: false
+      - key: GMAIL_CLIENT_SECRET
+        sync: false
+      - key: GMAIL_REFRESH_TOKEN
+        sync: false

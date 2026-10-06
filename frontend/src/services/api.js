@@ -4,7 +4,7 @@
  * Centralized HTTP request helper with token management.
  */
 
-const API_BASE = '/api';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
 
 export function getStoredToken() {
   return localStorage.getItem('caresync_token');
@@ -47,6 +47,10 @@ async function request(endpoint, options = {}) {
     error.status = response.status;
     error.data = data;
     throw error;
+  }
+
+  if (typeof data.success !== 'boolean') {
+    throw new Error('The server returned an unexpected response. Check the API address or try again shortly.');
   }
 
   return data;

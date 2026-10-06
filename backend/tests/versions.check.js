@@ -4,6 +4,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 process.env.NODE_ENV = 'production';
+process.env.UPLOAD_STORAGE = 'local';
 process.env.JWT_SECRET = 'isolated-version-history-check-secret-for-tests';
 const jwt = require('jsonwebtoken');
 const User = require('../src/models/User');
@@ -48,6 +49,12 @@ async function main() {
   stub(User, 'findById', key => query(users.find(user => user._id === String(key)) || null));
   stub(Appointment, 'findById', key => query(copy(records.find(row => row._id === String(key)) || null)));
   stub(Appointment, 'find', () => query([]));
+  stub(Appointment, 'exists', filter => {
+    const urls = filter.$or.map(condition => Object.values(condition)[0]);
+    const referenced = records.some(row => [...(row.documents || []), ...(row.archivedDocuments || [])]
+      .some(document => [document, ...(document.versions || [])].some(version => urls.includes(version.url))));
+    return query(referenced ? { _id: record._id } : null);
+  });
   stub(Appointment, 'findOneAndUpdate', async (filter, update, options) => {
     if (failWrite) throw new Error('Injected record write failure');
     if (race) { const hook = race; race = null; hook(); }

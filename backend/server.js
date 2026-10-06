@@ -15,9 +15,15 @@ const { registerSlotFreedHandler } = require('./src/events/handlers/slotFreed.ha
 const routes = require('./src/routes');
 const { errorHandler } = require('./src/middleware/errorHandler');
 const app = express();
+app.disable('x-powered-by');
+app.set('trust proxy', env.TRUST_PROXY);
 
 // ── Middleware ────────────────────────────────────────────
-app.use(cors());
+app.use(cors({ origin: (origin, callback) => {
+  const allowed = !origin || env.CORS_ORIGINS.includes(origin) ||
+    (!env.CORS_ORIGINS.length && process.env.NODE_ENV !== 'production');
+  callback(allowed ? null : Object.assign(new Error('This browser origin is not allowed'), { statusCode: 403 }), allowed);
+} }));
 app.use(express.json());
 
 // ── Static Files (Uploaded Documents) ────────────────────
@@ -29,7 +35,8 @@ app.use('/api', routes);
 
 // Health-check endpoint
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  const connected = require('mongoose').connection.readyState === 1;
+  res.status(connected ? 200 : 503).json({ status: connected ? 'ok' : 'unavailable', timestamp: new Date().toISOString() });
 });
 
 // ── Global Error Handler ─────────────────────────────────
@@ -40,6 +47,7 @@ async function start() {
   // 1. Connect to MongoDB
   await connectDB();
   await Promise.all([
+    require('./src/models/User').init(),
     require('./src/models/WalkIn').init(), require('./src/models/Slot').init(),
     require('./src/models/SlotPlan').init(), require('./src/models/AssignmentRecovery').init(),
     require('./src/models/Notification').init(),

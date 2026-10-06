@@ -77,12 +77,13 @@ export default function ConsultationModal({ isOpen, onClose, appointment, onSucc
 
     try {
       const formData = new FormData();
-      formData.append('file', selectedFile);
       formData.append('type', docType);
       if (replacement) formData.append('version', replacement.version || 1);
       if (docTitle.trim()) {
         formData.append('title', docTitle.trim());
       }
+      // Multipart fields must arrive before the file for local category routing.
+      formData.append('file', selectedFile);
 
       const res = replacement
         ? await api.replaceAppointmentDocument(appointment._id, replacement._id, formData)

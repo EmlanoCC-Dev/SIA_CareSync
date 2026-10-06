@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Healthcare Appointment, Queue, and Patient Notification Integration System — Backend API",
   "main": "server.js",
+  "engines": { "node": ">=22" },
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"

@@ -15,7 +15,7 @@ module.exports = function otpRateLimit(req, res, next) {
   }
   if (++entry.count > 60) {
     res.set('Retry-After', String(Math.ceil((entry.resetAt - now) / 1000)));
-    return res.status(429).json({ success: false, message: 'Too many verification requests. Try again later.' });
+    return res.status(429).json({ success: false, message: 'Too many account requests. Try again later.' });
   }
   next();
 };

@@ -3,6 +3,9 @@ const User = require('../models/User');
 const { UPLOAD_ROOT } = require('../middleware/upload');
 const { setCustomTime } = require('../config/systemTime');
 const emitter = require('../events/emitter');
+const env = require('../config/env');
+const { clearStoredFiles } = require('./fileStorage.service');
+const mongoose = require('mongoose');
 
 const records = ['Appointment', 'AppointmentComment', 'WalkIn', 'Slot', 'SlotPlan',
   'Notification', 'AuditLog', 'EmailOtp', 'AssignmentRecovery'].map(name => require(`../models/${name}`));
@@ -31,6 +34,7 @@ async function clearDemoData(adminId) {
       deleted[model.modelName] = (await model.deleteMany({})).deletedCount;
     }
     deleted.User = (await User.deleteMany({ role: { $nin: ['Doctor', 'Staff'] }, _id: { $ne: adminId } })).deletedCount;
+    if (env.UPLOAD_STORAGE === 'gridfs' || mongoose.connection.db) await clearStoredFiles();
     // Fixed application-owned directory, never a path supplied by the caller.
     await fs.rm(UPLOAD_ROOT, { recursive: true, force: true });
     await fs.mkdir(UPLOAD_ROOT, { recursive: true });

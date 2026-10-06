@@ -7,8 +7,12 @@
 
 function errorHandler(err, _req, res, _next) {
   if (res.headersSent) return _next(err);
-  const statusCode = err.statusCode || (['CastError', 'ValidationError'].includes(err.name) ? 400 : 500);
-  const message = err.message || 'Internal Server Error';
+  const statusCode = err.code === 'LIMIT_FILE_SIZE' ? 413 : err.name === 'MulterError' ? 400 :
+    err.statusCode || err.status || (['CastError', 'ValidationError'].includes(err.name) ? 400 : 500);
+  const message = err.code === 'LIMIT_FILE_SIZE' ? 'The file exceeds the 25 MB upload limit.' :
+    err.type === 'entity.parse.failed' ? 'The request body must be valid JSON.' :
+    err.type === 'entity.too.large' ? 'The request body is too large.' :
+    process.env.NODE_ENV === 'production' && statusCode >= 500 && !err.statusCode ? 'The service is temporarily unavailable. Try again shortly.' : err.message || 'Internal Server Error';
 
   // Log full error in development
   if (process.env.NODE_ENV !== 'production') {

@@ -17,7 +17,7 @@ router.post('/register/otp', otpRateLimit, userController.registrationOtp);
 router.post('/register', otpRateLimit, userController.register);
 router.post('/password/otp', otpRateLimit, userController.passwordOtp);
 router.post('/password/reset', otpRateLimit, userController.resetPassword);
-router.post('/login', userController.login);
+router.post('/login', otpRateLimit, userController.login);
 
 // Protected routes
 router.get('/me', userController.getMe);

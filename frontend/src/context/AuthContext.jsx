@@ -6,30 +6,32 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sessionError, setSessionError] = useState('');
 
-  useEffect(() => {
-    async function loadUser() {
-      const token = getStoredToken();
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const res = await api.getMe();
-        if (res.success && res.data) {
-          setUser(res.data);
-        } else {
-          setStoredToken(null);
-        }
-      } catch (err) {
-        console.error('Failed to restore session:', err);
-        setStoredToken(null);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
+  async function loadUser() {
+    setLoading(true);
+    setSessionError('');
+    const token = getStoredToken();
+    if (!token) {
+      setLoading(false);
+      return;
     }
-
+    try {
+      const res = await api.getMe();
+      if (res.success && res.data) {
+        setUser(res.data);
+      } else {
+        setStoredToken(null);
+      }
+    } catch (err) {
+      setUser(null);
+      if (err.status === 401 || err.status === 403) setStoredToken(null);
+      else setSessionError('Your session could not be checked. The server may be starting or temporarily unavailable.');
+    } finally {
+      setLoading(false);
+    }
+  }
+  useEffect(() => {
     loadUser();
   }, []);
 
@@ -56,10 +58,11 @@ export function AuthProvider({ children }) {
   const logout = () => {
     setStoredToken(null);
     setUser(null);
+    setSessionError('');
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, sessionError, retrySession: loadUser, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

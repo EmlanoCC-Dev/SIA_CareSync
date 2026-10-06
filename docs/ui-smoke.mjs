@@ -52,6 +52,7 @@ try {
   await page.setRequestInterception(true);
   page.on('request', request => {
     const url = new URL(request.url());
+    if (['fonts.googleapis.com', 'fonts.gstatic.com'].includes(url.hostname)) return request.abort();
     if (!url.pathname.startsWith('/api/')) return request.continue();
     if (request.method() === 'GET' && failedReads.has(url.pathname)) {
       return request.respond({ status: 503, contentType: 'application/json', body: JSON.stringify({ success: false, message: 'This list is temporarily unavailable.' }) });
@@ -210,9 +211,11 @@ try {
     await click('.landing-auth-actions button', 'Log In');
     await page.waitForSelector('dialog[open] #login-email');
     await check(`login-${width}`);
-    // Native modal dialog confines keyboard focus and Escape closes it.
-    for (let i = 0; i < 8; i++) await page.keyboard.press('Tab');
-    assert(await page.evaluate(() => document.activeElement.closest('dialog') !== null));
+    // Native dialogs may tab into browser chrome; background controls stay inert.
+    for (let i = 0; i < 8; i++) {
+      await page.keyboard.press('Tab');
+      assert(await page.evaluate(() => document.activeElement === document.body || document.activeElement.closest('dialog') !== null), 'Auth dialog focus reached a background control');
+    }
     await click('.auth-welcome-panel button', 'Create');
     await page.waitForSelector('#register-last-name');
     await check(`register-${width}`);

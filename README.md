@@ -12,7 +12,7 @@ CareSync is the **Healthcare Appointment, Queue, and Patient Notification Integr
 - Consultation notes, document uploads, and preserved note/document versions with protected downloads.
 - Admin account creation, editing, role changes, deactivation, and reactivation. Deactivated accounts remain stored.
 - Role-scoped dashboards, date-filtered reports, audit records, and private in-app notifications.
-- Gmail SMTP email for patient appointment confirmation, decline, cancellation, and no-show. Routine updates remain in-app.
+- Gmail email (local SMTP or hosted HTTPS Gmail API) for patient appointment confirmation, decline, cancellation, and no-show. Routine updates remain in-app.
 - Email OTP for patient self-registration and password change/reset. Admin-created accounts do not require signup OTP.
 - Visible notification email-delivery status and sent timestamps.
 
@@ -26,7 +26,7 @@ SMS is excluded from the agreed scope because paid providers are not feasible fo
 | Node.js and npm | Use Node.js **22 or newer**. This workspace was tested with Node.js **24.11.1** and npm **11.6.2**. The root `concurrently` package requires Node.js 22+. npm is included with Node.js. |
 | MongoDB | A running local MongoDB instance or accessible MongoDB Atlas database, with a connection URI and permissions to create application collections/indexes. |
 | Browser | Required for the web application. Chrome is also used by the optional focused browser check. |
-| Gmail SMTP account | Required for real email delivery, patient signup, and password OTPs. Configure a Google App Password for the sender account. |
+| Gmail sender account | Required for real email delivery, patient signup, and password OTPs. Use a Google App Password for local SMTP or OAuth credentials for the hosted Gmail API. |
 
 MongoDB Compass is optional for inspecting a development database. MongoDB need not be installed locally when using a remote database. No global React, Vite, nodemon, Python, or Java installation is required.
 
@@ -117,7 +117,13 @@ SMTP_APP_PASSWORD=your-google-app-password
 | `JWT_EXPIRES_IN` | Login-token lifetime; default `7d`. |
 | `EMAIL_ENABLED` | Exactly `true` or `false`. Use `true` for email and OTP workflows. |
 | `SMTP_USER` | Gmail sender address; required when email is enabled. |
-| `SMTP_APP_PASSWORD` | Google App Password, rather than the normal login password; required when email is enabled. Spaces are removed by configuration loading. |
+| `SMTP_APP_PASSWORD` | Google App Password, rather than the normal login password; required for enabled SMTP. The Gmail API transport uses OAuth credentials instead. Spaces are removed by configuration loading. |
+| `EMAIL_TRANSPORT` | `smtp` locally or `gmail-api` for the free hosted backend. |
+| `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN` | Backend-only OAuth credentials, required with enabled Gmail API email. |
+| `UPLOAD_STORAGE` | `local` for disk uploads in development; `gridfs` for persistent MongoDB files on free hosting. Defaults to GridFS in production when unset. |
+| `TZ` | Clinic timezone; default `Asia/Manila` keeps operating hours correct on UTC-based hosts. |
+| `CORS_ORIGINS` | Exact allowed browser origins, comma-separated. Configure the actual Vercel origin in production. |
+| `TRUST_PROXY` | `0` locally, `1` behind Render's proxy, so account request limits use the client IP. |
 
 Generate a JWT secret locally, then paste the result into `JWT_SECRET`:
 
@@ -125,7 +131,7 @@ Generate a JWT secret locally, then paste the result into `JWT_SECRET`:
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-The backend loads `backend/.env`; no frontend `.env` is required for this local setup. Restart the backend after changing configuration.
+The backend loads `backend/.env`; no frontend `.env` is required for local development. For the hosted website, set the public `VITE_API_BASE_URL` to the Render URL including `/api`. Restart the backend or rebuild the frontend after changing its respective configuration.
 
 The committed example starts with `EMAIL_ENABLED=false`. Existing accounts and the in-app inbox can work with email disabled, but **patient signup and password change/reset cannot complete without OTP email delivery**. There is no signup OTP bypass.
 
@@ -193,14 +199,14 @@ Build the frontend from the repository root:
 npm run build
 ```
 
-Output is written to `frontend/dist/`. Use `npm run start:backend` to run the backend without nodemon. For deployment, serve the frontend build and route `/api` to the backend; the Vite development proxy is not a production server configuration.
+Output is written to `frontend/dist/`. Use `npm run start:backend` to run the backend without nodemon. For the free Vercel + Render + MongoDB deployment, follow the [deployment guide](docs/deployment/free-hosting-guide.md). The preparation includes Gmail API email, MongoDB GridFS uploads, a Render Blueprint and Vercel configuration; the Vite development proxy is not used in production.
 
 Run all isolated backend checks from Windows PowerShell after installation/configuration:
 
 ```powershell
-Get-ChildItem backend/tests -Filter '*.check.js' | ForEach-Object {
-    node $_.FullName
-    if ($LASTEXITCODE -ne 0) { throw "Backend check failed: $($_.Name)" }
+foreach ($checkFile in (Get-ChildItem backend/tests -Filter '*.check.js')) {
+    node $checkFile.FullName
+    if ($LASTEXITCODE -ne 0) { throw "Backend check failed: $($checkFile.Name)" }
 }
 ```
 
@@ -213,7 +219,7 @@ node backend/scripts/verify-email.js
 node backend/scripts/verify-live-state.js
 ```
 
-The first authenticates to Gmail without sending email. The second reads backend health and aggregate MongoDB OTP/audit/delivery metadata without changing records or sending email.
+The first verifies the configured Gmail transport without sending email. The second reads backend health and aggregate MongoDB OTP/audit/delivery metadata without changing records or sending email. Verify real signup OTP delivery after configuring hosted Gmail API email.
 
 The live concurrency check creates, tests, and removes a uniquely named **temporary database**. Its database user needs permission for that operation:
 
@@ -282,5 +288,7 @@ CareSync/
 - [Gmail email setup and delivery behavior](docs/project_specifications/261004_gmail_email_notifications_walkthrough.md)
 - [Email policy and OTP workflows](docs/project_specifications/261004_email_policy_and_account_otp_walkthrough.md)
 - [Live verification results](docs/project_specifications/261004_live_verification_results.md)
+- [Free hosting, MongoDB file migration and mobile deployment guide](docs/deployment/free-hosting-guide.md)
+- [Deployment preparation code review](docs/deployment/audit-2026-10-06.md)
 
 The full live clinic journey, recovery evidence, and final submission documentation remain tracked in the specification checklist. Recorded isolated checks do not establish every live workflow.

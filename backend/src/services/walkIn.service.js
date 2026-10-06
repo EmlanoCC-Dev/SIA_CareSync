@@ -81,7 +81,7 @@ async function addToHoldingList({ name, contactNumber, overrideHours = false, ac
     targetModel: 'WalkIn',
   });
 
-  console.log(`🎫  Walk-in #${queueNumber} added: ${name}`);
+  console.log(`🎫  Walk-in #${queueNumber} added`);
   return walkIn;
 }
 

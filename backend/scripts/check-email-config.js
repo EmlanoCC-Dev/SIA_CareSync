@@ -26,8 +26,13 @@ if (inherited !== undefined && parsed.EMAIL_ENABLED !== undefined && inherited !
 try {
   const env = require('../src/config/env');
   console.log(`Effective email setting in this NEW process: ${env.EMAIL_ENABLED ? 'enabled' : 'disabled'}`);
+  console.log(`Email transport: ${env.EMAIL_TRANSPORT}`);
   console.log(`Sender configured: ${Boolean(env.SMTP_USER)}`);
-  console.log(`App Password configured: ${Boolean(env.SMTP_APP_PASSWORD)}`);
+  if (env.EMAIL_TRANSPORT === 'smtp') console.log(`App Password configured: ${Boolean(env.SMTP_APP_PASSWORD)}`);
+  if (env.EMAIL_TRANSPORT === 'gmail-api') {
+    console.log(`Gmail OAuth client configured: ${Boolean(env.GMAIL_CLIENT_ID && env.GMAIL_CLIENT_SECRET)}`);
+    console.log(`Gmail refresh token configured: ${Boolean(env.GMAIL_REFRESH_TOKEN)}`);
+  }
   console.log('Restart the running backend to load edited configuration; this command does not change it.');
   process.exitCode = env.EMAIL_ENABLED ? 0 : 1;
 } catch {

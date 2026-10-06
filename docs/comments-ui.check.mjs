@@ -60,10 +60,13 @@ try {
       if (await evaluate(expression)) return;
       await new Promise(resolve => setTimeout(resolve, 50));
     }
-    throw new Error(`UI condition failed: ${expression}`);
+    throw new Error(`UI condition failed: ${expression}\nBrowser errors: ${JSON.stringify(errors)}\nPage: ${await evaluate('document.body.innerText.slice(0, 1800)')}`);
   }
   await send('Runtime.enable');
   await send('Page.enable');
+  await send('Network.enable');
+  // External font loading must not stall this isolated browser check.
+  await send('Network.setBlockedURLs', { urls: ['https://fonts.googleapis.com/*', 'https://fonts.gstatic.com/*'] });
   await send('Browser.setDownloadBehavior', { behavior: 'deny' });
   for (const role of ['Patient', 'Doctor', 'Staff', 'Admin']) for (const width of [1440, 390]) {
     console.log(`Checking ${role} at ${width}px`);
@@ -91,6 +94,7 @@ try {
       ].map((emailDelivery, index) => ({ _id: 'notification-' + index, title: 'Care update ' + (index + 1),
         message: 'Appointment notification', createdAt: '2026-10-04T02:00:00Z', readAt: null, emailDelivery }));
       window.failLoad = false; window.failPost = false; window.posts = 0;
+      window.restoreFailure = Number(sessionStorage.getItem('restore-failure') || 0);
       window.downloads = []; window.recordRequests = []; window.failRecordSave = false;
       window.delayRecordResponse = false;
       const original = window.fetch;
@@ -142,7 +146,7 @@ try {
           visit.statusHistory.push({ status: visit.status, changedAt: '2026-10-04T02:00:00Z', remarks: resubmit ? 'Resubmitted' : 'Correction requested' });
           data = visit;
         } else if (url === '/api/appointments/appointment-1') data = visit;
-        else if (url === '/api/users/me') data = user;
+        else if (url === '/api/users/me') { data = user; if (window.restoreFailure) status = window.restoreFailure; }
         else if (url.startsWith('/api/appointments')) data = [visit];
         else if (url.startsWith('/api/notifications')) data = { items: window.inbox, unreadCount: window.inbox.length, total: window.inbox.length, pageSize: 20 };
         else if (url === '/api/users') data = [patient, doctor];
@@ -157,6 +161,23 @@ try {
     const injection = await send('Page.addScriptToEvaluateOnNewDocument', { source });
     await send('Page.navigate', { url: process.argv[3] || 'http://127.0.0.1:3000' });
     await waitFor(`!![...document.querySelectorAll('td button')].find(button => button.textContent.includes('History & comments'))`);
+    if (role === 'Patient') {
+      await evaluate(`sessionStorage.setItem('restore-failure', '503')`);
+      await send('Page.reload');
+      await waitFor(`!!document.querySelector('.session-error')`);
+      assert.equal(await evaluate(`localStorage.getItem('caresync_token')`), 'comments-ui-mock', 'A temporary outage must preserve the login token');
+      const sessionPicture = await send('Page.captureScreenshot', { format: 'png' });
+      await writeFile(join(screenshots, `session-retry-${width}.png`), Buffer.from(sessionPicture.data, 'base64'));
+      await evaluate(`sessionStorage.removeItem('restore-failure'); window.restoreFailure = 0; document.querySelector('.session-error .load-error button').click()`);
+      await waitFor(`!!document.querySelector('td button')`);
+      await evaluate(`sessionStorage.setItem('restore-failure', '401')`);
+      await send('Page.reload');
+      await waitFor(`!!document.querySelector('.landing-auth-actions')`);
+      assert.equal(await evaluate(`localStorage.getItem('caresync_token')`), null, 'An invalid session must be removed');
+      await evaluate(`sessionStorage.removeItem('restore-failure')`);
+      await send('Page.reload');
+      await waitFor(`!!document.querySelector('td button')`);
+    }
     await evaluate(`[...document.querySelectorAll('td button')].find(button => button.textContent.includes('History & comments')).click()`);
     await waitFor(`document.querySelector('.appointment-details-dialog')?.open && document.querySelector('.appointment-comment-message')?.textContent.includes('clarify')`);
     const setDraft = text => evaluate(`(() => { const input = document.querySelector('#appointment-comment-message'); Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(input, ${JSON.stringify(text)}); input.dispatchEvent(new Event('input', { bubbles: true })); })()`);
