@@ -260,7 +260,7 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
                 <option value="">-- Any Available Doctor (Assigned by Staff) --</option>
                 {doctors.map((doc) => (
                   <option key={doc._id} value={doc._id}>
-                    Dr. {doc.firstName} {doc.lastName} ({doc.email})
+                    Dr. {doc.firstName} {doc.lastName}
                   </option>
                 ))}
               </select>

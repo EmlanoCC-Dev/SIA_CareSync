@@ -1,7 +1,7 @@
 /** Public waiting-room display, available at #/display. */
 import React, { useCallback, useEffect, useState } from 'react';
 import { RefreshCw, Users } from 'lucide-react';
-import careSyncLogo from '../assets/caresync-logo.png';
+import careSyncLogo from '../assets/caresync-logo.svg';
 import { api } from '../services/api';
 
 const POLL_INTERVAL = 10_000;

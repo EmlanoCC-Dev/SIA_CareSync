@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { api, getStoredToken } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import EmailVerificationCode from './EmailVerificationCode';
+import PasswordInput from './PasswordInput';
 import { Mail } from 'lucide-react';
 
 export default function PasswordChangeForm({ initialEmail = '', fixedEmail = false, onComplete }) {
@@ -53,10 +54,10 @@ export default function PasswordChangeForm({ initialEmail = '', fixedEmail = fal
     {requested && <>
       <EmailVerificationCode id="password-change-otp" value={otp} onChange={setOtp} resendAt={resendAt} onResend={requestCode} disabled={loading} />
       <label className="form-label" htmlFor="password-change-new">New password</label>
-      <input id="password-change-new" className="form-input" type="password" autoComplete="new-password" minLength={6} maxLength={72}
+      <PasswordInput id="password-change-new" visibilityLabel="new password" className="form-input" autoComplete="new-password" minLength={6} maxLength={72}
         value={password} required disabled={loading} onChange={event => setPassword(event.target.value)} />
       <label className="form-label" htmlFor="password-change-confirm">Confirm new password</label>
-      <input id="password-change-confirm" className="form-input" type="password" autoComplete="new-password" minLength={6} maxLength={72}
+      <PasswordInput id="password-change-confirm" visibilityLabel="password confirmation" className="form-input" autoComplete="new-password" minLength={6} maxLength={72}
         value={confirmation} required disabled={loading} onChange={event => setConfirmation(event.target.value)} />
     </>}
     <button className="auth-submit" disabled={loading} type="submit">

@@ -3,7 +3,7 @@ import {
   CalendarCheck, Clock3, Database, Globe2, Home, MessageCircle,
   Mail, MapPin, Phone, ShieldCheck, Stethoscope, Users,
 } from 'lucide-react';
-import logoSource from '../assets/landing-logo.png';
+import logoSource from '../assets/caresync-logo.svg';
 import heroImage from '../assets/landing-image-1.png';
 import missionImage from '../assets/landing-image-2.png';
 

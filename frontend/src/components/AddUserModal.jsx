@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import { X, UserPlus, AlertCircle } from 'lucide-react';
+import PasswordInput from './PasswordInput';
 
 export default function AddUserModal({ isOpen, onClose, onUserAdded, user = null }) {
   const dialog = useRef(null);
@@ -137,9 +138,8 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, user = null
 
             {!user && <div className="form-group" style={{ marginBottom: '1rem' }}>
               <label className="form-label" htmlFor="account-password">Password</label>
-              <input
+              <PasswordInput
                 id="account-password"
-                type="password"
                 name="password"
                 className="form-input"
                 placeholder="Minimum 6 characters"

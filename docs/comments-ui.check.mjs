@@ -292,6 +292,7 @@ try {
       const now = Date.now; window.clockOffset = 0; Date.now = () => now() + window.clockOffset;
       const user = { _id: 'otp-patient', firstName: 'Alex', lastName: 'Santos', role: 'Patient', email: 'alex@example.test' };
       window.otpRequests = []; window.failOtpSend = false; window.delayPasswordReset = false;
+      window.formSubmissions = 0; document.addEventListener('submit', () => window.formSubmissions++, true);
       const original = window.fetch;
       window.fetch = async (url, options = {}) => {
         if (!String(url).startsWith('/api/')) return original(url, options);
@@ -320,10 +321,28 @@ try {
     await waitFor(`!!document.querySelector('.landing-auth-actions')`);
     const input = (selector, value) => evaluate(`(() => { const field = document.querySelector(${JSON.stringify(selector)}); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(field, ${JSON.stringify(value)}); field.dispatchEvent(new Event('input', { bubbles: true })); })()`);
     const clickText = text => evaluate(`[...document.querySelectorAll('button')].find(button => button.getClientRects().length && button.textContent.includes(${JSON.stringify(text)})).click()`);
+    const checkPasswordToggle = async id => {
+      const field = `document.getElementById(${JSON.stringify(id)})`;
+      const button = `document.querySelector('button[aria-controls="${id}"]')`;
+      const before = await evaluate(`({ value: ${field}.value, submissions: window.formSubmissions, autocomplete: ${field}.autocomplete })`);
+      assert.equal(await evaluate(`${field}.type`), 'password');
+      await evaluate(`${button}.click()`);
+      assert.equal(await evaluate(`${field}.type`), 'text');
+      assert.equal(await evaluate(`${button}.getAttribute('aria-pressed')`), 'true');
+      if (id === 'password-change-new') assert.equal(await evaluate(`document.querySelector('#password-change-confirm').type`), 'password', 'Visibility must be independent for confirmation');
+      assert(await evaluate(`(() => { const input = ${field}.getBoundingClientRect(), toggle = ${button}.getBoundingClientRect(); return toggle.left >= input.left && toggle.right <= input.right && toggle.top >= input.top && toggle.bottom <= input.bottom; })()`), 'Toggle must fit inside the field');
+      await evaluate(`${button}.focus()`);
+      await send('Input.dispatchKeyEvent', { type: 'keyDown', key: ' ', code: 'Space', windowsVirtualKeyCode: 32 });
+      await send('Input.dispatchKeyEvent', { type: 'keyUp', key: ' ', code: 'Space', windowsVirtualKeyCode: 32 });
+      await waitFor(`${field}.type === 'password'`);
+      assert.equal(await evaluate(`${button}.getAttribute('aria-pressed')`), 'false');
+      assert.deepEqual(await evaluate(`({ value: ${field}.value, submissions: window.formSubmissions, autocomplete: ${field}.autocomplete })`), before, 'Show/hide must preserve the value and autocomplete without submitting');
+    };
     await clickText('Sign Up');
     await waitFor(`document.querySelector('.auth-modal-backdrop')?.open`);
     await input('#register-name', 'Alex'); await input('#register-last-name', 'Santos');
     await input('#register-email', 'alex@example.test'); await input('#register-password', 'test-password');
+    await checkPasswordToggle('register-password');
     await evaluate(`window.failOtpSend = true; document.querySelector('#register-name').form.requestSubmit()`);
     await waitFor(`document.querySelector('[role=alert]')?.textContent.includes('Could not deliver')`);
     assert.equal(await evaluate(`document.querySelectorAll('.email-send-notice').length`), 0, 'Failed SMTP must not show a success banner');
@@ -359,6 +378,8 @@ try {
     assert(await evaluate(`document.querySelector('.email-request-notice')?.textContent.includes('Verification request received')`));
     assert(!await evaluate(`document.querySelector('.email-request-notice').textContent.includes('sent successfully')`), 'Password request acknowledgement must not claim confirmed delivery');
     await input('#password-change-otp', '123456'); await input('#password-change-new', 'new-password'); await input('#password-change-confirm', 'different-password');
+    await checkPasswordToggle('password-change-new');
+    await checkPasswordToggle('password-change-confirm');
     await evaluate(`document.querySelector('#password-change-otp').form.requestSubmit()`);
     await waitFor(`document.querySelector('.password-dialog [role=alert]')?.textContent.includes('do not match')`);
     assert.equal(await evaluate(`window.otpRequests.filter(item => item.url.endsWith('/reset')).length`), 0);
@@ -370,8 +391,11 @@ try {
     // Closing during the submitted operation must still sign out the changed account on success.
     await evaluate(`window.delayPasswordReset = true; document.querySelector('#password-change-otp').form.requestSubmit()`);
     await waitFor(`typeof window.releasePasswordReset === 'function'`);
+    assert(await evaluate(`document.querySelector('button[aria-controls="password-change-new"]').disabled && document.querySelector('button[aria-controls="password-change-confirm"]').disabled`), 'Visibility controls must respect disabled fields');
     await evaluate(`document.querySelector('button[aria-label="Close password change"]').click(); window.releasePasswordReset()`);
     await waitFor(`!localStorage.getItem('caresync_token') && !!document.querySelector('#login-email')`);
+    await input('#login-password', 'test-password');
+    await checkPasswordToggle('login-password');
     await clickText('Forgot password?');
     await waitFor(`!!document.querySelector('#password-change-email')`);
     await input('#password-change-email', 'alex@example.test');
@@ -385,5 +409,5 @@ try {
     await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: injection.identifier });
   }
   assert.deepEqual(errors, []);
-  console.log(`Passed all-role comments, correction/resubmission/history controls and signup/password OTP flows at desktop/mobile widths. Screenshots: ${screenshots}`);
+  console.log(`Passed all-role comments, correction/resubmission/history controls, password visibility and signup/password OTP flows at desktop/mobile widths. Screenshots: ${screenshots}`);
 } finally { socket?.close(); chrome.kill(); }

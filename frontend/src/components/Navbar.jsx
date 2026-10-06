@@ -6,7 +6,7 @@ import SystemTimeModal from './SystemTimeModal';
 import NotificationInbox from './NotificationInbox';
 import PasswordChangeForm from './PasswordChangeForm';
 import { LogOut, Tv, Clock, KeyRound, X } from 'lucide-react';
-import logoSource from '../assets/landing-logo.png';
+import logoSource from '../assets/caresync-logo.svg';
 
 export default function Navbar() {
   const { user, logout } = useAuth();

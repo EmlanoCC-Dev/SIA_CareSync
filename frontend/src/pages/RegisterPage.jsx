@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import logoSource from '../assets/landing-logo.png';
+import logoSource from '../assets/caresync-logo.svg';
 import { api } from '../services/api';
 import EmailVerificationCode from '../components/EmailVerificationCode';
+import PasswordInput from '../components/PasswordInput';
 
 export default function RegisterPage({ onSwitchToLogin, onBackToLanding, formOnly = false }) {
   const { register } = useAuth();
@@ -54,7 +55,7 @@ export default function RegisterPage({ onSwitchToLogin, onBackToLanding, formOnl
             <label className="form-label" htmlFor="register-email">Email address</label>
             <input id="register-email" type="email" name="email" autoComplete="email" maxLength={254} disabled={loading} className="form-input" placeholder="you@example.com" value={formData.email} onChange={handleChange} required />
             <label className="form-label" htmlFor="register-password">Password</label>
-            <input id="register-password" type="password" name="password" autoComplete="new-password" minLength={6} maxLength={72} disabled={loading} className="form-input" placeholder="At least 6 characters" value={formData.password} onChange={handleChange} required />
+            <PasswordInput id="register-password" name="password" autoComplete="new-password" minLength={6} maxLength={72} disabled={loading} className="form-input" placeholder="At least 6 characters" value={formData.password} onChange={handleChange} required />
             </> : <EmailVerificationCode id="register-otp" value={otp} onChange={setOtp} resendAt={resendAt} onResend={requestCode} disabled={loading} />}
             <button type="submit" disabled={loading} className="auth-submit">{loading ? 'Please wait...' : requested ? 'Verify & create account' : 'Send verification code'}</button>
             {requested && <button type="button" className="btn btn-secondary" disabled={loading} onClick={() => { setRequested(false); setOtp(''); setError(''); setNotice(''); }}>Edit account details</button>}

@@ -9,7 +9,7 @@ import DoctorDashboard from './pages/DoctorDashboard';
 import StaffDashboard from './pages/StaffDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import ClinicDisplayScreen from './pages/ClinicDisplayScreen';
-import { Activity, CalendarCheck } from 'lucide-react';
+import { Activity, CalendarCheck, X } from 'lucide-react';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -55,7 +55,7 @@ export default function App() {
       <LandingPage onLogin={() => setAuthView('login')} onRegister={() => setAuthView('register')} />
       {authView !== 'landing' && (
         <dialog ref={authDialog} className="auth-modal-backdrop" aria-label={authView === 'login' ? 'Sign in' : 'Create account'} onCancel={() => setAuthView('landing')} onMouseDown={(event) => event.target === event.currentTarget && setAuthView('landing')}>
-          <button type="button" className="auth-modal-close" onClick={() => setAuthView('landing')} aria-label="Close">&times;</button>
+          <button type="button" className="auth-modal-close" onClick={() => setAuthView('landing')} aria-label="Close"><X size={20} aria-hidden="true" /></button>
           <div className={`auth-wrapper auth-figma auth-slider ${authView === 'register' ? 'auth-register' : 'auth-login'}`}>
             <div className="auth-moving-form">
               <div hidden={authView !== 'login'}><LoginPage formOnly onBackToLanding={() => setAuthView('landing')} /></div>

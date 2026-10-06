@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import logoSource from '../assets/landing-logo.png';
+import logoSource from '../assets/caresync-logo.svg';
 import PasswordChangeForm from '../components/PasswordChangeForm';
+import PasswordInput from '../components/PasswordInput';
 
 export default function LoginPage({ onSwitchToRegister, onBackToLanding, formOnly = false }) {
   const { login } = useAuth();
@@ -36,7 +37,7 @@ export default function LoginPage({ onSwitchToRegister, onBackToLanding, formOnl
             <label className="form-label" htmlFor="login-email">Email address</label>
             <input id="login-email" type="email" autoComplete="email" className="form-input" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
             <label className="form-label" htmlFor="login-password">Password</label>
-            <input id="login-password" type="password" autoComplete="current-password" className="form-input" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <PasswordInput id="login-password" autoComplete="current-password" className="form-input" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} required />
             <button type="submit" disabled={loading} className="auth-submit">{loading ? 'Signing in...' : 'Sign in'}</button>
           </form>}
           {!resetting && <button type="button" className="btn btn-secondary auth-recovery" onClick={() => { setResetting(true); setError(''); setNotice(''); }}>Forgot password?</button>}

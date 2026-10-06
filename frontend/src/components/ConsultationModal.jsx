@@ -378,7 +378,7 @@ export default function ConsultationModal({ isOpen, onClose, appointment, onSucc
                 </div>
 
                 <div>
-                  <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Category / Folder</label>
+                  <label className="form-label" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Category</label>
                   <select
                     className="form-select"
                     style={{ padding: '0.45rem 0.6rem', fontSize: '0.85rem' }}
@@ -386,11 +386,11 @@ export default function ConsultationModal({ isOpen, onClose, appointment, onSucc
                     disabled={uploading}
                     onChange={(e) => setDocType(e.target.value)}
                   >
-                    <option value="lab_result">Lab Result (lab_results/)</option>
-                    <option value="radiology">Radiology / X-Ray (radiology/)</option>
-                    <option value="prescription">Prescription (prescriptions/)</option>
-                    <option value="referral">Referral Letter (referral_letters/)</option>
-                    <option value="general">General Medical History (general/)</option>
+                    <option value="lab_result">Lab Result</option>
+                    <option value="radiology">Radiology / X-Ray</option>
+                    <option value="prescription">Prescription</option>
+                    <option value="referral">Referral Letter</option>
+                    <option value="general">General Medical History</option>
                   </select>
                 </div>
 
