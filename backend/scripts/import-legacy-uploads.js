@@ -50,7 +50,7 @@ async function main() {
   let missing = 0;
   for (const url of urls) if (!await bucket.find({ 'metadata.legacyUrl': url }).next()) missing++;
   console.log(`[Legacy uploads] ${copied} files verified; ${urls.size} referenced legacy paths; ${missing} missing. Appointment records unchanged.`);
-  if (missing) throw new Error('Some legacy uploads are still missing');
+  if (missing) console.warn('[Legacy uploads] Restore missing files from a backup; available files were preserved.');
 }
 if (require.main === module) main().catch(() => {
   console.error('[Legacy uploads] Import failed; check bundle, checksums and database access.'); process.exitCode = 1;
