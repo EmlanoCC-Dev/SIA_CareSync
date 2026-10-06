@@ -1,0 +1,1312 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CareSync — Technical Specification and Code Guide</title><style>
+  @page { size: A4; margin: 16mm 15mm 19mm; }
+  * { box-sizing: border-box; }
+  body { margin: 30px auto; max-width: 1020px; padding: 0 24px; color: #19353e; font: 15px/1.5 Arial, sans-serif; }
+  h1 { font-size: 32px; line-height: 1.15; color: #007c7b; } h1:first-child { font-size: 19px; text-transform: uppercase; letter-spacing: 3px; }
+  h2 { font-size: 24px; line-height: 1.25; color: #144956; } h3 { font-size: 18px; color: #007b79; margin-top: 1.4em; }
+  h2,h3 { break-after: avoid; } p,li { orphans: 3; widows: 3; }
+  a { color: #006e77; overflow-wrap: anywhere; } code { font: .93em Consolas, monospace; overflow-wrap: anywhere; }
+  pre { padding: 10px; border-left: 3px solid #008c86; background: #eef6f5; white-space: pre-wrap; overflow-wrap: anywhere; break-inside: avoid; }
+  pre code { font-size: inherit; }
+  table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: 12px; line-height: 1.38; margin: 14px 0; }
+  th,td { border: 1px solid #c8dbdc; padding: 7px; vertical-align: top; overflow-wrap: anywhere; }
+  th { background: #e3f2f0; text-align: left; } tr:nth-child(even) td { background: #f7fbfa; }
+  tr { break-inside: avoid; } thead { display: table-header-group; }
+  table tr > :first-child { width: 29%; }
+  .toc { padding: 14px 18px; background: #f0f7f6; border: 1px solid #c8dbdc; }
+  .toc ol { columns: 2; column-gap: 28px; padding-left: 20px; margin: 0; }
+  .toc li { margin: 0 0 5px; break-inside: avoid; }
+  @media print {
+    body { margin: 0; padding: 0; max-width: none; font-size: 9.5pt; line-height: 1.4; }
+    h1 { font-size: 28pt; } h1:first-child { font-size: 13pt; }
+    h2 { font-size: 17pt; margin-top: 1.4em; } h3 { font-size: 11.5pt; }
+    #section-1 { break-before: page; margin-top: 0; }
+    table { font-size: 8pt; } th,td { padding: 4px; } pre { font-size: 7.7pt; line-height: 1.35; }
+    .toc { font-size: 8.3pt; margin-top: 18px; }
+  }
+</style></head><body><h1>CareSync</h1>
+<h1>Technical Specification and Code Guide</h1>
+<p><strong>How the final project requirements were implemented</strong><br>Prepared 6 October 2026 · Systems Integration and Architecture · Mobile and Web Application Track</p>
+<p>This guide connects the original project specification to the actual CareSync implementation. It explains the technical decisions, identifies the code that implements them, and separates implemented features from evidence that still needs to be collected. Use it alongside the final paper during the technical defense.</p>
+<p><strong>Reviewed web/backend revision:</strong> <code>b48083ee385ecb173bf2bbb853c7469b858324a6</code>. Code links open that exact GitHub revision and line. Short link labels show the filename and line; source excerpts also give the full path. Line numbers beside excerpts are annotations, not part of the executable code.</p>
+<p><strong>Mobile scope:</strong> the separate local <code>C:\Users\Adrian\Documents\CareSync_mobile</code> working copy, including existing uncommitted changes. Mobile references identify local files and lines; they do not claim that these changes are already committed. File hashes and an excerpt register are included in <code>technical-specification-source-index.json</code>.</p>
+<p><strong>Assessment source:</strong> the 14-page <code>Final Project Specification_MWA.pdf</code>, SHA-256 <code>b45a62c585bbe8418e66cec0c6f0c2329165aecec8eb137880de08cb46f7b596</code>. Its requirements are assessment criteria, not authorization to operate the database or cloud services.</p>
+<p><strong>Evidence boundary:</strong> this document was prepared through source inspection and existing dated records. No database backup, restore, reset, email send, deployment or live clinical transaction was performed to write it. The older final paper and coverage report contain earlier implementation baselines; this guide updates the technical explanation for GridFS, Gmail API and the deployed topology. It does not finalize the group&#39;s title page, contributions or remaining evidence.</p>
+<nav class="toc" aria-label="Contents"><h3 style="margin-top:0">Contents</h3><ol><li><a href="#section-1">What each specification requires and where CareSync fits</a></li><li><a href="#section-2">The ten required components, mapped to real code</a></li><li><a href="#section-3">Architecture and the shared integration contract</a></li><li><a href="#section-4">Authentication, roles and object-level access</a></li><li><a href="#section-5">Email verification and password recovery</a></li><li><a href="#section-6">Appointment workflow, concurrency and compensation</a></li><li><a href="#section-7">MongoDB structure, schedules and queue integration</a></li><li><a href="#section-8">Uploads, protected downloads and actual version history</a></li><li><a href="#section-9">Events, Gmail, comments, inbox and audit</a></li><li><a href="#section-10">Reports, validation and failure handling</a></li><li><a href="#section-11">Deployment, the mobile build and backup requirements</a></li><li><a href="#section-12">Testing: what exists, what passed and what still needs evidence</a></li><li><a href="#section-13">Functional, quality and screen traceability</a></li><li><a href="#section-14">Required paper chapters, diagrams and submission evidence</a></li><li><a href="#section-15">How to use this guide in the technical defense</a></li></ol></nav><h2 id="section-1">1. What each specification requires and where CareSync fits</h2>
+<p>“Implemented” means a code path exists. “Recorded verification” means an earlier dated check is documented. “Pending” means a requirement or its submission proof is not yet complete.</p>
+<table>
+<thead>
+<tr>
+<th>Specification heading / source page</th>
+<th>CareSync response and evidence boundary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1. Project Overview / p.1</td>
+<td>Integrated appointment, queue and consultation workflow, rather than only CRUD. Web and Flutter consume one API; MongoDB persists shared records; Gmail supplies an external service. See sections 3–10.</td>
+</tr>
+<tr>
+<td>2. General Objective / p.1</td>
+<td>Prototype, architecture, APIs, data, security and deployment are represented in source. Final presentation and full live evidence remain group tasks.</td>
+</tr>
+<tr>
+<td>3. Specific Objectives / p.1</td>
+<td>Current/target process, stakeholders, architectural choices, integration, validation, logs and tests are covered in the paper/code. Clinic confirmation, backup/restore and full E2E evidence remain pending.</td>
+</tr>
+<tr>
+<td>4. Approved Themes / p.2</td>
+<td>Theme 4: Healthcare Appointment, Queue, and Patient Notification Integration System. Patient app, clinic web, doctor schedules, queue, email and consultation records correspond directly. SMS is not implemented.</td>
+</tr>
+<tr>
+<td>5. Minimum Components / pp.2–3</td>
+<td>All ten have healthcare equivalents, mapped in section 2. Appointment is the work item; medical document is the submitted asset.</td>
+</tr>
+<tr>
+<td>6. Integration Requirement / p.3</td>
+<td>REST API connects two clients to clinic services. Gmail is an external API; booking/slot events automate notifications, audit and queue assignment. Only one option is required; CareSync does not claim ETL, ERP or a webhook.</td>
+</tr>
+<tr>
+<td>7. Architecture Styles / pp.3–4</td>
+<td>Layered modular backend with process-local event handlers. It is a single backend application, not deployed microservices. See section 3.</td>
+</tr>
+<tr>
+<td>8. Integration Patterns / p.4</td>
+<td>Shared backend/API hub for both clients, direct Gmail connection and internal event-driven reactions. Comparison and tradeoffs appear in section 3.</td>
+</tr>
+<tr>
+<td>9. Required Documentation / pp.4–9</td>
+<td>Existing 15-chapter paper is the main draft; section 14 maps its subsections to code/evidence. Update historical claims and complete placeholders.</td>
+</tr>
+<tr>
+<td>10. Functional Requirements / pp.9–10</td>
+<td>Section 13 provides 12 assessable implementation requirements; the existing paper has 17. Keep one consistent final FR register.</td>
+</tr>
+<tr>
+<td>11. Non-functional Requirements / p.10</td>
+<td>Section 13 provides 10 quality requirements and their actual verification boundaries. Backup and measured performance are not established by code alone.</td>
+</tr>
+<tr>
+<td>12. Sample User Roles / p.10</td>
+<td>Patient, Doctor, Staff and Admin adapt the generic role examples to the approved healthcare theme. Server permissions appear in section 4.</td>
+</tr>
+<tr>
+<td>13. Required Diagrams / p.11</td>
+<td>Eight required diagram assets plus an ERD exist. Section 14 maps them and identifies revisions needed for cloud storage/deployment.</td>
+</tr>
+<tr>
+<td>14. Required Screens / p.11</td>
+<td>All twelve have page/component/dialog counterparts in section 13. Instructor acceptance of consolidated screens must be confirmed.</td>
+</tr>
+<tr>
+<td>15. Integration Evidence / p.11</td>
+<td>Capture related request, persisted record, status/event, notification and audit result for the same demo transaction. Existing transport/HTTP checks alone are not the complete proof.</td>
+</tr>
+<tr>
+<td>16. Required Testing Evidence / p.12</td>
+<td>Minimum 8 functional, 5 integration, 5 error, 3 access-control and 1 E2E. Section 12 maps proposed case IDs to actual check files; final case-level results and live E2E proof need completion.</td>
+</tr>
+<tr>
+<td>17. Suggested Group Roles / p.12</td>
+<td>Assign actual responsibilities and contributions; do not infer people or completed work from Git history alone.</td>
+</tr>
+<tr>
+<td>18. Suggested Timeline / p.12</td>
+<td>Record actual milestones, owners and completion dates. No invented dates in this guide.</td>
+</tr>
+<tr>
+<td>19. Final Submission / p.13</td>
+<td>Paper/PDF, prototype, source, DB/migration material, feature screenshots, integration proof, tests, backup/recovery, slides and contributions. Several evidence items remain pending.</td>
+</tr>
+<tr>
+<td>20. Presentation and Defense / p.13</td>
+<td>Explain the paths and decisions in this guide; rehearse booking through doctor completion across web/mobile. See section 15.</td>
+</tr>
+<tr>
+<td>21. Important Reminders / pp.13–14</td>
+<td>Use demo data, protect credentials and patient data, keep architecture and diagrams accurate, and understand the code being defended.</td>
+</tr>
+</tbody></table>
+<p>The specification contains generic creative-production examples as well as an explicitly approved healthcare theme. This guide maps their component purposes to healthcare; it does not claim CareSync contains animation or creative campaign features. Confirm this theme-based interpretation with the instructor.</p>
+<h2 id="section-2">2. The ten required components, mapped to real code</h2>
+<table>
+<thead>
+<tr>
+<th>Required component</th>
+<th>Healthcare implementation</th>
+<th>Main code</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>User Management</td>
+<td>Patient registration/login, clinic accounts, role/status management and password verification.</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/controllers/user.controller.js#L18">user.controller.js:18</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/user.service.js#L133">user.service.js:133</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/AddUserModal.jsx#L1">AddUserModal.jsx:1</a></td>
+</tr>
+<tr>
+<td>Project / Production</td>
+<td>Appointment is the work item: create, assign, review, check in, consult and complete.</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L89">appointment.service.js:89</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/pages/StaffDashboard.jsx#L1">StaffDashboard.jsx:1</a></td>
+</tr>
+<tr>
+<td>Asset / File Submission</td>
+<td>Authorized clinic user attaches categorized medical documents to an appointment.</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/upload.js#L115">upload.js:115</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/ConsultationModal.jsx#L1">ConsultationModal.jsx:1</a></td>
+</tr>
+<tr>
+<td>Version Tracking</td>
+<td>Status/booking history plus note revisions and retained document snapshots.</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/Appointment.js#L59">Appointment.js:59</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L675">appointment.service.js:675</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/VersionHistory.jsx#L1">VersionHistory.jsx:1</a></td>
+</tr>
+<tr>
+<td>Review / Approval</td>
+<td>Staff/Admin approve or request booking correction; authorized clinic users decline; patient resubmits.</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/appointment.routes.js#L33">appointment.routes.js:33</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L260">appointment.service.js:260</a></td>
+</tr>
+<tr>
+<td>Comment / Feedback</td>
+<td>Appointment-scoped comments with author, role and timestamp.</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L813">appointment.service.js:813</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/AppointmentComment.js#L1">AppointmentComment.js:1</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/AppointmentComments.jsx#L1">AppointmentComments.jsx:1</a></td>
+</tr>
+<tr>
+<td>Notification / Log</td>
+<td>Private inbox, read state, selected patient emails and delivery outcome.</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/notification.service.js#L8">notification.service.js:8</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/NotificationInbox.jsx#L1">NotificationInbox.jsx:1</a></td>
+</tr>
+<tr>
+<td>Dashboard / Report</td>
+<td>Four role dashboards; date/status/doctor aggregates for clinic users.</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/App.jsx#L83">App.jsx:83</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/report.service.js#L5">report.service.js:5</a></td>
+</tr>
+<tr>
+<td>Audit Log</td>
+<td>Events recorded with actor, target and changes; Admin-only viewing.</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/events/handlers/auditLog.handler.js#L1">auditLog.handler.js:1</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/auditLog.routes.js#L17">auditLog.routes.js:17</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/AuditLogViewer.jsx#L1">AuditLogViewer.jsx:1</a></td>
+</tr>
+<tr>
+<td>Integration Component</td>
+<td>Shared REST API, Gmail HTTPS API, internal workflow events and queue automation.</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/index.js#L52">index.js:52</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/email.service.js#L43">email.service.js:43</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/events/handlers/slotFreed.handler.js#L1">slotFreed.handler.js:1</a></td>
+</tr>
+</tbody></table>
+<p><strong>Scope distinction for the defense:</strong> review/approval concerns the appointment booking and requested corrections. Documents have upload/replacement/version history, but there is no separate per-document approved/rejected publication workflow. If the instructor expects that specific interpretation of asset approval, obtain acceptance of the healthcare mapping rather than describe a nonexistent file approval feature.</p>
+<h2 id="section-3">3. Architecture and the shared integration contract</h2>
+<h3>Why the application is layered</h3>
+<p>React and Flutter handle presentation. Express routes select operations; middleware checks identity and permissions; controllers translate HTTP into service calls; services enforce clinic rules; Mongoose models persist data. The event layer reacts to completed service actions. Routes/controllers/services are directories within one deployed Node process.</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Example / responsibility</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Web presentation</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/BookAppointmentModal.jsx#L1">BookAppointmentModal.jsx:1</a> renders booking choices.</td>
+</tr>
+<tr>
+<td>Mobile presentation</td>
+<td><strong>CareSync_mobile/lib/booking_screen.dart:1</strong> (local working copy) implements the patient booking flow.</td>
+</tr>
+<tr>
+<td>Client transport</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/services/api.js#L21">api.js:21</a> and <strong>CareSync_mobile/lib/api_services.dart:1</strong> (local working copy) encode requests and bearer tokens.</td>
+</tr>
+<tr>
+<td>Route and access control</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/appointment.routes.js#L18">appointment.routes.js:18</a> restricts booking to Patient.</td>
+</tr>
+<tr>
+<td>Controller</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/controllers/appointment.controller.js#L31">appointment.controller.js:31</a> derives patient identity from the authenticated request.</td>
+</tr>
+<tr>
+<td>Business service</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L89">appointment.service.js:89</a> resolves slots, reserves capacity, writes history and emits the event.</td>
+</tr>
+<tr>
+<td>Persistence</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/Appointment.js#L21">Appointment.js:21</a> and <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/Slot.js#L69">Slot.js:69</a> define stored structure and indexes.</td>
+</tr>
+<tr>
+<td>Event reactions</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/server.js#L66">server.js:66</a> registers notification, audit and freed-slot listeners after startup checks.</td>
+</tr>
+</tbody></table>
+<h3>One request across web, mobile and database</h3>
+<p>Illustrative payload, not a live execution result:</p>
+<pre><code class="language-json">{&quot;slotId&quot;:&quot;aaaaaaaaaaaaaaaaaaaaaaaa&quot;,&quot;reason&quot;:&quot;Demo consultation&quot;}
+</code></pre>
+<p>The client sends <code>POST /api/appointments</code> with <code>Authorization: Bearer &lt;session token&gt;</code>. The server verifies the session, requires Patient, and assigns <code>patientId</code> from <code>req.user</code>, not from a client-supplied patient ID. For a selected slot it derives doctor/date/time from the slot record. The service writes a Pending appointment with history. The controller responds with HTTP 201 and <code>{success:true,data:...}</code>. Clinic users subsequently read the same appointment from the same API/database.</p>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/controllers/appointment.controller.js#L31">appointment.controller.js:31</a>. Full path: <code>backend/src/controllers/appointment.controller.js</code>.</p>
+<pre><code class="language-text"> 31  async function create(req, res, next) {
+ 32    try {
+ 33      const { doctorId, date, timeSlot, slotId, reason } = req.body;
+ 34      const appointment = await appointmentService.create({
+ 35        patientId: req.user.id,
+ 36        doctorId,
+ 37        date,
+ 38        timeSlot,
+ 39        slotId,
+ 40        reason,
+ 41      });
+ 42      res.status(201).json({ success: true, data: appointment });
+ 43    } catch (err) {
+ 44      next(err);
+ 45    }
+</code></pre>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/services/api.js#L21">api.js:21</a>. Full path: <code>frontend/src/services/api.js</code>.</p>
+<pre><code class="language-text"> 21  async function request(endpoint, options = {}) {
+ 22    const token = getStoredToken();
+ 23    const isFormData = options.body instanceof FormData;
+ 24  
+ 25    const headers = {
+ 26      ...(isFormData ? {} : { &#39;Content-Type&#39;: &#39;application/json&#39; }),
+ 27      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+ 28      ...options.headers,
+ 29    };
+ 30  
+ 31    const config = {
+ 32      ...options,
+</code></pre>
+<p><code>VITE_API_BASE_URL</code> chooses the web API base at build time. Flutter&#39;s <code>API_BASE_URL</code> is also a build-time define; <code>localhost</code> on a phone points to the phone, so the deployed APK uses the hosted Render endpoint.</p>
+<p>Source: <strong>CareSync_mobile/lib/api_services.dart:17</strong> (local working copy). Full path: <code>CareSync_mobile/lib/api_services.dart</code>.</p>
+<pre><code class="language-text"> 17    static const baseUrl = String.fromEnvironment(
+ 18      &#39;API_BASE_URL&#39;,
+ 19      defaultValue: &#39;http://127.0.0.1:5000/api&#39;,
+ 20    );
+ 21    static const _storage = FlutterSecureStorage();
+ 22    static final sessionExpired = ValueNotifier(false);
+ 23  
+</code></pre>
+<h3>Architecture and pattern comparison</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Decision and tradeoff</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Layered architecture</td>
+<td>Selected: clear HTTP/business/persistence responsibilities, simple single-service deployment. Changes to service rules serve both clients.</td>
+</tr>
+<tr>
+<td>Service-oriented architecture</td>
+<td>External Gmail and REST boundaries demonstrate service integration; internal modules are not independent deployed services.</td>
+</tr>
+<tr>
+<td>Microservices</td>
+<td>Not selected: would add coordination, hosting and operational complexity for this prototype.</td>
+</tr>
+<tr>
+<td>Event-driven architecture</td>
+<td>Used internally for notifications, audit and queue reassignment. Events are process-local; no durable broker/outbox or replay.</td>
+</tr>
+<tr>
+<td>Point-to-point integration</td>
+<td>Backend directly calls Gmail. Straightforward for one external provider, but provider-specific code remains in email service.</td>
+</tr>
+<tr>
+<td>Hub-and-spoke integration</td>
+<td>Both clients use the shared backend as their integration hub. They do not connect to Atlas directly. Backend outage affects both.</td>
+</tr>
+<tr>
+<td>Shared database pattern</td>
+<td>Backend modules share MongoDB. Clients share business data through the API, not unrestricted direct database credentials.</td>
+</tr>
+</tbody></table>
+<p>The startup sequence waits for MongoDB/model indexes, refuses unresolved assignment recovery and materializes schedule plans before listening: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/server.js#L46">server.js:46</a>. This supports predictable initialization, but is not proof of uptime or load capacity.</p>
+<h2 id="section-4">4. Authentication, roles and object-level access</h2>
+<h3>Authentication is enforced by the API</h3>
+<p>The central router has an exact public allowlist for login, registration/password verification and the public clock/queue. Everything else runs <code>protect</code>. UI visibility does not grant access. Public self-registration explicitly sets <code>role: &#39;Patient&#39;</code>; only the Admin route can create other account types.</p>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/index.js#L32">index.js:32</a>. Full path: <code>backend/src/routes/index.js</code>.</p>
+<pre><code class="language-text"> 32  const publicRequests = new Set([
+ 33    &#39;POST /users/login&#39;, &#39;POST /users/register&#39;,
+ 34    &#39;POST /users/register/otp&#39;, &#39;POST /users/password/otp&#39;, &#39;POST /users/password/reset&#39;,
+ 35    &#39;GET /system/time&#39;, &#39;HEAD /system/time&#39;,
+ 36    &#39;GET /walkins/now-serving&#39;, &#39;HEAD /walkins/now-serving&#39;,
+ 37  ]);
+ 38  router.use((req, res, next) =&gt; {
+ 39    res.set(&#39;Cache-Control&#39;, &#39;no-store&#39;);
+ 40    res.set(&#39;X-Content-Type-Options&#39;, &#39;nosniff&#39;);
+ 41    const route = `${req.method} ${req.path.replace(/\/+$/, &#39;&#39;).toLowerCase()}`;
+ 42    if (publicRequests.has(route)) return next();
+ 43    return protect(req, res, next);
+ 44  });
+ 45  router.use((req, res, next) =&gt; {
+</code></pre>
+<p>Passwords are hashed with bcrypt at cost 10 on save, compared through <code>comparePassword</code>, and normally excluded from queries: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/User.js#L87">User.js:87</a>. Login signs a JWT containing account ID and token version, with configured expiry: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/user.service.js#L174">user.service.js:174</a>. <code>protect</code> verifies HS256, fetches the current account and rejects deactivated/unrecognized accounts or stale token versions.</p>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/auth.js#L60">auth.js:60</a>. Full path: <code>backend/src/middleware/auth.js</code>.</p>
+<pre><code class="language-text"> 60      const decoded = jwt.verify(token, env.JWT_SECRET, { algorithms: [&#39;HS256&#39;] });
+ 61      if (!mongoose.isObjectIdOrHexString(decoded.id)) throw new Error(&#39;Invalid token subject&#39;);
+ 62  
+ 63      // Attach user to request
+ 64      let user;
+ 65      try { user = await User.findById(decoded.id); }
+ 66      catch (err) { return next(err); } // A database outage does not invalidate a login token.
+ 67      if (!user || user.status === &#39;Deactivated&#39; || !ROLES.includes(user.role) ||
+ 68          (decoded.version ?? 0) !== (user.tokenVersion || 0)) {
+ 69        return res.status(401).json({
+ 70          success: false,
+ 71          message: &#39;Account is unavailable or deactivated&#39;,
+</code></pre>
+<p>Fetching the current account means role/status changes take effect on later requests. A database outage is forwarded as a service error rather than automatically invalidating the user&#39;s token. Password reset hashes the new password and increments <code>tokenVersion</code>, invalidating older sessions: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/user.service.js#L180">user.service.js:180</a>.</p>
+<h3>Roles and ownership are separate checks</h3>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/auth.js#L19">auth.js:19</a>. Full path: <code>backend/src/middleware/auth.js</code>.</p>
+<pre><code class="language-text"> 19  function assertAppointmentAccess(appointment, user) {
+ 20    const allowed = user &amp;&amp; ([&#39;Staff&#39;, &#39;Admin&#39;].includes(user.role) ||
+ 21      (user.role === &#39;Patient&#39; &amp;&amp; recordId(appointment.patient) === recordId(user._id || user.id)) ||
+ 22      (user.role === &#39;Doctor&#39; &amp;&amp; recordId(appointment.doctor) === recordId(user._id || user.id)));
+ 23    if (!allowed) throw Object.assign(new Error(&#39;You do not have permission to access this appointment&#39;), { statusCode: 403 });
+ 24  }
+</code></pre>
+<p>This is the object-level control: Patient must own the appointment; Doctor must be assigned; Staff/Admin can access clinic appointments. It runs before individual appointment operations, including upload/download. Route-specific roles further restrict mutations.</p>
+<table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>Patient</th>
+<th>Doctor</th>
+<th>Staff</th>
+<th>Admin</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Self-book / resubmit</td>
+<td>Own booking</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Read appointment, comments, history and downloads</td>
+<td>Own</td>
+<td>Assigned</td>
+<td>Clinic</td>
+<td>Clinic</td>
+</tr>
+<tr>
+<td>Approve / request correction / assign slot</td>
+<td>No</td>
+<td>No</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Decline / cancel</td>
+<td>Own cancellation, subject to state</td>
+<td>Assigned, subject to state</td>
+<td>Subject to state</td>
+<td>Subject to state</td>
+</tr>
+<tr>
+<td>Check in / start / complete</td>
+<td>No</td>
+<td>Assigned</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Notes / upload / replace / archive document</td>
+<td>No</td>
+<td>Assigned</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Reports</td>
+<td>No</td>
+<td>Own consultations</td>
+<td>Clinic</td>
+<td>Clinic</td>
+</tr>
+<tr>
+<td>Account role/status administration</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Audit viewer / clock override / demo reset</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Notification inbox</td>
+<td>Own</td>
+<td>Own</td>
+<td>Own</td>
+<td>Own</td>
+</tr>
+</tbody></table>
+<p>Sources: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/appointment.routes.js#L23">appointment.routes.js:23</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/user.routes.js#L25">user.routes.js:25</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/system.routes.js#L31">system.routes.js:31</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/report.service.js#L14">report.service.js:14</a>. Exact status/date rules still apply; a role check alone is not permission to perform every transition.</p>
+<p><strong>Practical limitation:</strong> the current web token is in localStorage, not an HttpOnly cookie. Flutter uses secure storage. Source contains access controls, but there is no claim of a penetration test, regulatory certification or protection against all XSS/device compromise. Clinic Staff/Admin can edit clinical records; explain this broader prototype permission honestly when discussing least privilege.</p>
+<h2 id="section-5">5. Email verification and password recovery</h2>
+<p>Registration is two steps: request a code, then register with that code. The server normalizes the email, generates six digits using <code>crypto.randomInt</code>, and stores a keyed HMAC instead of plaintext code. Purpose and email are included in the hash to prevent a registration code being reused as a password-reset code.</p>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/otp.service.js#L14">otp.service.js:14</a>. Full path: <code>backend/src/services/otp.service.js</code>.</p>
+<pre><code class="language-text"> 14  function hashCode(purpose, email, code) {
+ 15    // Keyed hashes prevent guessing six-digit codes from a database dump alone.
+ 16    return createHmac(&#39;sha256&#39;, env.JWT_SECRET).update(JSON.stringify([&#39;email-otp&#39;, purpose, email, code])).digest(&#39;hex&#39;);
+ 17  }
+</code></pre>
+<p><code>reserveOtp</code> uses a conditional MongoDB update for a 60-second resend delay and fewer than five sends per hour. Codes expire after ten minutes. <code>consumeOtp</code> permits fewer than five incorrect attempts and atomically marks a correct challenge consumed. A second use cannot satisfy the same filter.</p>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/otp.service.js#L80">otp.service.js:80</a>. Full path: <code>backend/src/services/otp.service.js</code>.</p>
+<pre><code class="language-text"> 80    const filter = { _id: `${purpose}:${email}`, ready: true, consumedAt: null, expiresAt: { $gt: new Date() }, attempts: { $lt: 5 } };
+ 81    const challenge = await EmailOtp.findOneAndUpdate({ ...filter, codeHash: hashCode(purpose, email, code) },
+ 82      { $set: { consumedAt: new Date(), codeHash: null, ready: false } }, { new: true });
+ 83    if (!challenge) {
+ 84      await EmailOtp.updateOne(filter, { $inc: { attempts: 1 } });
+ 85      throw fail(&#39;Invalid, expired, or used code. After five attempts, request a new code.&#39;);
+ 86    }
+ 87    return challenge;
+ 88  }
+</code></pre>
+<p>Sources: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/otp.service.js#L19">otp.service.js:19</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/otp.service.js#L42">otp.service.js:42</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/EmailOtp.js#L17">EmailOtp.js:17</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/otpRateLimit.js#L4">otpRateLimit.js:4</a>.</p>
+<p>The challenge becomes usable only after the email provider accepts the verification message. Failure returns 503 and invalidates its hash. Password-reset requests return a generic response for active/missing accounts; sending is asynchronous for active accounts. The expiry predicate is the validity check; the TTL index only cleans old records later.</p>
+<p>The account endpoint limiter permits 60 requests per IP per 15 minutes and bounds its Map at 10,000 entries. It is process-local, so it resets on restart and is not shared across workers. Database challenge cooldown/attempt rules provide an additional independent control.</p>
+<p>The shared web password field includes a Show/Hide control: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/PasswordInput.jsx#L1">PasswordInput.jsx:1</a>. This improves input usability; it does not change hashing or authorization. The current minimum password length is six characters, with a 72-byte upper bound for bcrypt; do not describe it as a stronger password policy than the code enforces.</p>
+<p><strong>Evidence still required:</strong> use a demo email to receive a real deployed signup/password code, complete the flow, and record the result without revealing the code or credentials. The deployment record confirms OAuth authentication, not actual inbox delivery.</p>
+<h2 id="section-6">6. Appointment workflow, concurrency and compensation</h2>
+<h3>Lifecycle and review</h3>
+<p>The main lifecycle is Pending → Confirmed → Checked In → In Progress → Completed. Alternatives include Needs correction, Declined, Cancelled and No-show. The enum is <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/Appointment.js#L21">Appointment.js:21</a>; allowed transitions are enforced in service methods, not by permitting arbitrary status strings from the client.</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Implementation / purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Book and reserve</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L89">appointment.service.js:89</a>; selected doctor requires an actual slot. Flexible booking can remain unassigned until clinic assignment.</td>
+</tr>
+<tr>
+<td>Approve</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L160">appointment.service.js:160</a>; updates Pending conditionally and confirms the linked reservation.</td>
+</tr>
+<tr>
+<td>Request correction / resubmit</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L260">appointment.service.js:260</a>; authorized workflow, booking revision/history and stale-change checks.</td>
+</tr>
+<tr>
+<td>Decline / cancel / no-show</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L209">appointment.service.js:209</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L331">appointment.service.js:331</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L381">appointment.service.js:381</a>. Reasons/history/events and linked slot changes.</td>
+</tr>
+<tr>
+<td>Check in / clinical lifecycle</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L432">appointment.service.js:432</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L489">appointment.service.js:489</a>. Queue tickets and clinic-side status transitions.</td>
+</tr>
+<tr>
+<td>Automatic no-show processing</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L30">appointment.service.js:30</a>. Invoked by relevant request/service flows and simulated clock changes; not a separately deployed scheduler.</td>
+</tr>
+</tbody></table>
+<h3>Two users cannot successfully claim the same available slot</h3>
+<p>The pre-read supplies helpful validation; the decisive operation is the atomic conditional update below. A competing request sees no matching Available/unowned slot and receives 409.</p>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/slot.service.js#L304">slot.service.js:304</a>. Full path: <code>backend/src/services/slot.service.js</code>.</p>
+<pre><code class="language-text">304    const reserved = await Slot.findOneAndUpdate(
+305      { _id: slotId, status: &#39;Available&#39;, appointment: null },
+306      { $set: { status: &#39;Reserved-Tentative&#39;, appointment: appointmentId, reservationOperation: operationId } },
+307      { new: true }
+308    );
+309    if (!reserved) {
+310      const err = new Error(&#39;This slot has already been taken&#39;);
+311      err.statusCode = 409;
+312      throw err;
+313    }
+314    return reserved;
+315  }
+</code></pre>
+<p>The unique <code>(doctor,date,startTime)</code> index prevents duplicate slot records: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/Slot.js#L69">Slot.js:69</a>. Booking creates an assignment journal before claiming the slot, then stores the appointment and marks the journal done. A failed write triggers compensation.</p>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L117">appointment.service.js:117</a>. Full path: <code>backend/src/services/appointment.service.js</code>.</p>
+<pre><code class="language-text">117    const appointmentId = new mongoose.Types.ObjectId();
+118    const operation = slotId ? await recovery.begin({ kind: &#39;booking&#39;, appointment: appointmentId, slot: slotId }) : null;
+119    let appointment;
+120    try {
+121      if (slotId) await slotService.reserveSlot(slotId, appointmentId, operation._id);
+122      appointment = await Appointment.create({
+123      _id: appointmentId,
+124      patient: patientId,
+125      doctor: resolvedDoctorId,
+126      slot: slotId || null,
+127      date: resolvedDate,
+128      timeSlot: resolvedTimeSlot,
+129      reason,
+</code></pre>
+<h3>What recovery does, and what it does not do</h3>
+<p><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/assignmentRecovery.service.js#L13">assignmentRecovery.service.js:13</a> checks appointment/slot/walk-in references. If the assignment committed but acknowledgement failed, it marks the journal done. Otherwise it releases only records still owned by that operation. Ambiguous existing clinical records require reconciliation; it does not delete them to force success.</p>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/assignmentRecovery.service.js#L31">assignmentRecovery.service.js:31</a>. Full path: <code>backend/src/services/assignmentRecovery.service.js</code>.</p>
+<pre><code class="language-text"> 31    const results = await Promise.allSettled([
+ 32      Slot.updateOne({ _id: operation.slot, appointment: operation.appointment, reservationOperation: operation._id,
+ 33        status: { $in: [&#39;Reserved-Tentative&#39;, &#39;Reserved-Confirmed&#39;] } },
+ 34        { $set: { status: &#39;Available&#39;, appointment: null, reservationOperation: null } }),
+ 35      ...(operation.walkIn ? [WalkIn.updateOne({ _id: operation.walkIn, appointment: operation.appointment,
+ 36        assignedSlot: operation.slot, status: &#39;Slot Assigned&#39; },
+ 37        { $set: { status: &#39;Waiting&#39;, appointment: null, assignedSlot: null } })] : []),
+ 38    ]);
+</code></pre>
+<p>These are guarded per-document writes plus compensating recovery, not an ACID transaction across all collections. Startup refuses pending recovery records; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/scripts/recover-assignments.js#L1">recover-assignments.js:1</a> provides an offline maintenance path. This is <strong>operation recovery</strong>, not a database backup or disaster-recovery restore.</p>
+<p>Corrections and note/file replacement use expected revision or current-value predicates. A stale client receives 409 instead of silently overwriting newer work. Tests for this logic are <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/concurrency.check.js#L1">concurrency.check.js:1</a> and <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/corrections.check.js#L1">corrections.check.js:1</a>. Successful isolated race checks support these paths; they are not a measured throughput benchmark.</p>
+<h2 id="section-7">7. MongoDB structure, schedules and queue integration</h2>
+<h3>Data model</h3>
+<table>
+<thead>
+<tr>
+<th>Model / storage</th>
+<th>What it preserves and how it connects</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>User</td>
+<td>Identity, bcrypt password, role/status, token version, working hours. <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/User.js#L1">User.js:1</a></td>
+</tr>
+<tr>
+<td>Appointment</td>
+<td>References patient or walk-in, doctor and slot; embeds status/booking history, notes and attachment versions. <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/Appointment.js#L1">Appointment.js:1</a></td>
+</tr>
+<tr>
+<td>Slot and SlotPlan</td>
+<td>Concrete doctor/date/start/end capacity and recurring generation plans. <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/Slot.js#L1">Slot.js:1</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/SlotPlan.js#L1">SlotPlan.js:1</a></td>
+</tr>
+<tr>
+<td>WalkIn</td>
+<td>Queue ticket, daily key, status, assignment references and arrival. <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/WalkIn.js#L1">WalkIn.js:1</a></td>
+</tr>
+<tr>
+<td>AppointmentComment</td>
+<td>Separate appointment-linked comment records with author snapshots/timestamps. <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/AppointmentComment.js#L1">AppointmentComment.js:1</a></td>
+</tr>
+<tr>
+<td>Notification</td>
+<td>Recipient-owned inbox item and email-delivery outcome/read state. <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/Notification.js#L1">Notification.js:1</a></td>
+</tr>
+<tr>
+<td>AuditLog</td>
+<td>Action, actor, target, timestamp and change metadata. <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/AuditLog.js#L1">AuditLog.js:1</a></td>
+</tr>
+<tr>
+<td>EmailOtp</td>
+<td>Verification challenge hash, validity, attempts, cooldown and TTL cleanup. <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/EmailOtp.js#L1">EmailOtp.js:1</a></td>
+</tr>
+<tr>
+<td>AssignmentRecovery</td>
+<td>Durable pending/done journal for incomplete booking/assignment operations. <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/AssignmentRecovery.js#L1">AssignmentRecovery.js:1</a></td>
+</tr>
+<tr>
+<td>medicalFiles.files / medicalFiles.chunks</td>
+<td>GridFS metadata and actual uploaded bytes in the application database. <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/fileStorage.service.js#L5">fileStorage.service.js:5</a></td>
+</tr>
+</tbody></table>
+<p>Mongoose schemas enforce types/enums; references express relationships but are not SQL foreign-key constraints. Services must maintain relationships. Keep embedded history growth in mind: unlimited retained versions can eventually exceed MongoDB&#39;s per-document limit. The code does not claim unlimited archive capacity.</p>
+<h3>Doctor availability and clinic date rules</h3>
+<p><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/slot.service.js#L54">slot.service.js:54</a> creates slots based on working hours/duration; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/slot.service.js#L147">slot.service.js:147</a> materializes recurring plans. Clinic timezone is configured as Asia/Manila. <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/utils/timeHelper.js#L1">timeHelper.js:1</a> handles date/time validation; date-only appointment keys are kept distinct from timestamp instants. Clock simulation is Admin-controlled and process-local: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/config/systemTime.js#L1">systemTime.js:1</a>.</p>
+<h3>Walk-ins and scheduled arrivals share the public display</h3>
+<p>Walk-ins receive daily queue numbers with a unique <code>(queueDay,queueNumber)</code> index and duplicate-key retry: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/WalkIn.js#L70">WalkIn.js:70</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/walkIn.service.js#L52">walkIn.service.js:52</a>. Assignment conditionally claims the waiting walk-in and available slot, creates an appointment, and uses the same recovery journal.</p>
+<p>A <code>SLOT_FREED</code> handler tries to assign a released eligible slot to the oldest waiting walk-in: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/events/handlers/slotFreed.handler.js#L1">slotFreed.handler.js:1</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/walkIn.service.js#L206">walkIn.service.js:206</a>. Competing 409 claims are retried. Eligible date, operating hours and slot time are still checked.</p>
+<p>The public result combines in-progress/waiting walk-ins with checked-in/in-progress scheduled appointments. Scheduled tickets use <code>A-</code> prefixes. The response maps entries to ticket and status, rather than patient names or medical reasons: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/walkIn.service.js#L336">walkIn.service.js:336</a>.</p>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/pages/ClinicDisplayScreen.jsx#L7">ClinicDisplayScreen.jsx:7</a>. Full path: <code>frontend/src/pages/ClinicDisplayScreen.jsx</code>.</p>
+<pre><code class="language-text">  7  const POLL_INTERVAL = 10_000;
+</code></pre>
+<p>The web display polls every ten seconds; its clock advances locally between fetches. Although a handler accepts an optional Socket.io argument, <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/server.js#L68">server.js:68</a> supplies none and does not initialize a Socket.io server. Describe current updates as polling with internal events, not live WebSocket delivery.</p>
+<h2 id="section-8">8. Uploads, protected downloads and actual version history</h2>
+<h3>Why documents are in GridFS</h3>
+<p>Production selects <code>UPLOAD_STORAGE=gridfs</code>. Upload bytes are streamed into the <code>medicalFiles</code> bucket in MongoDB; appointment records retain document metadata/storage references. This lets web/mobile use one protected record and file source without depending on a persistent Render local folder. Local categorized disk storage remains a development option.</p>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/upload.js#L115">upload.js:115</a>. Full path: <code>backend/src/middleware/upload.js</code>.</p>
+<pre><code class="language-text">115  const gridfsStorage = {
+116    _handleFile(req, file, callback) {
+117      let stream;
+118      try {
+119        stream = getBucket().openUploadStream(file.originalname, { metadata: { appointment: req.params.id } });
+120        pipeline(file.stream, stream, error =&gt; {
+121          if (error) {
+122            discardUpload({ storageId: stream.id }).catch(() =&gt; {}).finally(() =&gt; callback(error));
+123            return;
+124          }
+125          callback(null, { storageId: stream.id, storageUrl: `/uploads/gridfs/${stream.id}`,
+126            filename: file.originalname, size: stream.gridFSFile.length });
+127        });
+</code></pre>
+<p>Limits are 25 MiB, one file, five fields, and 4,096 bytes per field: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/upload.js#L137">upload.js:137</a>. Extension allowlist includes PDF/images/Office/text/CSV. It is extension-based validation, not antivirus scanning or deep content validation. Failed unattached uploads are discarded; cleanup checks preserve references if an attachment commit succeeded but acknowledgement failed: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/controllers/appointment.controller.js#L138">appointment.controller.js:138</a>.</p>
+<h3>A storage reference is not a public download link</h3>
+<p><code>/uploads</code> is deliberately blocked at the server. Downloads use <code>/api/appointments/:id/documents/:docId/download</code>, or the protected version-specific endpoint. Identity and appointment ownership are checked before resolving GridFS bytes. The controller selects metadata from the authorized appointment, sets attachment/no-store/nosniff headers and streams the matching file.</p>
+<p>Sources: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/server.js#L31">server.js:31</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/appointment.routes.js#L59">appointment.routes.js:59</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/controllers/appointment.controller.js#L199">appointment.controller.js:199</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/fileStorage.service.js#L11">fileStorage.service.js:11</a>. Local fallback also verifies path containment and real paths. The deployment migration retains legacy references through GridFS <code>metadata.legacyUrl</code>; it does not make them public URLs.</p>
+<h3>Notes and files have content history, not only status labels</h3>
+<p>Saving changed consultation notes increments revision and appends a snapshot containing notes, author and time. The update tests the earlier content/revision to reject a stale writer.</p>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L567">appointment.service.js:567</a>. Full path: <code>backend/src/services/appointment.service.js</code>.</p>
+<pre><code class="language-text">567    const snapshot = { version, notes: consultationNotes.trim(), savedAt: new Date(), savedBy: actor._id || actor.id,
+568      authorName: actorName(actor), authorRole: actor.role };
+569    // ponytail: embedded history gives one atomic write; move to a transaction-backed collection if records approach MongoDB&#39;s 16 MB limit.
+570    const updated = await Appointment.findOneAndUpdate(
+571      { _id: appointmentId, consultationNotes: appointment.consultationNotes ?? null,
+572        notesRevision: revision ? revision : { $in: [0, null] } },
+573      { $set: { consultationNotes: snapshot.notes, notesRevision: version },
+574        $push: { noteVersions: { $each: [...(!(appointment.noteVersions || []).length ? previous : []), snapshot] } } },
+575      { new: true, runValidators: true }
+576    );
+577    if (!updated) throw Object.assign(new Error(&#39;Notes changed while saving. Close and reopen the record.&#39;), { statusCode: 409 });
+578    emitRecordChange(updated, actor, { operation: &#39;Notes updated&#39;, notesVersion: version });
+579    return updated;
+</code></pre>
+<p>File replacement retains the document ID, increments its version and stores the previous URL/metadata as a snapshot: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L585">appointment.service.js:585</a>. Removing an attachment archives its metadata and removes the current item in one update; bytes remain available through version history.</p>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L631">appointment.service.js:631</a>. Full path: <code>backend/src/services/appointment.service.js</code>.</p>
+<pre><code class="language-text">631    // Archive and remove the current attachment together; the files remain available in version history.
+632    const updated = await Appointment.findOneAndUpdate(
+633      { _id: appointmentId, documents: { $elemMatch: { _id: document._id, url: document.url } } },
+634      { $pull: { documents: { _id: docId } }, $push: { archivedDocuments: archived } }, { new: true, runValidators: true }
+635    );
+636    if (!updated) throw Object.assign(new Error(&#39;Document was already removed; refresh the appointment&#39;), { statusCode: 409 });
+637    emitter.emit(EVENTS.DOCUMENT_DELETED, {
+638      performedBy: actor._id || actor.id, targetModel: &#39;Appointment&#39;, targetId: updated._id, archived: true,
+639      document: { _id: document._id, filename: document.filename, type: document.type },
+</code></pre>
+<p><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L675">appointment.service.js:675</a> combines current and archived entries. <code>getDocumentVersion</code> validates the requested version and returns only an actual stored snapshot. UI is <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/VersionHistory.jsx#L1">VersionHistory.jsx:1</a>; mobile reads versions/downloads through <strong>CareSync_mobile/lib/api_services.dart:274</strong> (local working copy) and its appointment detail screen.</p>
+<p><strong>Legacy demo boundary:</strong> one historical demo attachment was already missing before migration. The user confirmed these demo files are disposable. Do not fabricate restored bytes or claim every legacy download succeeds. A new complete demo attachment is needed for the version/download demonstration.</p>
+<h2 id="section-9">9. Events, Gmail, comments, inbox and audit</h2>
+<h3>Event-driven integration within the backend</h3>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/events/emitter.js#L14">emitter.js:14</a>. Full path: <code>backend/src/events/emitter.js</code>.</p>
+<pre><code class="language-text"> 14  const emitter = new EventEmitter();
+ 15  
+ 16  // Increase listener limit for production (we&#39;ll have multiple handlers per event)
+ 17  emitter.setMaxListeners(20);
+ 18  
+ 19  // Track background writes so a demo reset cannot race an unfinished handler.
+ 20  emitter.pending = new Set();
+ 21  emitter.onAsync = (event, handler) =&gt; emitter.on(event, (...args) =&gt; {
+ 22    const job = Promise.resolve(handler(...args));
+ 23    emitter.pending.add(job);
+ 24    job.then(() =&gt; emitter.pending.delete(job), () =&gt; emitter.pending.delete(job));
+ 25    return job;
+</code></pre>
+<p>Business services emit named events from <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/events/events.js#L1">events.js:1</a>. Registered handlers create notifications/audit entries and attempt queue reassignment. The pending set lets demo reset detect unfinished background jobs. It is not durable storage of events. A process crash between the clinical write and handler persistence can lose a reaction; no automatic replay or distributed delivery guarantee is implemented.</p>
+<h3>External Gmail API integration</h3>
+<p><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/email.service.js#L8">email.service.js:8</a> refreshes OAuth access tokens using backend-only credentials, caches them before expiry and coalesces simultaneous refresh requests. <code>sendEmail</code> encodes MIME headers/body and submits a base64url message over HTTPS.</p>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/email.service.js#L54">email.service.js:54</a>. Full path: <code>backend/src/services/email.service.js</code>.</p>
+<pre><code class="language-text"> 54        response = await fetch(&#39;https://gmail.googleapis.com/gmail/v1/users/me/messages/send&#39;, {
+ 55          method: &#39;POST&#39;, signal: AbortSignal.timeout(15000),
+ 56          headers: { Authorization: `Bearer ${token}`, &#39;Content-Type&#39;: &#39;application/json&#39; },
+ 57          body: JSON.stringify({ raw: Buffer.from(mime).toString(&#39;base64url&#39;) }),
+ 58        });
+ 59        data = await response.json();
+ 60      } catch { throw emailFailure(&#39;GMAIL_SEND_FAILED&#39;); }
+</code></pre>
+<p>Only environment variable names appear in source/docs; actual secrets belong in Render settings. The retained SMTP branch is a separate configurable transport. Production uses Gmail API. A successful OAuth refresh proves authentication; a Gmail message ID proves provider acceptance; neither alone proves inbox delivery/read status.</p>
+<h3>Notification persistence and failure behavior</h3>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/notification.service.js#L8">notification.service.js:8</a>. Full path: <code>backend/src/services/notification.service.js</code>.</p>
+<pre><code class="language-text">  8  async function sendNotification({ userId, appointment, type, title, message }) {
+  9    if (!userId) return;
+ 10    const eligible = env.EMAIL_ENABLED &amp;&amp; PATIENT_EMAIL_TYPES.has(type);
+ 11    // Save the inbox entry first. SMTP failures must not remove it or fail the clinical action.
+ 12    const notification = await Notification.create({
+ 13      user: recordId(userId), appointment: appointment ? recordId(appointment) : null, type, title, message,
+ 14      emailDelivery: { status: eligible ? &#39;pending&#39; : env.EMAIL_ENABLED ? &#39;skipped&#39; : &#39;disabled&#39;, errorCode: env.EMAIL_ENABLED &amp;&amp; !eligible ? &#39;IN_APP_ONLY&#39; : null },
+ 15    });
+ 16    if (!eligible) return notification;
+</code></pre>
+<p>An inbox item is saved before selected email delivery is attempted. Booking confirmed, declined, cancellation and no-show are patient email types. Other eligible workflow notifications can be in-app only. Delivery records track pending/sent/failed/skipped/disabled, timestamps, message ID and bounded error codes. Email failure does not remove the inbox entry or fail the already-completed clinic action. Sending is single-attempt, without durable outbox/replay: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/notification.service.js#L39">notification.service.js:39</a>.</p>
+<p>Inbox reads/mark-read operations filter by <code>req.user._id</code>, even for Admin: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/notification.routes.js#L13">notification.routes.js:13</a>. Repeated mark-read preserves the first timestamp.</p>
+<h3>Comments and audit are different records</h3>
+<p><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L813">appointment.service.js:813</a> persists appointment feedback with author identity/role/name and emits the related action. Appointment access is required for reading and writing. <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/AppointmentComments.jsx#L1">AppointmentComments.jsx:1</a> displays the discussion.</p>
+<p>Audit handlers store important business events with actor/target/change metadata: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/events/handlers/auditLog.handler.js#L1">auditLog.handler.js:1</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/auditLog.service.js#L22">auditLog.service.js:22</a>. The API offers Admin-only read access and no ordinary edit route. “Audit trail” does not mean cryptographic tamper-proof storage: database administrators and Clear Demo Data can remove records; handler failure is logged, not durably replayed. Governance must define ownership, retention and who can access backups containing these records.</p>
+<h2 id="section-10">10. Reports, validation and failure handling</h2>
+<h3>Reports aggregate shared operational data</h3>
+<p>Report requests validate the date range and doctor ID. Doctor role is forced to its own ID; Staff/Admin can view clinic data. MongoDB <code>$facet</code> computes status totals, daily counts and per-doctor counts from the same filtered appointment set.</p>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/report.service.js#L14">report.service.js:14</a>. Full path: <code>backend/src/services/report.service.js</code>.</p>
+<pre><code class="language-text"> 14    const targetDoctor = actor.role === &#39;Doctor&#39; ? String(actor._id || actor.id) : doctorId;
+ 15    if (targetDoctor) {
+ 16      if (!mongoose.isObjectIdOrHexString(targetDoctor)) throw Object.assign(new Error(&#39;Invalid doctor ID&#39;), { statusCode: 400 });
+ 17      match.doctor = new mongoose.Types.ObjectId(targetDoctor);
+ 18    }
+ 19    const [result] = await Appointment.aggregate([
+ 20      { $match: match },
+ 21      { $facet: {
+ 22        statuses: [{ $group: { _id: &#39;$status&#39;, count: { $sum: 1 } } }],
+ 23        daily: [
+ 24          { $group: { _id: { $dateToString: { format: &#39;%Y-%m-%d&#39;, date: &#39;$date&#39;, timezone: &#39;UTC&#39; } },
+ 25            total: { $sum: 1 }, completed: { $sum: { $cond: [{ $eq: [&#39;$status&#39;, &#39;Completed&#39;] }, 1, 0] } } } },
+</code></pre>
+<p>The UI is <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/pages/ReportsPage.jsx#L1">ReportsPage.jsx:1</a>. Role dashboard selection is <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/App.jsx#L83">App.jsx:83</a>. Report totals are operational appointment counts; the code does not implement billing analytics or diagnose patients.</p>
+<h3>Errors preserve a usable contract</h3>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/errorHandler.js#L10">errorHandler.js:10</a>. Full path: <code>backend/src/middleware/errorHandler.js</code>.</p>
+<pre><code class="language-text"> 10    const statusCode = err.code === &#39;LIMIT_FILE_SIZE&#39; ? 413 : err.name === &#39;MulterError&#39; ? 400 :
+ 11      err.statusCode || err.status || ([&#39;CastError&#39;, &#39;ValidationError&#39;].includes(err.name) ? 400 : 500);
+ 12    const message = err.code === &#39;LIMIT_FILE_SIZE&#39; ? &#39;The file exceeds the 25 MB upload limit.&#39; :
+ 13      err.type === &#39;entity.parse.failed&#39; ? &#39;The request body must be valid JSON.&#39; :
+ 14      err.type === &#39;entity.too.large&#39; ? &#39;The request body is too large.&#39; :
+ 15      process.env.NODE_ENV === &#39;production&#39; &amp;&amp; statusCode &gt;= 500 &amp;&amp; !err.statusCode ? &#39;The service is temporarily unavailable. Try again shortly.&#39; : err.message || &#39;Internal Server Error&#39;;
+ 16  
+ 17    // Log full error in development
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Response</th>
+<th>Concrete trigger / implementation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>400</td>
+<td>Invalid JSON/date/ID/query/validation; central error middleware and service checks.</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Missing/invalid/stale/deactivated session. <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/auth.js#L44">auth.js:44</a></td>
+</tr>
+<tr>
+<td>403</td>
+<td>Wrong role/appointment owner or disallowed browser origin. <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/auth.js#L89">auth.js:89</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/server.js#L22">server.js:22</a></td>
+</tr>
+<tr>
+<td>404</td>
+<td>Missing authorized record/file/version or blocked raw upload URL.</td>
+</tr>
+<tr>
+<td>409</td>
+<td>Taken slot, stale revision, duplicate account or unsupported competing state.</td>
+</tr>
+<tr>
+<td>413</td>
+<td>File exceeds upload size limit.</td>
+</tr>
+<tr>
+<td>429</td>
+<td>Verification/account requests exceed cooldown or attempt window.</td>
+</tr>
+<tr>
+<td>503 / 500</td>
+<td>Email unavailable, recovery pending, reset busy or infrastructure error; friendly production envelope.</td>
+</tr>
+</tbody></table>
+<p>The web API helper handles JSON and blob responses and passes HTTP status to callers: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/services/api.js#L21">api.js:21</a>. AuthContext clears a stored session on authentication rejection, but retains it for temporary load failure and provides retry: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/context/AuthContext.jsx#L1">AuthContext.jsx:1</a>. Mobile <code>_send</code> applies a 20-second timeout and clears a current session only after 401: <strong>CareSync_mobile/lib/api_services.dart:32</strong> (local working copy). Show unavailable/retry states instead of claiming the data is empty when a request failed.</p>
+<p>Health at <code>/health</code> reports whether Mongoose is connected: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/server.js#L37">server.js:37</a>. It is a database-connectivity signal, not a full file/email/workflow health probe. Required monitoring evidence should include relevant request and event/delivery logs, without publishing raw credentials or confidential patient data.</p>
+<h2 id="section-11">11. Deployment, the mobile build and backup requirements</h2>
+<h3>Deployed components, recorded 6 October 2026</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Recorded configuration / source</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Web</td>
+<td><a href="https://caresync-inky.vercel.app">caresync-inky.vercel.app</a>, Vercel Hobby. <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/vercel.json#L3">vercel.json:3</a> selects Vite and <code>dist</code>.</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td><a href="https://caresync-api-uhvz.onrender.com">caresync-api-uhvz.onrender.com</a>, Render Free, Singapore, Node 24. <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/render.yaml#L7">render.yaml:7</a> defines backend build/start/health.</td>
+</tr>
+<tr>
+<td>Shared data/files</td>
+<td>Atlas <code>caresync_app</code>, with GridFS bucket <code>medicalFiles</code>. Both clients call <code>/api</code>; neither holds MongoDB credentials.</td>
+</tr>
+<tr>
+<td>Email</td>
+<td>Gmail API over HTTPS; secrets in Render environment settings. <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/config/env.js#L1">env.js:1</a> validates configuration.</td>
+</tr>
+<tr>
+<td>Android</td>
+<td>APK built with <code>--dart-define=API_BASE_URL=https://caresync-api-uhvz.onrender.com/api</code>; artifact <code>build/releases/CareSync-1.0.0.apk</code>. Physical phone test pending.</td>
+</tr>
+</tbody></table>
+<p>Sources: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/docs/deployment/deployment-receipt-2026-10-06.md">deployment receipt</a>, <code>docs/deployment/free-hosting-guide.md</code>. This guide records that earlier deployment; it did not poll provider status again.</p>
+<p><strong>Backend-only settings:</strong> <code>MONGO_URI</code>, <code>JWT_SECRET</code>, <code>GMAIL_CLIENT_ID</code>, <code>GMAIL_CLIENT_SECRET</code>, <code>GMAIL_REFRESH_TOKEN</code>, sender address and optional SMTP password. <code>UPLOAD_STORAGE</code>, <code>EMAIL_TRANSPORT</code>, timezone, trusted proxy and CORS origins control runtime behavior. <code>render.yaml</code> uses unset private inputs rather than literal credentials.</p>
+<p><strong>Public build settings:</strong> only the API base URL is needed in Vercel/Flutter. Never put backend secrets in <code>VITE_*</code> values or Dart defines compiled into the client. Exact browser origins are allowed by CORS; requests without an Origin header still require normal API authentication. CORS is not a replacement for authorization.</p>
+<p>The APK has a valid v2 signature using the existing development signing configuration and package <code>com.example.flutter_care_sync</code>; it is a demo sideload artifact, not a completed Play Store release. Hash: <code>c44b3b8147fd01454be2c1dd82a3ac94d52c6f51d383f527d99199ffe8695d5d</code>. Install by transferring the APK to Android; USB debugging is unnecessary for sideloading. Opening a mobile browser tests the website, not the Flutter APK.</p>
+<p>Operational follow-up: link Vercel&#39;s GitHub project connection for automatic deployments; verify Render integration; test cold-start/retry on the phone; rotate exposed credentials in provider/Render settings. Do not assert automatic push-to-deploy already works. Free backend wake-up can exceed the current mobile timeout; check health before the defense.</p>
+<h3>Backup and recovery are separate pending requirements</h3>
+<p>The specification&#39;s documentation chapter 10.3 requires backup of <strong>source code, database, uploaded files and documentation</strong>; chapter 10.4 requires recovery steps. Its final submission also requires backup/recovery evidence. No completed full database backup/restore is recorded. Assignment compensation and Clear Demo Data do not satisfy this requirement.</p>
+<p>Planned workflow only; no setup or execution was performed for this guide:</p>
+<ol>
+<li>Select a quiet demo window and record the exact code revision, documentation version, database and timestamp. Stop clinic writers while making a consistent application snapshot; a basic standalone dump is not being claimed as an online point-in-time snapshot.</li>
+<li>Dump the <strong>whole</strong> application database with MongoDB Database Tools. Include all collections, especially <code>medicalFiles.files</code> and <code>medicalFiles.chunks</code>; document metadata alone does not contain file bytes. Retain indexes/collection metadata from the dump.</li>
+<li>Preserve matching source and docs. GitHub plus a dated repository archive/bundle protects the web/backend revision; separately save/commit the mobile working copy. A web repository backup does not include the sibling mobile repository. Keep required signing/recovery secrets separately protected, outside public source/docs.</li>
+<li>Generate a checksum, encrypt the backup archive, and upload it to a private Google Drive folder. Drive stores the backup; it does not create a database export. Keep a local copy and the decryption password separately, with a documented owner and retention policy.</li>
+<li>Restore into a new isolated test database, leaving production untouched. Verify accounts/login with matching configuration, counts, relationships, versions, comments, audit/inbox records and current/history file hashes/downloads. Prevent restored notification/queue handlers from sending messages or mutating production during verification.</li>
+<li>Save sanitized dump/restore logs, screenshots, file verification results and recovery timings. State actual results and observed recovery time; do not invent an RPO/RTO achievement.</li>
+</ol>
+<p>Exact commands and network settings should be finalized when the user resumes backup work. The existing maintenance scripts concern migration/reconciliation, not a configured recurring Drive backup job. No backup scheduler or Drive upload integration is implemented.</p>
+<h3>Clear Demo Data: actual deletion behavior</h3>
+<p>Source: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/demoReset.service.js#L36">demoReset.service.js:36</a>. Full path: <code>backend/src/services/demoReset.service.js</code>.</p>
+<pre><code class="language-text"> 36      deleted.User = (await User.deleteMany({ role: { $nin: [&#39;Doctor&#39;, &#39;Staff&#39;] }, _id: { $ne: adminId } })).deletedCount;
+ 37      if (env.UPLOAD_STORAGE === &#39;gridfs&#39; || mongoose.connection.db) await clearStoredFiles();
+ 38      // Fixed application-owned directory, never a path supplied by the caller.
+ 39      await fs.rm(UPLOAD_ROOT, { recursive: true, force: true });
+ 40      await fs.mkdir(UPLOAD_ROOT, { recursive: true });
+</code></pre>
+<p>It retains Doctor accounts, Staff accounts and the requesting Admin; it deletes Patient accounts and other Admin accounts, clinic records, notifications/audit/verification/recovery data and uploaded files. The API requires Admin plus explicit confirmation: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/system.routes.js#L50">system.routes.js:50</a>. Its in-process guard checks active requests and pending handlers. It is destructive cleanup, not a backup. Do not reset before collecting required evidence or preserving data you intend to keep.</p>
+<h2 id="section-12">12. Testing: what exists, what passed and what still needs evidence</h2>
+<p>The deployment receipt records all <strong>17 backend check files passed</strong> after dependency fixes; a production dependency audit reported zero known vulnerabilities at that time. These are earlier isolated checks, not a rerun during document preparation. Prior browser evidence includes synthetic role screens and limited deployed landing/login checks; synthetic fixtures do not prove the live end-to-end workflow.</p>
+<p>Case IDs below are a <strong>submission checklist</strong>, not fabricated executed results. Connect each to the assertion/output in the named check file, actual dated result and screenshot/log. If a chosen scenario is not asserted there, execute it before marking Pass. A file can contain many cases; 17 files is not the same measurement as the specification&#39;s per-category minimum.</p>
+<table>
+<thead>
+<tr>
+<th>Functional cases — required minimum 8</th>
+<th>Relevant existing checks</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>F01 valid verified registration; F02 valid login</td>
+<td><code>otp.check.js</code>, <code>accounts-noshow.check.js</code>, <code>api-access.check.js</code></td>
+</tr>
+<tr>
+<td>F03 booking; F04 staff approval; F05 decline with reason</td>
+<td><code>clinic-workflows.check.js</code>, <code>concurrency.check.js</code></td>
+</tr>
+<tr>
+<td>F06 consultation note revision; F07 attachment/history</td>
+<td><code>versions.check.js</code>, <code>file-storage.check.js</code></td>
+</tr>
+<tr>
+<td>F08 appointment feedback comment</td>
+<td><code>comments.check.js</code></td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>Integration cases — required minimum 5</th>
+<th>Relevant existing checks</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>I01 booking updates appointment/slot/history</td>
+<td><code>concurrency.check.js</code>, <code>clinic-workflows.check.js</code></td>
+</tr>
+<tr>
+<td>I02 review event persists inbox; I03 audit event persists actor/target</td>
+<td><code>notifications.check.js</code>, <code>audit-coverage.check.js</code></td>
+</tr>
+<tr>
+<td>I04 freed slot assigns eligible walk-in</td>
+<td><code>walkin-status.check.js</code>, <code>concurrency.check.js</code></td>
+</tr>
+<tr>
+<td>I05 Gmail transport accepts encoded message / records failure</td>
+<td><code>gmail-api.check.js</code>, <code>email-notifications.check.js</code> (mocked provider; live inbox proof separate)</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>Error-handling cases — required minimum 5</th>
+<th>Relevant existing checks</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>E01 competing slot claim; E02 stale notes/file update</td>
+<td><code>concurrency.check.js</code>, <code>versions.check.js</code></td>
+</tr>
+<tr>
+<td>E03 expired/wrong/reused OTP; E04 unavailable email provider</td>
+<td><code>otp.check.js</code>, <code>gmail-api.check.js</code></td>
+</tr>
+<tr>
+<td>E05 invalid request/file/query</td>
+<td><code>api-access.check.js</code>, <code>file-storage.check.js</code>, <code>deployment.check.js</code>; also recorded live malformed JSON rejection</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>Security cases — required minimum 3</th>
+<th>Relevant existing checks</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>S01 unauthenticated private endpoint denied</td>
+<td><code>api-access.check.js</code>, recorded live HTTP 401</td>
+</tr>
+<tr>
+<td>S02 wrong role denied; S03 unrelated appointment/file owner denied</td>
+<td><code>api-access.check.js</code>, <code>comments.check.js</code>, <code>versions.check.js</code></td>
+</tr>
+</tbody></table>
+<p>Source links: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/api-access.check.js#L1">api-access.check.js:1</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/otp.check.js#L1">otp.check.js:1</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/versions.check.js#L1">versions.check.js:1</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/file-storage.check.js#L1">file-storage.check.js:1</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/notifications.check.js#L1">notifications.check.js:1</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/audit-coverage.check.js#L1">audit-coverage.check.js:1</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/gmail-api.check.js#L1">gmail-api.check.js:1</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/clinic-workflows.check.js#L1">clinic-workflows.check.js:1</a>.</p>
+<p>The other check files cover accounts/no-show, corrections, concurrency, demo reset, deployment, email delivery outcomes, scheduled queue and walk-in statuses. All live evidence must be kept separate from stubbed/isolated results. Existing folders under <code>docs/final_submission/testing-evidence/</code> contain dated outputs and screenshots; their presence does not mean every final assessment item is done.</p>
+<h3>The required one full end-to-end scenario remains pending</h3>
+<p>E2E01: on the real Android APK, patient receives verification code, registers/logs in and books; Staff reviews the same request on deployed web; patient sees confirmation/inbox; clinic checks in and starts the visit; assigned Doctor saves notes, uploads/replaces a demo file and completes; patient reads history/downloads; Admin sees matching audit; report/queue reflect the result. Check persistence after backend restart and compare file hashes. Use one appointment ID to correlate sanitized evidence across components.</p>
+<p>Capture expected/actual behavior and pass/fail for each step. A cold-start retry or provider failure must be recorded, not omitted. No physical-phone execution, complete hosted clinical E2E or full database restore has yet been established in the available evidence.</p>
+<h2 id="section-13">13. Functional, quality and screen traceability</h2>
+<h3>Assessable functional requirements</h3>
+<p>These IDs are this guide&#39;s cross-reference, not a silent renumbering of the existing paper&#39;s 17 FRs.</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Expected behavior / implementation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>G-FR01</td>
+<td>Verified Patient registration and password reset. <code>user.controller.js</code>, <code>user.service.js</code>, <code>otp.service.js</code>; sections 4–5.</td>
+</tr>
+<tr>
+<td>G-FR02</td>
+<td>Login and role/status management. <code>auth.js</code>, <code>user.routes.js</code>, <code>App.jsx</code>; section 4.</td>
+</tr>
+<tr>
+<td>G-FR03</td>
+<td>Book against real schedule capacity or request an unassigned booking. <code>appointment.service.js:create</code>, <code>slot.service.js:reserveSlot</code>; section 6.</td>
+</tr>
+<tr>
+<td>G-FR04</td>
+<td>Staff/Admin approval, decline, correction and patient resubmission. <code>appointment.routes.js</code>, <code>reviseBooking</code>; section 6.</td>
+</tr>
+<tr>
+<td>G-FR05</td>
+<td>Check-in/consultation/completion, cancellation and no-show history. <code>checkIn</code>, <code>updateConsultation</code>, <code>cancel</code>, <code>noShow</code>; sections 6–7.</td>
+</tr>
+<tr>
+<td>G-FR06</td>
+<td>Doctor availability, recurring slot plans and walk-in assignment. <code>slot.service.js</code>, <code>walkIn.service.js</code>; section 7.</td>
+</tr>
+<tr>
+<td>G-FR07</td>
+<td>Medical uploads and authorized downloads. <code>upload.js</code>, <code>downloadDocument</code>; section 8.</td>
+</tr>
+<tr>
+<td>G-FR08</td>
+<td>Content versions and archived attachment history. <code>uploadDocuments</code>, <code>attachFile</code>, <code>getVersions</code>; section 8.</td>
+</tr>
+<tr>
+<td>G-FR09</td>
+<td>Appointment discussion with author/time. <code>AppointmentComment</code>, <code>addComment</code>; section 9.</td>
+</tr>
+<tr>
+<td>G-FR10</td>
+<td>Inbox/read state and selected patient email delivery. <code>notification.routes.js</code>, <code>notification.service.js</code>, <code>email.service.js</code>; section 9.</td>
+</tr>
+<tr>
+<td>G-FR11</td>
+<td>Admin audit trail. <code>auditLog.handler.js</code>, <code>auditLog.routes.js</code>; section 9.</td>
+</tr>
+<tr>
+<td>G-FR12</td>
+<td>Role dashboards/reports and public anonymized queue. <code>App.jsx</code>, <code>report.service.js</code>, <code>ClinicDisplayScreen.jsx</code>; sections 7, 10.</td>
+</tr>
+</tbody></table>
+<h3>Quality requirements: minimum eight, ten mapped here</h3>
+<table>
+<thead>
+<tr>
+<th>ID / quality</th>
+<th>Implementation and verification boundary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>G-NFR01 Authentication/authorization</td>
+<td>JWT, current account/role, ownership and route roles. Isolated access checks and live no-token rejection recorded; no full penetration test.</td>
+</tr>
+<tr>
+<td>G-NFR02 Credential/input protection</td>
+<td>bcrypt/HMAC, environment secrets, private upload route, request/file validation. Extension filter is not malware scanning.</td>
+</tr>
+<tr>
+<td>G-NFR03 Privacy</td>
+<td>Own/assigned appointment scope, minimal public queue, private inbox, limited doctor list. Staff/Admin broad access and backup handling need policy.</td>
+</tr>
+<tr>
+<td>G-NFR04 Consistency</td>
+<td>Unique indexes, conditional writes, revision checks and compensation journal. Not a global multi-collection ACID guarantee.</td>
+</tr>
+<tr>
+<td>G-NFR05 Fault handling</td>
+<td>Friendly JSON failures, preserved sessions on outages, inbox retained if email fails. Process-local events may still be lost.</td>
+</tr>
+<tr>
+<td>G-NFR06 Usability/accessibility</td>
+<td>Labeled forms, Show/Hide password, shared modal/error states and responsive styles. Prior UI checks exist; formal accessibility/device audit pending.</td>
+</tr>
+<tr>
+<td>G-NFR07 Compatibility</td>
+<td>React browser client and Flutter Android client use one API. APK builds; actual phone/version/network test pending.</td>
+</tr>
+<tr>
+<td>G-NFR08 Maintainability</td>
+<td>Layered modules, shared helpers, check scripts and configuration manifests. Code links/hashes make documentation reviewable.</td>
+</tr>
+<tr>
+<td>G-NFR09 Performance/availability</td>
+<td>Indexed lookups, aggregate reports, bounded upload/OTP state and health route. No measured load SLA; free hosting sleeps.</td>
+</tr>
+<tr>
+<td>G-NFR10 Backup/recoverability</td>
+<td>Whole DB+GridFS, source/mobile/docs archive and isolated restore plan. Implementation/execution/evidence still pending; not marked met.</td>
+</tr>
+</tbody></table>
+<p>UI sources: <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/LoadError.jsx#L1">LoadError.jsx:1</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/context/DialogContext.jsx#L1">DialogContext.jsx:1</a>; <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/styles/responsive.css#L1">responsive.css:1</a>. These support implementation descriptions, not automatic WCAG certification.</p>
+<h3>The twelve required screens and their equivalents</h3>
+<table>
+<thead>
+<tr>
+<th>Specification screen</th>
+<th>Actual web counterpart / code</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Login</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/pages/LoginPage.jsx#L1">LoginPage.jsx:1</a>; sign-in modal in <code>App.jsx</code>.</td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/pages/PatientDashboard.jsx#L1">PatientDashboard.jsx:1</a>, <code>DoctorDashboard</code>, <code>StaffDashboard</code>, <code>AdminDashboard</code>.</td>
+</tr>
+<tr>
+<td>Project List</td>
+<td>Appointment lists in role dashboards; healthcare work-item equivalent.</td>
+</tr>
+<tr>
+<td>Project Details</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/AppointmentPatientDetails.jsx#L1">AppointmentPatientDetails.jsx:1</a> and <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/StatusTimelineModal.jsx#L1">StatusTimelineModal.jsx:1</a>.</td>
+</tr>
+<tr>
+<td>Submission Form</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/ConsultationModal.jsx#L1">ConsultationModal.jsx:1</a> upload/categorization/notes.</td>
+</tr>
+<tr>
+<td>Version History</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/VersionHistory.jsx#L1">VersionHistory.jsx:1</a>.</td>
+</tr>
+<tr>
+<td>Review / Approval</td>
+<td>Staff dashboard actions and <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/BookingCorrections.jsx#L1">BookingCorrections.jsx:1</a>.</td>
+</tr>
+<tr>
+<td>Comment / Feedback</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/AppointmentComments.jsx#L1">AppointmentComments.jsx:1</a>.</td>
+</tr>
+<tr>
+<td>Notification</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/NotificationInbox.jsx#L1">NotificationInbox.jsx:1</a>.</td>
+</tr>
+<tr>
+<td>Audit Log</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/AuditLogViewer.jsx#L1">AuditLogViewer.jsx:1</a>.</td>
+</tr>
+<tr>
+<td>Reports</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/pages/ReportsPage.jsx#L1">ReportsPage.jsx:1</a>.</td>
+</tr>
+<tr>
+<td>User / Role Management</td>
+<td><a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/pages/AdminDashboard.jsx#L1">AdminDashboard.jsx:1</a> and <a href="https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/AddUserModal.jsx#L1">AddUserModal.jsx:1</a>.</td>
+</tr>
+</tbody></table>
+<p>Mobile is the patient portal rather than four clinic-role dashboards. Relevant local screens: <strong>CareSync_mobile/lib/login_screen.dart:1</strong> (local working copy), <strong>CareSync_mobile/lib/register_screen.dart:1</strong> (local working copy), <strong>CareSync_mobile/lib/appointments_screen.dart:1</strong> (local working copy), <strong>CareSync_mobile/lib/appointment_detail_screen.dart:1</strong> (local working copy), <strong>CareSync_mobile/lib/notifications_screen.dart:1</strong> (local working copy). Confirm screen requirements can be satisfied by these pages/dialogs rather than assuming twelve independent URLs are mandatory.</p>
+<h2 id="section-14">14. Required paper chapters, diagrams and submission evidence</h2>
+<h3>Connect the 15-chapter paper to this code guide</h3>
+<table>
+<thead>
+<tr>
+<th>Required chapter / subsections</th>
+<th>Where implementation support comes from / remaining writing</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Title page</td>
+<td>Insert actual group members, course, instructor, institution and date. No names invented.</td>
+</tr>
+<tr>
+<td>1: 1.1–1.5 background, problem, objectives, scope, users</td>
+<td>Healthcare scope and component mapping: sections 1–2. Confirm actual clinic observations.</td>
+</tr>
+<tr>
+<td>2: 2.1–2.3 current process, issues, stakeholders</td>
+<td>Current-state draft and stakeholder register; validate interviews/observations rather than treating assumptions as research findings.</td>
+</tr>
+<tr>
+<td>3: 3.1–3.4 FR, NFR, interfaces, traceability</td>
+<td>Sections 3 and 13; reconcile IDs with the paper and final test register.</td>
+</tr>
+<tr>
+<td>4: 4.1–4.4 business, data, application, technology architecture</td>
+<td>Sections 3, 6–7 and 11. Explain clinical flow, schemas, layers and deployed platforms.</td>
+</tr>
+<tr>
+<td>5: 5.1–5.5 target process, architecture diagram, style/pattern comparison, decisions</td>
+<td>Section 3 plus current technical choices: modular layers, common API, GridFS, Gmail and compensation. Add formal decision records if required.</td>
+</tr>
+<tr>
+<td>6: 6.1–6.6 use case, context, DFD, sequence, ERD and UI</td>
+<td>Diagram register below and section 13. Update drawings to match current implementation.</td>
+</tr>
+<tr>
+<td>7: 7.1–7.6 scenario, integration, mapping, payload, validation, logs</td>
+<td>Sections 3, 6, 8–10; use one actual demo transaction for request/database/event evidence.</td>
+</tr>
+<tr>
+<td>8: 8.1–8.6 access matrix, least privilege, privacy, audit, governance, risks</td>
+<td>Sections 4–5 and 9–11. Assign real owners/retention and maintain at least eight assessed risks; existing paper has 11 preliminary risks.</td>
+</tr>
+<tr>
+<td>9: 9.1–9.6 plan, functional/integration/error/E2E cases and results</td>
+<td>Section 12 and dated check outputs. Record case-level expected/actual results and complete live E2E.</td>
+</tr>
+<tr>
+<td>10: 10.1–10.4 deployment, evidence, backup and recovery</td>
+<td>Deployment receipt plus section 11. Full dump and isolated restore remain unexecuted.</td>
+</tr>
+<tr>
+<td>11: 11.1–11.3 demo, sample accounts/data</td>
+<td>Prepare authorized role accounts and nonconfidential data; rehearse the full flow. Keep passwords outside public documents.</td>
+</tr>
+<tr>
+<td>12: 12.1–12.2 limitations/enhancements</td>
+<td>Sections 3–13 identify actual limits; propose durable outbox, stronger production policy, monitoring and backup automation separately.</td>
+</tr>
+<tr>
+<td>13: Group contributions</td>
+<td>Record actual work, owners and evidence.</td>
+</tr>
+<tr>
+<td>14: References</td>
+<td>Specification, pinned source, provider/tool documentation and dated evidence; use the instructor&#39;s citation style.</td>
+</tr>
+<tr>
+<td>15: Appendices</td>
+<td>Case results, screenshots, payloads/logs, schema/config examples, backup/restore proof and this code guide.</td>
+</tr>
+</tbody></table>
+<h3>Required diagrams: source files and accuracy checks</h3>
+<p>Existing files are under <code>docs/final_submission/diagrams/</code>. This guide maps them; it does not assert they were redrawn during this task.</p>
+<table>
+<thead>
+<tr>
+<th>Diagram</th>
+<th>Editable/output file and code relationship</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Current-state process</td>
+<td><code>01-current-state.mmd/.svg</code>. Clinic baseline requires confirmation; this is not inferred from the application&#39;s code.</td>
+</tr>
+<tr>
+<td>Target-state process</td>
+<td><code>02-target-state.mmd/.svg</code>. Booking/review/check-in/consultation flow from <code>appointment.service.js</code>.</td>
+</tr>
+<tr>
+<td>Context</td>
+<td><code>03-context.mmd/.svg</code>. Patient/clinic clients, API, MongoDB and Gmail external boundary.</td>
+</tr>
+<tr>
+<td>UML use case</td>
+<td><code>04-use-case.svg</code>. Four roles and permissions from route/auth controls.</td>
+</tr>
+<tr>
+<td>Data flow</td>
+<td><code>05-data-flow.mmd/.svg</code>. HTTP data → service → MongoDB/history → notifications/audit; include GridFS byte storage.</td>
+</tr>
+<tr>
+<td>Sequence</td>
+<td><code>06-sequence.mmd/.svg</code>. Align booking/approval sequence with compensation and asynchronous reactions; do not imply atomic delivery.</td>
+</tr>
+<tr>
+<td>Application architecture</td>
+<td><code>07-application-architecture.mmd/.svg</code>. Both clients, layered backend, event handlers, MongoDB and Gmail.</td>
+</tr>
+<tr>
+<td>Deployment</td>
+<td><code>08-deployment.mmd/.svg</code>. Existing drawing reflects local development; update to Vercel, Render, Atlas/GridFS and Gmail HTTPS API.</td>
+</tr>
+<tr>
+<td>Additional ERD/database</td>
+<td><code>09-erd.mmd/.svg</code>. Models/references plus version arrays, notification delivery, OTP and recovery/GridFS where absent.</td>
+</tr>
+</tbody></table>
+<p>The architecture drawings and paper must agree with this guide: uploaded bytes are in GridFS for production; current queue refresh is polling; Gmail uses HTTPS; internal events are not a distributed broker. A GitHub source link alone does not establish a live workflow or diagram correctness.</p>
+<h3>Final submission readiness</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>State / action needed</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Paper printed + PDF</td>
+<td>Draft exists; complete human details, required subsection corrections and updated implementation/evidence claims.</td>
+</tr>
+<tr>
+<td>Working prototype/link</td>
+<td>Web/API deployment recorded; install/check Android APK and complete private clinical workflow.</td>
+</tr>
+<tr>
+<td>Source code</td>
+<td>Web/backend pinned; mobile working changes need separate preserved/submitted source.</td>
+</tr>
+<tr>
+<td>DB file or migration material</td>
+<td>Existing models and migration scripts explain structure; create sanitized reproducible DB/export material and backup according to submission requirements.</td>
+</tr>
+<tr>
+<td>Feature screenshots</td>
+<td>Existing synthetic UI captures available; collect real completed feature evidence with demo data.</td>
+</tr>
+<tr>
+<td>Integration proof</td>
+<td>Isolated tests/live HTTP available; capture one correlated client/API/database/notification/audit transaction.</td>
+</tr>
+<tr>
+<td>Test evidence</td>
+<td>Earlier suites passed; finalize case register and full E2E result.</td>
+</tr>
+<tr>
+<td>Backup/recovery evidence</td>
+<td>Pending whole-database dump, code/mobile/docs archive, isolated restore and verification.</td>
+</tr>
+<tr>
+<td>Slides</td>
+<td>Prepare concise demo/architecture/decision/limitations slides.</td>
+</tr>
+<tr>
+<td>Contributions</td>
+<td>Group must supply accurate names, roles and actual contributions.</td>
+</tr>
+</tbody></table>
+<h2 id="section-15">15. How to use this guide in the technical defense</h2>
+<p>Explain each technical feature through <strong>purpose → request → server rule → stored change → observable result → limitation</strong>. Open the pinned source link or show the short excerpt, then demonstrate the matching behavior with demo data.</p>
+<table>
+<thead>
+<tr>
+<th>Likely defense question</th>
+<th>Answer grounded in this implementation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>“Where is the integration?”</td>
+<td>React and Flutter use the same REST API. Clinical writes update shared MongoDB records; events create inbox/audit reactions; the backend calls Gmail over HTTPS. Show section 3&#39;s controller, section 9&#39;s transport and matching evidence.</td>
+</tr>
+<tr>
+<td>“Why isn&#39;t this just CRUD?”</td>
+<td>Booking claims scarce schedule capacity, approval/corrections drive state transitions, released slots can assign walk-ins, records retain content/history and actions generate notifications/audit. Show sections 6–9.</td>
+</tr>
+<tr>
+<td>“Can someone read another patient&#39;s file?”</td>
+<td>Central JWT plus appointment ownership and role middleware run before protected download. Raw storage paths return 404. Demonstrate the forbidden request with two demo patients.</td>
+</tr>
+<tr>
+<td>“What happens if two users book together?”</td>
+<td>Conditional Available/unowned slot update admits one claim; the other gets 409. Recovery journal compensates failed assignment writes. It is not a global database transaction.</td>
+</tr>
+<tr>
+<td>“What happens when Gmail is down?”</td>
+<td>Verification returns unavailable; clinical inbox survives an email failure, with failed delivery recorded. Events/email are not guaranteed replayed after a crash.</td>
+</tr>
+<tr>
+<td>“How are versions real?”</td>
+<td>Notes and file snapshots store prior content/storage references, authors and times. Archived attachments are queryable through protected version downloads. Show a replacement and the old/new bytes.</td>
+</tr>
+<tr>
+<td>“How does mobile work after deployment?”</td>
+<td>Compile the hosted API URL into Flutter; phone communicates with Render, sharing Atlas with web. No USB debugging is needed to install the APK. Device E2E still must be recorded.</td>
+</tr>
+<tr>
+<td>“Can we restore the database?”</td>
+<td>A plan exists, but full dump/isolated restore is not yet demonstrated. Include GridFS bytes and matching code/mobile/docs, then report verified recovery results after execution.</td>
+</tr>
+</tbody></table>
+<p>Before marking the project fully complete: confirm theme/screen interpretation; update the main paper/diagrams; install/test the APK; record real Gmail and clinical E2E; perform the separately authorized backup/restore workflow; fill case results, group details and slides. This guide provides the implementation explanation and code traceability, not invented completion evidence.</p>
+<p><strong>Companion artifacts:</strong> <code>technical-specification-code-guide.md</code> is editable; <code>.html</code> is readable offline; <code>.pdf</code> is printable; <code>technical-specification-source-index.json</code> records reviewed file hashes, exact citation anchors and excerpt lines. Runtime application code was not changed to prepare these documents.</p>
+</body></html>

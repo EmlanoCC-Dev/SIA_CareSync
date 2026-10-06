@@ -4,6 +4,7 @@ Prepared October 6, 2026 (Asia/Manila). This package gives you a substantial pap
 
 ## Start here
 
+- **[technical-specification-code-guide.pdf](technical-specification-code-guide.pdf)**: current technical implementation guide for all 21 specification headings, with exact code excerpts, pinned file/line links, roles, API/data flows, GridFS, Gmail, deployment, testing boundaries and pending backup/restore. Editable source is `.md`; offline version is `.html`; `technical-specification-source-index.json` records source hashes and citation lines. The reviewed web/backend revision is `b48083e`; mobile references are the separate local working copy with uncommitted changes. This guide updates the technical account without silently marking unfinished evidence complete.
 - **[specification-compliance-report.pdf](specification-compliance-report.pdf)**: direct comparison with the original 14-page specification, complete requirement/subsection mapping, categorized test summaries and remaining work. Editable source is `specification-compliance-report.md`; offline browser version is `.html`.
 - **testing-evidence/specification-review/**: current `88fee61` baseline, source PDF hash, 14 passing isolated backend reruns, and verification that all 44 existing browser source hashes still match. The complete live E2E scenario and backup/restore evidence remain pending.
 - **final-paper.pdf**: printable paper with the diagrams included.
@@ -46,3 +47,5 @@ An alternative Chrome executable can be supplied as the first argument. The expo
 Mermaid usage: https://mermaid.js.org/config/usage.html.
 
 Regenerate the coverage PDF separately with `node docs/final_submission/export-specification-report.mjs`. It reuses the pinned Markdown renderer in `build/paper-export/` and Puppeteer Core in `build/ui-tools/`, embeds the four selected synthetic screenshots, and prints through headless Chrome. It does not change the paper/diagrams or run application tests.
+
+Regenerate the technical guide with `node docs/final_submission/export-technical-guide.mjs`. It uses the same installed Markdown/browser tooling, checks section anchors and layout, and writes self-contained HTML/PDF without calling the application API. Edit the Markdown first; code excerpts and the source index describe the reviewed revision, so update those together when documenting a different revision. The main paper/diagram atlas and earlier coverage report remain historical drafts requiring the corrections identified in the newer guide.

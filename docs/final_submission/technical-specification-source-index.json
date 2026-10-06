@@ -1,0 +1,1643 @@
+{
+  "prepared": "2026-10-06 Asia/Manila",
+  "sourceSpecification": {
+    "filename": "Final Project Specification_MWA.pdf",
+    "pages": 14,
+    "sha256": "b45a62c585bbe8418e66cec0c6f0c2329165aecec8eb137880de08cb46f7b596"
+  },
+  "webBackendCommit": "b48083ee385ecb173bf2bbb853c7469b858324a6",
+  "mobileCommit": "7f2e18cff728cfcedf04b76175d9783ea982cd4a",
+  "mobileScope": "Local working copy containing uncommitted changes; not the deployed web repository.",
+  "files": [
+    {
+      "path": "backend/src/controllers/user.controller.js",
+      "scope": "pinned-web-backend",
+      "sha256": "c0d92a422d3a10cef89c77871451e22db843d6eccd9e552bfd7e4a284fb3f047",
+      "lineCount": 161
+    },
+    {
+      "path": "backend/src/services/user.service.js",
+      "scope": "pinned-web-backend",
+      "sha256": "f8f2de1c91b4ddead2591701c09b9637168728513a44d52675bd226324be1445",
+      "lineCount": 235
+    },
+    {
+      "path": "frontend/src/components/AddUserModal.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "4df019820863ca654adfff8d4e172f8682b14e223cc41a8b37b21740ef13de39",
+      "lineCount": 234
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "scope": "pinned-web-backend",
+      "sha256": "3af979c35486b06a20de9460b60f7e6adf23966d6741383468bee73341da63d0",
+      "lineCount": 857
+    },
+    {
+      "path": "frontend/src/pages/StaffDashboard.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "9b561db1d101334bb5df51bbba9098ed06dad07c8f51bd148742cdea6183c38c",
+      "lineCount": 396
+    },
+    {
+      "path": "backend/src/middleware/upload.js",
+      "scope": "pinned-web-backend",
+      "sha256": "297a7dcbf89cd0c34a866040d6cf1b847401eb2bc632d2d1305e5e5be133eeed",
+      "lineCount": 148
+    },
+    {
+      "path": "frontend/src/components/ConsultationModal.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "674c014b2d82c5773955872a1afc01ee20c228b2bf5b7724168a679ffddc5802",
+      "lineCount": 460
+    },
+    {
+      "path": "backend/src/models/Appointment.js",
+      "scope": "pinned-web-backend",
+      "sha256": "349c40afd7f55be8381fee3a09291077fc42075068b51bf25213796819c29852",
+      "lineCount": 231
+    },
+    {
+      "path": "frontend/src/components/VersionHistory.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "48e43933b0ae3c2070ae8a085a523db25a99afd1ecfb1ecfb45ac02c4b2857d5",
+      "lineCount": 71
+    },
+    {
+      "path": "backend/src/routes/appointment.routes.js",
+      "scope": "pinned-web-backend",
+      "sha256": "5041bb41a19888cc4b4243e639b194f4a6e9b497d5d09ac90182fe2dd6b6d8d5",
+      "lineCount": 66
+    },
+    {
+      "path": "backend/src/models/AppointmentComment.js",
+      "scope": "pinned-web-backend",
+      "sha256": "8f0a7042630bb4b35b361f43b6cf223642c726a7ec7da3ef877d67610d885652",
+      "lineCount": 13
+    },
+    {
+      "path": "frontend/src/components/AppointmentComments.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "71ce61819ad4032821fa17af8b383c0e1201959132b0eb88a9da6b7c1fa20cc9",
+      "lineCount": 102
+    },
+    {
+      "path": "backend/src/services/notification.service.js",
+      "scope": "pinned-web-backend",
+      "sha256": "68cb8f5e9da98dec1c49a7c82a81e013daf78344a4999b7f7d123d8d6b186bc9",
+      "lineCount": 50
+    },
+    {
+      "path": "frontend/src/components/NotificationInbox.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "52e4caad15e88be22bff1c779413c5fc7e9cfd2c072460f45fdf815489f40c62",
+      "lineCount": 160
+    },
+    {
+      "path": "frontend/src/App.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "b575cf06a2b34771e63cd07d6b8da7a208fccdae7a86640eb590fc2ba386e5e6",
+      "lineCount": 105
+    },
+    {
+      "path": "backend/src/services/report.service.js",
+      "scope": "pinned-web-backend",
+      "sha256": "d4b4c97f642d60134fedb5dd893a4b588fd4459e97cadfff3c3f5f77ada61ef7",
+      "lineCount": 45
+    },
+    {
+      "path": "backend/src/events/handlers/auditLog.handler.js",
+      "scope": "pinned-web-backend",
+      "sha256": "88d44886d4498c55d46b0652b9060426295a5f00f56b7d41f9fff54cc143c880",
+      "lineCount": 67
+    },
+    {
+      "path": "backend/src/routes/auditLog.routes.js",
+      "scope": "pinned-web-backend",
+      "sha256": "ba71325fb592d136ae465e9b41566f99ab421aa740b6c63620bd609fa64d0577",
+      "lineCount": 20
+    },
+    {
+      "path": "frontend/src/components/AuditLogViewer.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "8552705e6759d3d6f5f5b0fc50c5eb7ac693480978166ddde85e54027c05e683",
+      "lineCount": 299
+    },
+    {
+      "path": "backend/src/routes/index.js",
+      "scope": "pinned-web-backend",
+      "sha256": "b2d598a8ea669c60169935ca9965bf66074a614d405996d691ce34c54e7c1459",
+      "lineCount": 63
+    },
+    {
+      "path": "backend/src/services/email.service.js",
+      "scope": "pinned-web-backend",
+      "sha256": "78390a63ece74d5bc080f9b8526134ff861f5eda122f1a1b1f43443ab1b6c388",
+      "lineCount": 79
+    },
+    {
+      "path": "backend/src/events/handlers/slotFreed.handler.js",
+      "scope": "pinned-web-backend",
+      "sha256": "b84858e26d40e5f5bf91a2238c1fe599aaf95ff5be48e2ed072673aba20c293a",
+      "lineCount": 71
+    },
+    {
+      "path": "frontend/src/components/BookAppointmentModal.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "87b2ae479cc80fffa2e8d06c026ee7380336e0c75d98b7510126672dd54b4b67",
+      "lineCount": 426
+    },
+    {
+      "path": "CareSync_mobile/lib/booking_screen.dart",
+      "scope": "local-mobile",
+      "sha256": "c60ba8f3254bd7c30dfff9330658c3ec39c0fe226331d0c78606577e64ef99e7",
+      "lineCount": 409
+    },
+    {
+      "path": "frontend/src/services/api.js",
+      "scope": "pinned-web-backend",
+      "sha256": "ea6f5fcb52352c92d6b047343ba1c4596c340285752cec8adb86883fe72dcf69",
+      "lineCount": 152
+    },
+    {
+      "path": "CareSync_mobile/lib/api_services.dart",
+      "scope": "local-mobile",
+      "sha256": "e959fcf74d9b1948296c9cdb282dfe6890f027cbda0a787650d0f02a0b4a8c7b",
+      "lineCount": 300
+    },
+    {
+      "path": "backend/src/controllers/appointment.controller.js",
+      "scope": "pinned-web-backend",
+      "sha256": "b3d154f76e5fdf4f192990f25a141375ae62d98649700cbc4ca785d5c740d95a",
+      "lineCount": 345
+    },
+    {
+      "path": "backend/src/models/Slot.js",
+      "scope": "pinned-web-backend",
+      "sha256": "5513fe98d5dd541454a9e227c9815c71db3631c2530a0aa2db585a132eb93fa6",
+      "lineCount": 77
+    },
+    {
+      "path": "backend/server.js",
+      "scope": "pinned-web-backend",
+      "sha256": "4fd9608d59d489079c982552232099f77256cc8c6d409eb8c5f1881d92a3625e",
+      "lineCount": 84
+    },
+    {
+      "path": "backend/src/models/User.js",
+      "scope": "pinned-web-backend",
+      "sha256": "01c69a64e58bf3234f76769ba72a40e465b41902b8d9c160ee90ccd059316b44",
+      "lineCount": 100
+    },
+    {
+      "path": "backend/src/middleware/auth.js",
+      "scope": "pinned-web-backend",
+      "sha256": "5152ed2f8bc26c9c1bd1f9d61842f2a0e57ce4098ecd354e277e9ab725ed06b1",
+      "lineCount": 102
+    },
+    {
+      "path": "backend/src/routes/user.routes.js",
+      "scope": "pinned-web-backend",
+      "sha256": "05913e805bd283c471b81748248e32c041eea9ddde9d4f38c32dcc3e360b8654",
+      "lineCount": 33
+    },
+    {
+      "path": "backend/src/routes/system.routes.js",
+      "scope": "pinned-web-backend",
+      "sha256": "b5332f8a6bc54dedc8431cd95c160b0fb3f1e9966db2d22ed444192b06f8991e",
+      "lineCount": 61
+    },
+    {
+      "path": "backend/src/services/otp.service.js",
+      "scope": "pinned-web-backend",
+      "sha256": "2f518338314b92d27d1ebefc734540cda08f5f6ac743977a8977ede61ddc4078",
+      "lineCount": 91
+    },
+    {
+      "path": "backend/src/models/EmailOtp.js",
+      "scope": "pinned-web-backend",
+      "sha256": "7cbe6940e8f57048b13784b50cdd2b5ac64946db2a967e107c58e17b0827b6c7",
+      "lineCount": 19
+    },
+    {
+      "path": "backend/src/middleware/otpRateLimit.js",
+      "scope": "pinned-web-backend",
+      "sha256": "a569c2e4b711caa7caffa9eb908d526b0faab18f091866ee337838209182f0f5",
+      "lineCount": 22
+    },
+    {
+      "path": "frontend/src/components/PasswordInput.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "5aae5b2eeeef4b75f8bae72cb5b5088a59767855876fcd241df1726ed93c3005",
+      "lineCount": 18
+    },
+    {
+      "path": "backend/src/services/slot.service.js",
+      "scope": "pinned-web-backend",
+      "sha256": "034ba7c89249488e02739b7d19a52f019aa6fbbd1e46ffb1e912e86a2efa9f38",
+      "lineCount": 415
+    },
+    {
+      "path": "backend/src/services/assignmentRecovery.service.js",
+      "scope": "pinned-web-backend",
+      "sha256": "1291ed6cd41ba2c6b19d8d70b9fb07128fe8bedb30f1af9cf542be4da5ac9693",
+      "lineCount": 59
+    },
+    {
+      "path": "backend/scripts/recover-assignments.js",
+      "scope": "pinned-web-backend",
+      "sha256": "409067e22b451818e947e48386319140e6326ca7eba8236d7c5c6c6a964cf0bf",
+      "lineCount": 27
+    },
+    {
+      "path": "backend/tests/concurrency.check.js",
+      "scope": "pinned-web-backend",
+      "sha256": "b171e03440fc86f56d800e45cad39e0b2f47e7530cade92ba68dfdc27a7968b1",
+      "lineCount": 246
+    },
+    {
+      "path": "backend/tests/corrections.check.js",
+      "scope": "pinned-web-backend",
+      "sha256": "071582889b26c91bba6ae666124aa2b974ce5032f4d57df8aa760436d63861e3",
+      "lineCount": 173
+    },
+    {
+      "path": "backend/src/models/SlotPlan.js",
+      "scope": "pinned-web-backend",
+      "sha256": "2aca4aa85f2fd61cc58beb0a010a875a28ee6e59c4460d07a5daccbe7bb3793a",
+      "lineCount": 12
+    },
+    {
+      "path": "backend/src/models/WalkIn.js",
+      "scope": "pinned-web-backend",
+      "sha256": "e17cb30528408e646b1b2c2eebcc90f07dd22410711197556ce0648c2adbe117",
+      "lineCount": 77
+    },
+    {
+      "path": "backend/src/models/Notification.js",
+      "scope": "pinned-web-backend",
+      "sha256": "aaf532c7531c05666a3f0d744c65637738783071d17d546567815d944898c4ac",
+      "lineCount": 21
+    },
+    {
+      "path": "backend/src/models/AuditLog.js",
+      "scope": "pinned-web-backend",
+      "sha256": "12d343832024b8c92dea77621f47ac5efc96074ae8f7aec13d0c3b5cd5a4d682",
+      "lineCount": 50
+    },
+    {
+      "path": "backend/src/models/AssignmentRecovery.js",
+      "scope": "pinned-web-backend",
+      "sha256": "d387a84b13a7e1559526acbb810e5dfa9808b256134801d6f17abb66663ac25f",
+      "lineCount": 13
+    },
+    {
+      "path": "backend/src/services/fileStorage.service.js",
+      "scope": "pinned-web-backend",
+      "sha256": "49d75afcac072d9c881e82e547df80baaedd6d3a18404c58650accd84d8b0539",
+      "lineCount": 36
+    },
+    {
+      "path": "backend/src/utils/timeHelper.js",
+      "scope": "pinned-web-backend",
+      "sha256": "6ed96e417ff9bd450d0ceef835733fd5baa7e6358ab20facddb152ed13e6ca4e",
+      "lineCount": 141
+    },
+    {
+      "path": "backend/src/config/systemTime.js",
+      "scope": "pinned-web-backend",
+      "sha256": "9c61ef03614d9f3ba8b2d5e8d7231ccaead9998f58135812628a74fd89577e41",
+      "lineCount": 73
+    },
+    {
+      "path": "backend/src/services/walkIn.service.js",
+      "scope": "pinned-web-backend",
+      "sha256": "93768e4aaeac0dda03005da50e80b0dbba11db9ef2315bebf8da48ca6988b472",
+      "lineCount": 380
+    },
+    {
+      "path": "frontend/src/pages/ClinicDisplayScreen.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "b937d0748ead6bd99e2ca920123ffae8398c73c073b283a7795de82fca5ad385",
+      "lineCount": 146
+    },
+    {
+      "path": "backend/src/events/emitter.js",
+      "scope": "pinned-web-backend",
+      "sha256": "91cfb80f683242b2b55b27be5067896adbee3db71a4f37f8c2337cb1276e50c0",
+      "lineCount": 29
+    },
+    {
+      "path": "backend/src/events/events.js",
+      "scope": "pinned-web-backend",
+      "sha256": "03fff7657169fa17ee9594e0534b54c2f514ab5ba6147c4560b08bf646d98a61",
+      "lineCount": 55
+    },
+    {
+      "path": "backend/src/routes/notification.routes.js",
+      "scope": "pinned-web-backend",
+      "sha256": "ecd4078e1e42948473c994196e599cfb7289d154f726f8f5bb2322f8ed9bccf5",
+      "lineCount": 45
+    },
+    {
+      "path": "backend/src/services/auditLog.service.js",
+      "scope": "pinned-web-backend",
+      "sha256": "95f2bdadb48276ddc7f983d8a062e80902744d4df13da5cfbcef933e2dfa933d",
+      "lineCount": 56
+    },
+    {
+      "path": "frontend/src/pages/ReportsPage.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "d4f21a9d1995a9efd457c78c0b0ad24e9ec50a50d29dd8d895842d4dbc0b283e",
+      "lineCount": 71
+    },
+    {
+      "path": "backend/src/middleware/errorHandler.js",
+      "scope": "pinned-web-backend",
+      "sha256": "8f1763885d6f4a49a2b43429b54a79b81e2dc977b07ce59b298bfaa7e49f17a2",
+      "lineCount": 31
+    },
+    {
+      "path": "frontend/src/context/AuthContext.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "60555296a9701a4ccd83998f8e71baf0df1198ef7fbb18a0bff787255352a499",
+      "lineCount": 78
+    },
+    {
+      "path": "frontend/vercel.json",
+      "scope": "pinned-web-backend",
+      "sha256": "fd7ef1e458c40f1b7d73b28bb6b1c98e36dfe2d04e4eb8a2ea81971cae7a88ab",
+      "lineCount": 8
+    },
+    {
+      "path": "render.yaml",
+      "scope": "pinned-web-backend",
+      "sha256": "bcc622ee336bfde3c0d5cb9055ae6e31a051d36d2a8834a9f67cf048324dffcc",
+      "lineCount": 42
+    },
+    {
+      "path": "backend/src/config/env.js",
+      "scope": "pinned-web-backend",
+      "sha256": "d1541de78e7f1c77798609e3f975839ee6dcdb6802dbea9cd387caf2d6ebf88c",
+      "lineCount": 51
+    },
+    {
+      "path": "backend/src/services/demoReset.service.js",
+      "scope": "pinned-web-backend",
+      "sha256": "09f0959ec4c49da031d4da46e708e6012ca93aa5a04dedcf824be8b1bbdfe6b3",
+      "lineCount": 52
+    },
+    {
+      "path": "backend/tests/api-access.check.js",
+      "scope": "pinned-web-backend",
+      "sha256": "aad5f8e32fe057c1b3f87fe32252006122744dbbf6e16b5e4dea23a989e37927",
+      "lineCount": 243
+    },
+    {
+      "path": "backend/tests/otp.check.js",
+      "scope": "pinned-web-backend",
+      "sha256": "10f4f8e1ca0504288ee14f39c5e18a459daf5c79962cd13d2855a4bfb90de50b",
+      "lineCount": 232
+    },
+    {
+      "path": "backend/tests/versions.check.js",
+      "scope": "pinned-web-backend",
+      "sha256": "f564a59e2ba625f55a3ddb305367cfe578e3d320a5025cf4d1db734da2fda96c",
+      "lineCount": 227
+    },
+    {
+      "path": "backend/tests/file-storage.check.js",
+      "scope": "pinned-web-backend",
+      "sha256": "1243bcafb1d78ba4875d64d65ae4ebce8f2f050baa7dd8395da6b0e3f0315efc",
+      "lineCount": 156
+    },
+    {
+      "path": "backend/tests/notifications.check.js",
+      "scope": "pinned-web-backend",
+      "sha256": "f2a0c3c3047735618b08855800a432cd8d72d9744a6a3698734bb8e0d6d35f16",
+      "lineCount": 154
+    },
+    {
+      "path": "backend/tests/audit-coverage.check.js",
+      "scope": "pinned-web-backend",
+      "sha256": "7682d39ca154077793446794673535ae7a456933f0fc98223dba9cfa623860aa",
+      "lineCount": 190
+    },
+    {
+      "path": "backend/tests/gmail-api.check.js",
+      "scope": "pinned-web-backend",
+      "sha256": "5a5afb817a4aad86f6a2539e4b94b3ee134b03bd79ee1f1678079cff11f3e213",
+      "lineCount": 51
+    },
+    {
+      "path": "backend/tests/clinic-workflows.check.js",
+      "scope": "pinned-web-backend",
+      "sha256": "d28409b60b1c83fd70a96e95f66d13fea1418ff0bac176e0fecfae54ad26ba7c",
+      "lineCount": 211
+    },
+    {
+      "path": "frontend/src/components/LoadError.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "61133c60be2e3294db1b260f883b5071a8f7c478c7ba89de7717f2d71060c65f",
+      "lineCount": 10
+    },
+    {
+      "path": "frontend/src/context/DialogContext.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "da6dd0ce149a480d0c2db74a6ec8c7423d5ed3ce484d79b31d7304bb60b14a05",
+      "lineCount": 82
+    },
+    {
+      "path": "frontend/src/styles/responsive.css",
+      "scope": "pinned-web-backend",
+      "sha256": "80ec05c88953d8b689d0b7cc27b5761fdd3a8a9539f75bc7022d67d4ea598820",
+      "lineCount": 49
+    },
+    {
+      "path": "frontend/src/pages/LoginPage.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "af4bd249aca6824dc57879c609556848f625180fa09a41cffe91cea780af4897",
+      "lineCount": 57
+    },
+    {
+      "path": "frontend/src/pages/PatientDashboard.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "2e6b69f58cb30dc308e2d528726dd8fb95161c13cfe002ea25a62b8176056df0",
+      "lineCount": 370
+    },
+    {
+      "path": "frontend/src/components/AppointmentPatientDetails.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "e9b40fcd1b819c55b44b0ae598b75d42b38ce23b1a2d3d735f589185c09a795c",
+      "lineCount": 16
+    },
+    {
+      "path": "frontend/src/components/StatusTimelineModal.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "3bf696185afb05b50c9c95d5ede2078105bdfbbe85d1d13443c7d9606b8e9f5c",
+      "lineCount": 111
+    },
+    {
+      "path": "frontend/src/components/BookingCorrections.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "dde20110654c3a9ffc48344a3cce1aa529650a17fe98e79b15eaadbeb0c80eb4",
+      "lineCount": 76
+    },
+    {
+      "path": "frontend/src/pages/AdminDashboard.jsx",
+      "scope": "pinned-web-backend",
+      "sha256": "103ade98b4701eb8a10eddfa529994713daf5885a9a4d16d556f79cfe07151f8",
+      "lineCount": 385
+    },
+    {
+      "path": "CareSync_mobile/lib/login_screen.dart",
+      "scope": "local-mobile",
+      "sha256": "3377f1ec0e82be9b08a190ce7bb519475a17756520be41f102b6d19ac6d6a948",
+      "lineCount": 165
+    },
+    {
+      "path": "CareSync_mobile/lib/register_screen.dart",
+      "scope": "local-mobile",
+      "sha256": "baa03027256160d487324e71e29419f13a2c40e1395ce752df8b86eb2ac3322c",
+      "lineCount": 237
+    },
+    {
+      "path": "CareSync_mobile/lib/appointments_screen.dart",
+      "scope": "local-mobile",
+      "sha256": "401ff6356d21930d89a2c376706941cbcead55ab5d2f946b6fb6ff9a4189e422",
+      "lineCount": 554
+    },
+    {
+      "path": "CareSync_mobile/lib/appointment_detail_screen.dart",
+      "scope": "local-mobile",
+      "sha256": "99728e17fd163ee6c04dde29925c6835cd8cd420e5b2057c0c969357e2b1b3c2",
+      "lineCount": 571
+    },
+    {
+      "path": "CareSync_mobile/lib/notifications_screen.dart",
+      "scope": "local-mobile",
+      "sha256": "0da0fbfc8db3edbc84b82f5fe0c2e556d00483dc4e88b55a5ac84387059f0919",
+      "lineCount": 308
+    }
+  ],
+  "citations": [
+    {
+      "path": "backend/src/controllers/user.controller.js",
+      "line": 18,
+      "anchor": "async function register",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/controllers/user.controller.js#L18"
+    },
+    {
+      "path": "backend/src/services/user.service.js",
+      "line": 133,
+      "anchor": "async function updateUser",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/user.service.js#L133"
+    },
+    {
+      "path": "frontend/src/components/AddUserModal.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/AddUserModal.jsx#L1"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 89,
+      "anchor": "async function create",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L89"
+    },
+    {
+      "path": "frontend/src/pages/StaffDashboard.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/pages/StaffDashboard.jsx#L1"
+    },
+    {
+      "path": "backend/src/middleware/upload.js",
+      "line": 115,
+      "anchor": "const gridfsStorage",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/upload.js#L115"
+    },
+    {
+      "path": "frontend/src/components/ConsultationModal.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/ConsultationModal.jsx#L1"
+    },
+    {
+      "path": "backend/src/models/Appointment.js",
+      "line": 59,
+      "anchor": "const documentVersionSchema",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/Appointment.js#L59"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 675,
+      "anchor": "async function getVersions",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L675"
+    },
+    {
+      "path": "frontend/src/components/VersionHistory.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/VersionHistory.jsx#L1"
+    },
+    {
+      "path": "backend/src/routes/appointment.routes.js",
+      "line": 33,
+      "anchor": "router.patch('/:id/approve'",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/appointment.routes.js#L33"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 260,
+      "anchor": "async function reviseBooking",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L260"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 813,
+      "anchor": "async function addComment",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L813"
+    },
+    {
+      "path": "backend/src/models/AppointmentComment.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/AppointmentComment.js#L1"
+    },
+    {
+      "path": "frontend/src/components/AppointmentComments.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/AppointmentComments.jsx#L1"
+    },
+    {
+      "path": "backend/src/services/notification.service.js",
+      "line": 8,
+      "anchor": "async function sendNotification",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/notification.service.js#L8"
+    },
+    {
+      "path": "frontend/src/components/NotificationInbox.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/NotificationInbox.jsx#L1"
+    },
+    {
+      "path": "frontend/src/App.jsx",
+      "line": 83,
+      "anchor": "const renderDashboard",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/App.jsx#L83"
+    },
+    {
+      "path": "backend/src/services/report.service.js",
+      "line": 5,
+      "anchor": "async function getReport",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/report.service.js#L5"
+    },
+    {
+      "path": "backend/src/events/handlers/auditLog.handler.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/events/handlers/auditLog.handler.js#L1"
+    },
+    {
+      "path": "backend/src/routes/auditLog.routes.js",
+      "line": 17,
+      "anchor": "router.get('/'",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/auditLog.routes.js#L17"
+    },
+    {
+      "path": "frontend/src/components/AuditLogViewer.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/AuditLogViewer.jsx#L1"
+    },
+    {
+      "path": "backend/src/routes/index.js",
+      "line": 52,
+      "anchor": "router.use('/users'",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/index.js#L52"
+    },
+    {
+      "path": "backend/src/services/email.service.js",
+      "line": 43,
+      "anchor": "async function sendEmail",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/email.service.js#L43"
+    },
+    {
+      "path": "backend/src/events/handlers/slotFreed.handler.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/events/handlers/slotFreed.handler.js#L1"
+    },
+    {
+      "path": "frontend/src/components/BookAppointmentModal.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/BookAppointmentModal.jsx#L1"
+    },
+    {
+      "path": "CareSync_mobile/lib/booking_screen.dart",
+      "line": 1,
+      "anchor": "@start",
+      "url": null
+    },
+    {
+      "path": "frontend/src/services/api.js",
+      "line": 21,
+      "anchor": "async function request",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/services/api.js#L21"
+    },
+    {
+      "path": "CareSync_mobile/lib/api_services.dart",
+      "line": 1,
+      "anchor": "@start",
+      "url": null
+    },
+    {
+      "path": "backend/src/routes/appointment.routes.js",
+      "line": 18,
+      "anchor": "router.post('/'",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/appointment.routes.js#L18"
+    },
+    {
+      "path": "backend/src/controllers/appointment.controller.js",
+      "line": 31,
+      "anchor": "async function create",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/controllers/appointment.controller.js#L31"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 89,
+      "anchor": "async function create",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L89"
+    },
+    {
+      "path": "backend/src/models/Appointment.js",
+      "line": 21,
+      "anchor": "const APPOINTMENT_STATUSES",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/Appointment.js#L21"
+    },
+    {
+      "path": "backend/src/models/Slot.js",
+      "line": 69,
+      "anchor": "slotSchema.index",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/Slot.js#L69"
+    },
+    {
+      "path": "backend/server.js",
+      "line": 66,
+      "anchor": "registerAllHandlers();",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/server.js#L66"
+    },
+    {
+      "path": "backend/src/controllers/appointment.controller.js",
+      "line": 31,
+      "anchor": "async function create",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/controllers/appointment.controller.js#L31"
+    },
+    {
+      "path": "frontend/src/services/api.js",
+      "line": 21,
+      "anchor": "async function request",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/services/api.js#L21"
+    },
+    {
+      "path": "CareSync_mobile/lib/api_services.dart",
+      "line": 17,
+      "anchor": "  static const baseUrl =",
+      "url": null
+    },
+    {
+      "path": "backend/server.js",
+      "line": 46,
+      "anchor": "async function start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/server.js#L46"
+    },
+    {
+      "path": "backend/src/routes/index.js",
+      "line": 32,
+      "anchor": "const publicRequests",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/index.js#L32"
+    },
+    {
+      "path": "backend/src/models/User.js",
+      "line": 87,
+      "anchor": "userSchema.pre('save'",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/User.js#L87"
+    },
+    {
+      "path": "backend/src/services/user.service.js",
+      "line": 174,
+      "anchor": "function _signToken",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/user.service.js#L174"
+    },
+    {
+      "path": "backend/src/middleware/auth.js",
+      "line": 60,
+      "anchor": "const decoded = jwt.verify",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/auth.js#L60"
+    },
+    {
+      "path": "backend/src/services/user.service.js",
+      "line": 180,
+      "anchor": "async function resetPassword",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/user.service.js#L180"
+    },
+    {
+      "path": "backend/src/middleware/auth.js",
+      "line": 19,
+      "anchor": "function assertAppointmentAccess",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/auth.js#L19"
+    },
+    {
+      "path": "backend/src/routes/appointment.routes.js",
+      "line": 23,
+      "anchor": "router.use('/:id'",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/appointment.routes.js#L23"
+    },
+    {
+      "path": "backend/src/routes/user.routes.js",
+      "line": 25,
+      "anchor": "router.get('/', authorize('Admin')",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/user.routes.js#L25"
+    },
+    {
+      "path": "backend/src/routes/system.routes.js",
+      "line": 31,
+      "anchor": "router.post('/time'",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/system.routes.js#L31"
+    },
+    {
+      "path": "backend/src/services/report.service.js",
+      "line": 14,
+      "anchor": "const targetDoctor",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/report.service.js#L14"
+    },
+    {
+      "path": "backend/src/services/otp.service.js",
+      "line": 14,
+      "anchor": "function hashCode",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/otp.service.js#L14"
+    },
+    {
+      "path": "backend/src/services/otp.service.js",
+      "line": 80,
+      "anchor": "const filter = { _id:",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/otp.service.js#L80"
+    },
+    {
+      "path": "backend/src/services/otp.service.js",
+      "line": 19,
+      "anchor": "async function reserveOtp",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/otp.service.js#L19"
+    },
+    {
+      "path": "backend/src/services/otp.service.js",
+      "line": 42,
+      "anchor": "async function deliverOtp",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/otp.service.js#L42"
+    },
+    {
+      "path": "backend/src/models/EmailOtp.js",
+      "line": 17,
+      "anchor": "index",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/EmailOtp.js#L17"
+    },
+    {
+      "path": "backend/src/middleware/otpRateLimit.js",
+      "line": 4,
+      "anchor": "module.exports",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/otpRateLimit.js#L4"
+    },
+    {
+      "path": "frontend/src/components/PasswordInput.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/PasswordInput.jsx#L1"
+    },
+    {
+      "path": "backend/src/models/Appointment.js",
+      "line": 21,
+      "anchor": "const APPOINTMENT_STATUSES",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/Appointment.js#L21"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 89,
+      "anchor": "async function create",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L89"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 160,
+      "anchor": "async function approve",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L160"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 260,
+      "anchor": "async function reviseBooking",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L260"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 209,
+      "anchor": "async function decline",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L209"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 331,
+      "anchor": "async function cancel",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L331"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 381,
+      "anchor": "async function noShow",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L381"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 432,
+      "anchor": "async function checkIn",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L432"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 489,
+      "anchor": "async function updateConsultation",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L489"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 30,
+      "anchor": "async function autoMarkNoShows",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L30"
+    },
+    {
+      "path": "backend/src/services/slot.service.js",
+      "line": 304,
+      "anchor": "const reserved = await Slot.findOneAndUpdate",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/slot.service.js#L304"
+    },
+    {
+      "path": "backend/src/models/Slot.js",
+      "line": 69,
+      "anchor": "slotSchema.index({ doctor",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/Slot.js#L69"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 117,
+      "anchor": "const appointmentId = new mongoose.Types.ObjectId();",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L117"
+    },
+    {
+      "path": "backend/src/services/assignmentRecovery.service.js",
+      "line": 13,
+      "anchor": "async function recover",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/assignmentRecovery.service.js#L13"
+    },
+    {
+      "path": "backend/src/services/assignmentRecovery.service.js",
+      "line": 31,
+      "anchor": "const results = await Promise.allSettled(",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/assignmentRecovery.service.js#L31"
+    },
+    {
+      "path": "backend/scripts/recover-assignments.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/scripts/recover-assignments.js#L1"
+    },
+    {
+      "path": "backend/tests/concurrency.check.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/concurrency.check.js#L1"
+    },
+    {
+      "path": "backend/tests/corrections.check.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/corrections.check.js#L1"
+    },
+    {
+      "path": "backend/src/models/User.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/User.js#L1"
+    },
+    {
+      "path": "backend/src/models/Appointment.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/Appointment.js#L1"
+    },
+    {
+      "path": "backend/src/models/Slot.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/Slot.js#L1"
+    },
+    {
+      "path": "backend/src/models/SlotPlan.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/SlotPlan.js#L1"
+    },
+    {
+      "path": "backend/src/models/WalkIn.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/WalkIn.js#L1"
+    },
+    {
+      "path": "backend/src/models/AppointmentComment.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/AppointmentComment.js#L1"
+    },
+    {
+      "path": "backend/src/models/Notification.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/Notification.js#L1"
+    },
+    {
+      "path": "backend/src/models/AuditLog.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/AuditLog.js#L1"
+    },
+    {
+      "path": "backend/src/models/EmailOtp.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/EmailOtp.js#L1"
+    },
+    {
+      "path": "backend/src/models/AssignmentRecovery.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/AssignmentRecovery.js#L1"
+    },
+    {
+      "path": "backend/src/services/fileStorage.service.js",
+      "line": 5,
+      "anchor": "const BUCKET_NAME",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/fileStorage.service.js#L5"
+    },
+    {
+      "path": "backend/src/services/slot.service.js",
+      "line": 54,
+      "anchor": "async function generateSlots",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/slot.service.js#L54"
+    },
+    {
+      "path": "backend/src/services/slot.service.js",
+      "line": 147,
+      "anchor": "async function materializePlan",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/slot.service.js#L147"
+    },
+    {
+      "path": "backend/src/utils/timeHelper.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/utils/timeHelper.js#L1"
+    },
+    {
+      "path": "backend/src/config/systemTime.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/config/systemTime.js#L1"
+    },
+    {
+      "path": "backend/src/models/WalkIn.js",
+      "line": 70,
+      "anchor": "walkInSchema.index({ queueDay",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/models/WalkIn.js#L70"
+    },
+    {
+      "path": "backend/src/services/walkIn.service.js",
+      "line": 52,
+      "anchor": "async function add",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/walkIn.service.js#L52"
+    },
+    {
+      "path": "backend/src/events/handlers/slotFreed.handler.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/events/handlers/slotFreed.handler.js#L1"
+    },
+    {
+      "path": "backend/src/services/walkIn.service.js",
+      "line": 206,
+      "anchor": "async function assignSlotToNextWalkIn",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/walkIn.service.js#L206"
+    },
+    {
+      "path": "backend/src/services/walkIn.service.js",
+      "line": 336,
+      "anchor": "const scheduledEntries",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/walkIn.service.js#L336"
+    },
+    {
+      "path": "frontend/src/pages/ClinicDisplayScreen.jsx",
+      "line": 7,
+      "anchor": "const POLL_INTERVAL",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/pages/ClinicDisplayScreen.jsx#L7"
+    },
+    {
+      "path": "backend/server.js",
+      "line": 68,
+      "anchor": "registerSlotFreedHandler();",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/server.js#L68"
+    },
+    {
+      "path": "backend/src/middleware/upload.js",
+      "line": 115,
+      "anchor": "const gridfsStorage",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/upload.js#L115"
+    },
+    {
+      "path": "backend/src/middleware/upload.js",
+      "line": 137,
+      "anchor": "fileSize: 25",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/upload.js#L137"
+    },
+    {
+      "path": "backend/src/controllers/appointment.controller.js",
+      "line": 138,
+      "anchor": "async function uploadFile",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/controllers/appointment.controller.js#L138"
+    },
+    {
+      "path": "backend/server.js",
+      "line": 31,
+      "anchor": "app.use('/uploads'",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/server.js#L31"
+    },
+    {
+      "path": "backend/src/routes/appointment.routes.js",
+      "line": 59,
+      "anchor": "router.get('/:id/documents/:docId/download'",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/appointment.routes.js#L59"
+    },
+    {
+      "path": "backend/src/controllers/appointment.controller.js",
+      "line": 199,
+      "anchor": "async function downloadDocument",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/controllers/appointment.controller.js#L199"
+    },
+    {
+      "path": "backend/src/services/fileStorage.service.js",
+      "line": 11,
+      "anchor": "function gridfsId",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/fileStorage.service.js#L11"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 567,
+      "anchor": "const snapshot = { version, notes:",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L567"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 585,
+      "anchor": "async function attachFile",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L585"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 631,
+      "anchor": "// Archive and remove the current attachment",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L631"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 675,
+      "anchor": "async function getVersions",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L675"
+    },
+    {
+      "path": "frontend/src/components/VersionHistory.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/VersionHistory.jsx#L1"
+    },
+    {
+      "path": "CareSync_mobile/lib/api_services.dart",
+      "line": 274,
+      "anchor": "getVersions",
+      "url": null
+    },
+    {
+      "path": "backend/src/events/emitter.js",
+      "line": 14,
+      "anchor": "const emitter = new EventEmitter();",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/events/emitter.js#L14"
+    },
+    {
+      "path": "backend/src/events/events.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/events/events.js#L1"
+    },
+    {
+      "path": "backend/src/services/email.service.js",
+      "line": 8,
+      "anchor": "async function getAccessToken",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/email.service.js#L8"
+    },
+    {
+      "path": "backend/src/services/email.service.js",
+      "line": 54,
+      "anchor": "response = await fetch('https://gmail.googleapis.com",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/email.service.js#L54"
+    },
+    {
+      "path": "backend/src/services/notification.service.js",
+      "line": 8,
+      "anchor": "async function sendNotification",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/notification.service.js#L8"
+    },
+    {
+      "path": "backend/src/services/notification.service.js",
+      "line": 39,
+      "anchor": "// ponytail: single attempt",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/notification.service.js#L39"
+    },
+    {
+      "path": "backend/src/routes/notification.routes.js",
+      "line": 13,
+      "anchor": "const owner",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/notification.routes.js#L13"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "line": 813,
+      "anchor": "async function addComment",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/appointment.service.js#L813"
+    },
+    {
+      "path": "frontend/src/components/AppointmentComments.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/AppointmentComments.jsx#L1"
+    },
+    {
+      "path": "backend/src/events/handlers/auditLog.handler.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/events/handlers/auditLog.handler.js#L1"
+    },
+    {
+      "path": "backend/src/services/auditLog.service.js",
+      "line": 22,
+      "anchor": "async function logAction",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/auditLog.service.js#L22"
+    },
+    {
+      "path": "backend/src/services/report.service.js",
+      "line": 14,
+      "anchor": "const targetDoctor",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/report.service.js#L14"
+    },
+    {
+      "path": "frontend/src/pages/ReportsPage.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/pages/ReportsPage.jsx#L1"
+    },
+    {
+      "path": "frontend/src/App.jsx",
+      "line": 83,
+      "anchor": "const renderDashboard",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/App.jsx#L83"
+    },
+    {
+      "path": "backend/src/middleware/errorHandler.js",
+      "line": 10,
+      "anchor": "const statusCode",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/errorHandler.js#L10"
+    },
+    {
+      "path": "backend/src/middleware/auth.js",
+      "line": 44,
+      "anchor": "async function protect",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/auth.js#L44"
+    },
+    {
+      "path": "backend/src/middleware/auth.js",
+      "line": 89,
+      "anchor": "function authorize",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/middleware/auth.js#L89"
+    },
+    {
+      "path": "backend/server.js",
+      "line": 22,
+      "anchor": "app.use(cors",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/server.js#L22"
+    },
+    {
+      "path": "frontend/src/services/api.js",
+      "line": 21,
+      "anchor": "async function request",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/services/api.js#L21"
+    },
+    {
+      "path": "frontend/src/context/AuthContext.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/context/AuthContext.jsx#L1"
+    },
+    {
+      "path": "CareSync_mobile/lib/api_services.dart",
+      "line": 32,
+      "anchor": "Future<http.Response> _send",
+      "url": null
+    },
+    {
+      "path": "backend/server.js",
+      "line": 37,
+      "anchor": "app.get('/health'",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/server.js#L37"
+    },
+    {
+      "path": "frontend/vercel.json",
+      "line": 3,
+      "anchor": "\"framework\"",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/vercel.json#L3"
+    },
+    {
+      "path": "render.yaml",
+      "line": 7,
+      "anchor": "rootDir: backend",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/render.yaml#L7"
+    },
+    {
+      "path": "backend/src/config/env.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/config/env.js#L1"
+    },
+    {
+      "path": "backend/src/services/demoReset.service.js",
+      "line": 36,
+      "anchor": "deleted.User =",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/demoReset.service.js#L36"
+    },
+    {
+      "path": "backend/src/routes/system.routes.js",
+      "line": 50,
+      "anchor": "router.post('/demo-reset'",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/routes/system.routes.js#L50"
+    },
+    {
+      "path": "backend/tests/api-access.check.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/api-access.check.js#L1"
+    },
+    {
+      "path": "backend/tests/otp.check.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/otp.check.js#L1"
+    },
+    {
+      "path": "backend/tests/versions.check.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/versions.check.js#L1"
+    },
+    {
+      "path": "backend/tests/file-storage.check.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/file-storage.check.js#L1"
+    },
+    {
+      "path": "backend/tests/notifications.check.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/notifications.check.js#L1"
+    },
+    {
+      "path": "backend/tests/audit-coverage.check.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/audit-coverage.check.js#L1"
+    },
+    {
+      "path": "backend/tests/gmail-api.check.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/gmail-api.check.js#L1"
+    },
+    {
+      "path": "backend/tests/clinic-workflows.check.js",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/tests/clinic-workflows.check.js#L1"
+    },
+    {
+      "path": "frontend/src/components/LoadError.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/LoadError.jsx#L1"
+    },
+    {
+      "path": "frontend/src/context/DialogContext.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/context/DialogContext.jsx#L1"
+    },
+    {
+      "path": "frontend/src/styles/responsive.css",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/styles/responsive.css#L1"
+    },
+    {
+      "path": "frontend/src/pages/LoginPage.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/pages/LoginPage.jsx#L1"
+    },
+    {
+      "path": "frontend/src/pages/PatientDashboard.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/pages/PatientDashboard.jsx#L1"
+    },
+    {
+      "path": "frontend/src/components/AppointmentPatientDetails.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/AppointmentPatientDetails.jsx#L1"
+    },
+    {
+      "path": "frontend/src/components/StatusTimelineModal.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/StatusTimelineModal.jsx#L1"
+    },
+    {
+      "path": "frontend/src/components/ConsultationModal.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/ConsultationModal.jsx#L1"
+    },
+    {
+      "path": "frontend/src/components/VersionHistory.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/VersionHistory.jsx#L1"
+    },
+    {
+      "path": "frontend/src/components/BookingCorrections.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/BookingCorrections.jsx#L1"
+    },
+    {
+      "path": "frontend/src/components/AppointmentComments.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/AppointmentComments.jsx#L1"
+    },
+    {
+      "path": "frontend/src/components/NotificationInbox.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/NotificationInbox.jsx#L1"
+    },
+    {
+      "path": "frontend/src/components/AuditLogViewer.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/AuditLogViewer.jsx#L1"
+    },
+    {
+      "path": "frontend/src/pages/ReportsPage.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/pages/ReportsPage.jsx#L1"
+    },
+    {
+      "path": "frontend/src/pages/AdminDashboard.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/pages/AdminDashboard.jsx#L1"
+    },
+    {
+      "path": "frontend/src/components/AddUserModal.jsx",
+      "line": 1,
+      "anchor": "@start",
+      "url": "https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/AddUserModal.jsx#L1"
+    },
+    {
+      "path": "CareSync_mobile/lib/login_screen.dart",
+      "line": 1,
+      "anchor": "@start",
+      "url": null
+    },
+    {
+      "path": "CareSync_mobile/lib/register_screen.dart",
+      "line": 1,
+      "anchor": "@start",
+      "url": null
+    },
+    {
+      "path": "CareSync_mobile/lib/appointments_screen.dart",
+      "line": 1,
+      "anchor": "@start",
+      "url": null
+    },
+    {
+      "path": "CareSync_mobile/lib/appointment_detail_screen.dart",
+      "line": 1,
+      "anchor": "@start",
+      "url": null
+    },
+    {
+      "path": "CareSync_mobile/lib/notifications_screen.dart",
+      "line": 1,
+      "anchor": "@start",
+      "url": null
+    }
+  ],
+  "excerpts": [
+    {
+      "path": "backend/src/controllers/appointment.controller.js",
+      "firstLine": 31,
+      "lastLine": 45,
+      "anchor": "async function create"
+    },
+    {
+      "path": "frontend/src/services/api.js",
+      "firstLine": 21,
+      "lastLine": 32,
+      "anchor": "async function request"
+    },
+    {
+      "path": "CareSync_mobile/lib/api_services.dart",
+      "firstLine": 17,
+      "lastLine": 23,
+      "anchor": "  static const baseUrl ="
+    },
+    {
+      "path": "backend/src/routes/index.js",
+      "firstLine": 32,
+      "lastLine": 45,
+      "anchor": "const publicRequests"
+    },
+    {
+      "path": "backend/src/middleware/auth.js",
+      "firstLine": 60,
+      "lastLine": 71,
+      "anchor": "const decoded = jwt.verify"
+    },
+    {
+      "path": "backend/src/middleware/auth.js",
+      "firstLine": 19,
+      "lastLine": 24,
+      "anchor": "function assertAppointmentAccess"
+    },
+    {
+      "path": "backend/src/services/otp.service.js",
+      "firstLine": 14,
+      "lastLine": 17,
+      "anchor": "function hashCode"
+    },
+    {
+      "path": "backend/src/services/otp.service.js",
+      "firstLine": 80,
+      "lastLine": 88,
+      "anchor": "const filter = { _id:"
+    },
+    {
+      "path": "backend/src/services/slot.service.js",
+      "firstLine": 304,
+      "lastLine": 315,
+      "anchor": "const reserved = await Slot.findOneAndUpdate"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "firstLine": 117,
+      "lastLine": 129,
+      "anchor": "const appointmentId = new mongoose.Types.ObjectId();"
+    },
+    {
+      "path": "backend/src/services/assignmentRecovery.service.js",
+      "firstLine": 31,
+      "lastLine": 38,
+      "anchor": "const results = await Promise.allSettled("
+    },
+    {
+      "path": "frontend/src/pages/ClinicDisplayScreen.jsx",
+      "firstLine": 7,
+      "lastLine": 7,
+      "anchor": "const POLL_INTERVAL"
+    },
+    {
+      "path": "backend/src/middleware/upload.js",
+      "firstLine": 115,
+      "lastLine": 127,
+      "anchor": "const gridfsStorage"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "firstLine": 567,
+      "lastLine": 579,
+      "anchor": "const snapshot = { version, notes:"
+    },
+    {
+      "path": "backend/src/services/appointment.service.js",
+      "firstLine": 631,
+      "lastLine": 639,
+      "anchor": "// Archive and remove the current attachment"
+    },
+    {
+      "path": "backend/src/events/emitter.js",
+      "firstLine": 14,
+      "lastLine": 25,
+      "anchor": "const emitter = new EventEmitter();"
+    },
+    {
+      "path": "backend/src/services/email.service.js",
+      "firstLine": 54,
+      "lastLine": 60,
+      "anchor": "response = await fetch('https://gmail.googleapis.com"
+    },
+    {
+      "path": "backend/src/services/notification.service.js",
+      "firstLine": 8,
+      "lastLine": 16,
+      "anchor": "async function sendNotification"
+    },
+    {
+      "path": "backend/src/services/report.service.js",
+      "firstLine": 14,
+      "lastLine": 25,
+      "anchor": "const targetDoctor"
+    },
+    {
+      "path": "backend/src/middleware/errorHandler.js",
+      "firstLine": 10,
+      "lastLine": 17,
+      "anchor": "const statusCode"
+    },
+    {
+      "path": "backend/src/services/demoReset.service.js",
+      "firstLine": 36,
+      "lastLine": 40,
+      "anchor": "deleted.User ="
+    }
+  ]
+}
