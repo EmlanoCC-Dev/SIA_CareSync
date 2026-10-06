@@ -1,0 +1,29 @@
+Demo reset passed: role/confirmation guards, account preservation, all records/files, background activity, maintenance lock, failure retry, and repeated reset.
+
+❌  [400] Type CLEAR DEMO DATA to confirm the reset
+
+❌  [400] Type CLEAR DEMO DATA to confirm the reset
+
+❌  [400] Type CLEAR DEMO DATA to confirm the reset
+
+❌  [400] Type CLEAR DEMO DATA to confirm the reset
+
+❌  [400] Type CLEAR DEMO DATA to confirm the reset
+
+❌  [409] Clinic activity is still running. Pause other tabs and retry the reset in a moment.
+
+❌  [409] Clinic activity is still running. Pause other tabs and retry the reset in a moment.
+[Demo reset] Reset interrupted: Simulated storage failure
+
+❌  [500] Demo reset was interrupted; some data may have been cleared. Retry to finish clearing the remaining data.
+Error: Demo reset was interrupted; some data may have been cleared. Retry to finish clearing the remaining data.
+    at clearDemoData (C:\Users\Adrian\Documents\CareSync\backend\src\services\demoReset.service.js:41:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async C:\Users\Adrian\Documents\CareSync\backend\src\routes\system.routes.js:55:18
+[Demo reset] Reset interrupted: Simulated file permission failure
+
+❌  [500] Demo reset was interrupted; some data may have been cleared. Retry to finish clearing the remaining data.
+Error: Demo reset was interrupted; some data may have been cleared. Retry to finish clearing the remaining data.
+    at clearDemoData (C:\Users\Adrian\Documents\CareSync\backend\src\services\demoReset.service.js:41:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async C:\Users\Adrian\Documents\CareSync\backend\src\routes\system.routes.js:55:18

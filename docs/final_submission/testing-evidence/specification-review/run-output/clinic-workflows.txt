@@ -1,0 +1,1 @@
+Passed: schedule validation/generation, block/reopen guards, assignment/conflict rollback, report boundaries/scope, and authenticated HTTP routes.

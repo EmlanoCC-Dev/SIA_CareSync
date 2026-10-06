@@ -4,6 +4,8 @@ Prepared October 6, 2026 (Asia/Manila). This package gives you a substantial pap
 
 ## Start here
 
+- **[specification-compliance-report.pdf](specification-compliance-report.pdf)**: direct comparison with the original 14-page specification, complete requirement/subsection mapping, categorized test summaries and remaining work. Editable source is `specification-compliance-report.md`; offline browser version is `.html`.
+- **testing-evidence/specification-review/**: current `88fee61` baseline, source PDF hash, 14 passing isolated backend reruns, and verification that all 44 existing browser source hashes still match. The complete live E2E scenario and backup/restore evidence remain pending.
 - **final-paper.pdf**: printable paper with the diagrams included.
 - **final-paper.html**: the same document, self-contained and readable offline in a browser.
 - **final-paper.md**: editable source for all 15 required sections and appendices.
@@ -22,7 +24,7 @@ The eight required diagrams are current-state process flow, target-state process
 
 ## Evidence boundary
 
-Requirements come from the saved project specification checklist because the original PDF was unavailable at its recorded path. Check against the original before submission. The paper retains the October 4 verification baseline and now includes an October 6 follow-up with rerun isolated backend checks, the production build, and mocked browser checks. See [the UI review](testing-evidence/ui-review.md) for dated outputs, scope and screenshots. This follow-up did not operate the live clinic database, send email, restore data or deploy the system. Demo-reset checks are documented separately from the original evaluated feature baseline.
+The original PDF was unavailable when the paper draft was prepared. It has now been read directly for the separate [specification coverage report](specification-compliance-report.md), which identifies required subsection corrections and updates the evidence baseline to `88fee61`. The existing final paper still needs those corrections; its earlier baseline/status statements are historical draft text. The paper retains the October 4 verification baseline and an October 6 UI follow-up. See [the UI review](testing-evidence/ui-review.md) for dated browser/build outputs, scope and screenshots. The new coverage review reran all 14 isolated backend suites and verified existing browser source hashes; it did not operate the live clinic database, send email, restore data, rerun Flutter/browser checks or deploy the system.
 
 The document deliberately preserves remaining live verification, event-delivery limitations, SMS exclusion, and missing submission evidence. It does not invent team contributions, clinic observations, load metrics, screenshots, or test results. Existing paper/materials outside this repository should be reconciled with this draft.
 
@@ -42,3 +44,5 @@ node docs/final_submission/export.mjs
 An alternative Chrome executable can be supplied as the first argument. The exporter runs a temporary local renderer, validates all Mermaid sources by actually rendering them, writes SVG/HTML/PDF artifacts, and checks the PDF signatures. It launches headless Chrome and does not connect to the clinic API/database or send messages. Finished HTML files contain embedded vector diagrams and need no online scripts.
 
 Mermaid usage: https://mermaid.js.org/config/usage.html.
+
+Regenerate the coverage PDF separately with `node docs/final_submission/export-specification-report.mjs`. It reuses the pinned Markdown renderer in `build/paper-export/` and Puppeteer Core in `build/ui-tools/`, embeds the four selected synthetic screenshots, and prints through headless Chrome. It does not change the paper/diagrams or run application tests.

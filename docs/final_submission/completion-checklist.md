@@ -4,7 +4,8 @@ Use this checklist with `final-paper.md`. The draft is written; checkboxes refer
 
 ## 1. Confirm the specification and title page
 
-- [ ] Compare every required section/subsection and minimum count against the original *Final Project Specification_MWA.pdf*.
+- [x] Compare every required section/subsection and minimum count against the original *Final Project Specification_MWA.pdf*; see `specification-compliance-report.md` for the direct 14-page source comparison.
+- [ ] Apply the coverage report's required subsection, baseline, mobile-client and evidence corrections to the final paper; the comparison does not itself rewrite that draft.
 - [ ] Fill school, department, course/section, instructor, clinic, team names and submission date.
 - [ ] Apply the required paper layout and reference style.
 - [ ] Confirm healthcare mappings for generic feedback, version tracking, correction and dialog-based screens.

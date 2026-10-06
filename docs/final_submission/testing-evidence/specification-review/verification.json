@@ -1,0 +1,332 @@
+{
+  "date": "2026-10-06",
+  "timezone": "Asia/Manila",
+  "baseline": "88fee613ec0d646062beb64284a782ce60a31dec",
+  "node": "v24.11.1",
+  "sourcePdf": {
+    "filename": "Final Project Specification_MWA.pdf",
+    "pages": 14,
+    "sha256": "B45A62C585BBE8418E66CEC0C6F0C2329165AECEC8EB137880DE08CB46F7B596"
+  },
+  "evidenceScope": "Isolated backend suites only; no --live runs, live clinic database operations, SMTP sends, mobile tests, deployment or backup/restore.",
+  "sourceChecks": [
+    {
+      "file": "docs/comments-ui.check.mjs",
+      "matches": true
+    },
+    {
+      "file": "docs/demo-reset-ui.check.mjs",
+      "matches": true
+    },
+    {
+      "file": "docs/ui-smoke.mjs",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\App.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\AddUserModal.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\AddWalkInModal.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\AppointmentComments.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\AppointmentPatientDetails.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\AssignSlotModal.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\AuditLogViewer.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\BookAppointmentModal.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\BookingCorrections.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\ConsultationModal.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\EmailVerificationCode.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\LoadError.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\Navbar.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\NotificationInbox.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\PasswordChangeForm.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\SlotManagement.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\StatusTimelineModal.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\SystemTimeModal.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\VersionHistory.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\WalkInQueue.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\WorkingHoursEditor.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\components\\WorkspaceNavigation.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\context\\AuthContext.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\context\\DialogContext.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\index.css",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\main.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\pages\\AdminDashboard.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\pages\\ClinicDisplayScreen.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\pages\\DoctorDashboard.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\pages\\LandingPage.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\pages\\LoginPage.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\pages\\PatientDashboard.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\pages\\RegisterPage.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\pages\\ReportsPage.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\pages\\StaffDashboard.jsx",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\services\\api.js",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\styles\\app-screens.css",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\styles\\foundation.css",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\styles\\public-pages.css",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\styles\\responsive.css",
+      "matches": true
+    },
+    {
+      "file": "frontend/src\\utils\\dates.js",
+      "matches": true
+    }
+  ],
+  "screenshots": [
+    {
+      "folder": "ui",
+      "count": 275
+    },
+    {
+      "folder": "records-and-accounts",
+      "count": 32
+    },
+    {
+      "folder": "demo-reset",
+      "count": 4
+    }
+  ],
+  "results": [
+    {
+      "suite": "accounts-noshow.check.js",
+      "started": "2026-10-06T04:09:05.778Z",
+      "ended": "2026-10-06T04:09:07.733Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "summary": "Passed account-edit/role/status HTTP checks, deactivated login/session/booking checks, and no-show expiry/conflict/retry checks.",
+      "log": "run-output/accounts-noshow.txt"
+    },
+    {
+      "suite": "api-access.check.js",
+      "started": "2026-10-06T04:09:07.736Z",
+      "ended": "2026-10-06T04:09:10.019Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "summary": "Passed 125 HTTP checks, including authentication on all 44 registered private routes, ownership/assignment, uploads/downloads, clock permissions, and response privacy.",
+      "log": "run-output/api-access.txt"
+    },
+    {
+      "suite": "audit-coverage.check.js",
+      "started": "2026-10-06T04:09:10.019Z",
+      "ended": "2026-10-06T04:09:12.180Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "summary": "Passed 33 audit HTTP checks: actor/target attribution, metadata privacy, failures, competing deletion, on-demand generation, read permissions and clock exclusion.",
+      "log": "run-output/audit-coverage.txt"
+    },
+    {
+      "suite": "clinic-workflows.check.js",
+      "started": "2026-10-06T04:09:12.180Z",
+      "ended": "2026-10-06T04:09:14.049Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "summary": "Passed: schedule validation/generation, block/reopen guards, assignment/conflict rollback, report boundaries/scope, and authenticated HTTP routes.",
+      "log": "run-output/clinic-workflows.txt"
+    },
+    {
+      "suite": "comments.check.js",
+      "started": "2026-10-06T04:09:14.049Z",
+      "ended": "2026-10-06T04:09:16.409Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "summary": "Passed 52 comment HTTP checks, author attribution, private notifications, audit events, and failure checks.",
+      "log": "run-output/comments.txt"
+    },
+    {
+      "suite": "concurrency.check.js",
+      "started": "2026-10-06T04:09:16.409Z",
+      "ended": "2026-10-06T04:09:17.617Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "summary": "Passed isolated concurrency checks: unique tickets, competing assignments/bookings, scoped automation, non-overlapping generation, injected failures and durable recovery.",
+      "log": "run-output/concurrency.txt"
+    },
+    {
+      "suite": "corrections.check.js",
+      "started": "2026-10-06T04:09:17.617Z",
+      "ended": "2026-10-06T04:09:19.627Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "summary": "Passed 65 correction HTTP checks, history/audit/notification attribution, concurrency, reservation and expiry checks.",
+      "log": "run-output/corrections.txt"
+    },
+    {
+      "suite": "demo-reset.check.js",
+      "started": "2026-10-06T04:09:19.628Z",
+      "ended": "2026-10-06T04:09:21.750Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "summary": "Demo reset passed: role/confirmation guards, account preservation, all records/files, background activity, maintenance lock, failure retry, and repeated reset.",
+      "log": "run-output/demo-reset.txt"
+    },
+    {
+      "suite": "email-notifications.check.js",
+      "started": "2026-10-06T04:09:21.750Z",
+      "ended": "2026-10-06T04:09:23.153Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "summary": "Passed Gmail transport, notification routing, status logging, privacy, and failure checks. No real email sent.",
+      "log": "run-output/email-notifications.txt"
+    },
+    {
+      "suite": "notifications.check.js",
+      "started": "2026-10-06T04:09:23.154Z",
+      "ended": "2026-10-06T04:09:25.120Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "summary": "Passed notification event routing, privacy/failure checks and 32 owner-scoped HTTP checks.",
+      "log": "run-output/notifications.txt"
+    },
+    {
+      "suite": "otp.check.js",
+      "started": "2026-10-06T04:09:25.121Z",
+      "ended": "2026-10-06T04:09:29.666Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "summary": "Passed 30 OTP/auth HTTP checks plus expiry, replay, guessing, cooldown/send limits, races, failure/privacy and session invalidation checks. No real email sent.",
+      "log": "run-output/otp.txt"
+    },
+    {
+      "suite": "scheduled-queue.check.js",
+      "started": "2026-10-06T04:09:29.666Z",
+      "ended": "2026-10-06T04:09:31.763Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "summary": "Passed 26 scheduled-queue HTTP checks: arrival/start/completion, tickets/races, privacy, no-show exemption, rollover, ownership and rollback failures.",
+      "log": "run-output/scheduled-queue.txt"
+    },
+    {
+      "suite": "versions.check.js",
+      "started": "2026-10-06T04:09:31.763Z",
+      "ended": "2026-10-06T04:09:35.679Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "summary": "Passed 58 version-history HTTP checks: baselines, unchanged notes, authors, conflicts/failures, replacement/archive and protected original-file downloads.",
+      "log": "run-output/versions.txt"
+    },
+    {
+      "suite": "walkin-status.check.js",
+      "started": "2026-10-06T04:09:35.680Z",
+      "ended": "2026-10-06T04:09:37.570Z",
+      "exitCode": 0,
+      "status": "PASS",
+      "summary": "Passed 35 walk-in HTTP checks: lifecycle, permissions, linked records, conflicts/recovery, events, and date/status filters.",
+      "log": "run-output/walkin-status.txt"
+    }
+  ]
+}

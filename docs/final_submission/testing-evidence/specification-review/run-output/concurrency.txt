@@ -1,0 +1,25 @@
+🎫  Walk-in #1 added: Dummy 0
+🎫  Walk-in #2 added: Dummy 1
+🎫  Walk-in #3 added: Dummy 2
+🎫  Walk-in #4 added: Dummy 3
+🎫  Walk-in #5 added: Dummy 4
+🎫  Walk-in #6 added: Dummy 5
+🎫  Walk-in #7 added: Dummy 6
+🎫  Walk-in #8 added: Dummy 7
+🎫  Walk-in #9 added: Dummy 8
+🎫  Walk-in #10 added: Dummy 9
+🎫  Walk-in #11 added: Dummy 10
+🎫  Walk-in #12 added: Dummy 11
+🎫  Walk-in #13 added: Dummy 12
+🎫  Walk-in #14 added: Dummy 13
+🎫  Walk-in #15 added: Dummy 14
+🎫  Walk-in #16 added: Dummy 15
+🎫  Walk-in #17 added: Dummy 16
+🎫  Walk-in #18 added: Dummy 17
+🎫  Walk-in #19 added: Dummy 18
+🎫  Walk-in #20 added: Dummy 19
+🎫  Walk-in #1 added: Yesterday
+🔓  Slot-freed event handler registered
+🔓  [SlotFreed] Slot 10:30-10:45 freed (Integration check)
+✅  [SlotFreed] Walk-in #5 auto-assigned to freed slot
+Passed isolated concurrency checks: unique tickets, competing assignments/bookings, scoped automation, non-overlapping generation, injected failures and durable recovery.
