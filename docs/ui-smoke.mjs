@@ -182,9 +182,9 @@ try {
     await page.waitForSelector('.action-dialog[open]');
     if (defaultReason) assert.equal(await page.$eval('.action-dialog textarea', input => input.value), defaultReason);
     if (required) {
-      assert(await page.$eval('.action-dialog button[type="submit"]', button => button.disabled), `${action}: empty reason allowed`);
+      assert(await page.$$eval('.action-dialog button[type="submit"]', (buttons, action) => buttons.find(button => button.textContent === action).disabled, action), `${action}: empty reason allowed`);
       await page.type('.action-dialog textarea', '   ');
-      assert(await page.$eval('.action-dialog button[type="submit"]', button => button.disabled), `${action}: whitespace reason allowed`);
+      assert(await page.$$eval('.action-dialog button[type="submit"]', (buttons, action) => buttons.find(button => button.textContent === action).disabled, action), `${action}: whitespace reason allowed`);
     }
     if (reason !== undefined) {
       await page.$eval('.action-dialog textarea', input => { input.value = ''; input.dispatchEvent(new Event('input', { bubbles: true })); });
@@ -357,7 +357,18 @@ try {
         assert(cancellation.path.endsWith('/cancel'));
         assert.equal(cancellation.body.reason, `Cancelled by ${role === 'Patient' ? 'patient' : role === 'Doctor' ? 'Doctor' : 'staff'}`);
         if (role !== 'Patient') {
-          const decline = await actionDialog('button[title="Decline Appointment"]', 'Decline appointment', { required: true, reason: '  Schedule unavailable  ' });
+          const combined = 'button[title="Cancel/Decline appointment"]';
+          assert.equal(await page.$('button[title="Decline Appointment"]'), null, 'Separate decline button must be removed');
+          await page.click(combined);
+          await page.waitForSelector('.action-dialog[open]');
+          assert.equal(await page.$eval('.action-dialog button[value="cancel"]', button => button.disabled), false, 'Cancel must allow an empty reason');
+          assert.equal(await page.$eval('.action-dialog button[value="decline"]', button => button.disabled), true, 'Decline must require a reason');
+          await page.click('.action-dialog button[aria-label="Close dialog"]');
+          await page.waitForSelector('.action-dialog', { hidden: true });
+          const cancelledRequest = await actionDialog(combined, 'Cancel');
+          assert(cancelledRequest.path.endsWith('/cancel'));
+          assert.equal(cancelledRequest.body.reason, `Cancelled by ${role === 'Doctor' ? 'Doctor' : 'staff'}`);
+          const decline = await actionDialog(combined, 'Decline', { required: true, reason: '  Schedule unavailable  ' });
           assert(decline.path.endsWith('/decline'));
           assert.equal(decline.body.reason, 'Schedule unavailable');
         }

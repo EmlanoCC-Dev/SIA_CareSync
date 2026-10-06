@@ -55,17 +55,6 @@ export default function StaffDashboard() {
     }
   };
 
-  const handleDecline = async (id) => {
-    const reason = await showDialog({ kind: 'prompt', title: 'Decline appointment', message: 'Please enter the reason for declining this request.', confirmText: 'Decline appointment', required: true, danger: true });
-    if (!reason || !reason.trim()) return;
-    try {
-      await api.declineAppointment(id, reason.trim());
-      fetchAppointments();
-    } catch (err) {
-      await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to decline appointment' });
-    }
-  };
-
   const handleCheckIn = async (id) => {
     try {
       await api.checkInAppointment(id);
@@ -101,14 +90,17 @@ export default function StaffDashboard() {
     }
   };
 
-  const handleCancel = async (id) => {
-    const reason = await showDialog({ kind: 'prompt', title: 'Cancel appointment', message: 'You can include a reason for cancelling this appointment.', confirmText: 'Cancel appointment', danger: true });
-    if (reason === null) return;
+  const handleCancel = async (apt) => {
+    const result = await showDialog(apt.status === 'Pending'
+      ? { kind: 'cancel-decline', title: 'Cancel/Decline appointment', message: 'Cancel to withdraw the visit, or decline to reject the request. A reason is required to decline and optional to cancel.', danger: true }
+      : { kind: 'prompt', title: 'Cancel appointment', message: 'You can include a reason for cancelling this appointment.', confirmText: 'Cancel appointment', danger: true });
+    if (result === null) return;
     try {
-      await api.cancelAppointment(id, reason || 'Cancelled by staff');
+      if (result.action === 'decline') await api.declineAppointment(apt._id, result.reason);
+      else await api.cancelAppointment(apt._id, (typeof result === 'string' ? result : result.reason) || 'Cancelled by staff');
       fetchAppointments();
     } catch (err) {
-      await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to cancel appointment' });
+      await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to update appointment' });
     }
   };
 
@@ -309,14 +301,6 @@ export default function StaffDashboard() {
                                 <span>Approve</span>
                               </button>
                               {!apt.slot && !apt.walkIn && <button className="btn btn-primary btn-sm" onClick={() => setAssignment(apt)}>Assign doctor &amp; slot</button>}
-                              <button
-                                onClick={() => handleDecline(apt._id)}
-                                className="btn btn-danger btn-sm"
-                                title="Decline Appointment"
-                              >
-                                <X size={14} />
-                                <span>Decline</span>
-                              </button>
                             </>
                           )}
                           {apt.status === 'Confirmed' && (
@@ -351,11 +335,12 @@ export default function StaffDashboard() {
                           )}
                           {['Pending', 'Needs correction', 'Confirmed', 'Checked In'].includes(apt.status) && (
                             <button
-                              onClick={() => handleCancel(apt._id)}
+                              onClick={() => handleCancel(apt)}
                               className="btn btn-danger btn-sm"
-                              title="Cancel"
+                              title={apt.status === 'Pending' ? 'Cancel/Decline appointment' : 'Cancel'}
                             >
                               <X size={14} />
+                              <span>{apt.status === 'Pending' ? 'Cancel/Decline' : 'Cancel'}</span>
                             </button>
                           )}
                           <button

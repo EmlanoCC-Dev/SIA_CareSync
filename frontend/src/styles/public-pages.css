@@ -21,8 +21,8 @@
 .landing-hero h1 span { color: var(--primary); }
 .landing-intro { font-size: 15px; color: var(--text-muted); line-height: 1.8; max-width: 50ch; }
 .landing-hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
-.landing-hero-image { position: relative; aspect-ratio: 1.05; overflow: hidden; border-radius: 16px; background: var(--primary-light); }
-.landing-hero-image img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.landing-hero-image { position: relative; aspect-ratio: 1.05; overflow: hidden; border-radius: 16px; }
+.landing-hero-image img { display: block; width: 100%; height: 100%; object-fit: cover; mask-image: linear-gradient(to right, transparent, #000 60%); }
 .landing-image-caption { position: absolute; left: 20px; right: 20px; bottom: 20px; display: flex; align-items: center; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 10px; background: white; box-shadow: var(--shadow-md); }
 .landing-image-caption svg { color: var(--primary); } .landing-image-caption strong { display: block; font-size: 12px; } .landing-image-caption p { font-size: 11px; color: var(--text-muted); }
 .landing-visit-steps { display: flex; gap: 24px; padding-top: 28px; margin-top: 32px; border-top: 1px solid var(--border); list-style: none; }
@@ -37,7 +37,7 @@
 .landing-service-grid svg { width: 24px; height: 24px; color: var(--primary); margin-bottom: 20px; }
 .landing-service-grid h3 { font-size: 17px; margin-bottom: 12px; } .landing-service-grid p { font-size: 13px; color: var(--text-muted); line-height: 1.8; }
 .landing-mission { width: min(var(--landing-content-width), calc(100% - 64px)); margin: auto; padding: 64px 0; display: grid; grid-template-columns: .9fr 1.1fr; align-items: center; gap: 72px; }
-.landing-mission-image { aspect-ratio: 1.3; overflow: hidden; border-radius: 16px; } .landing-mission-image img { width: 100%; height: 100%; object-fit: cover; }
+.landing-mission-image { aspect-ratio: 1.3; overflow: hidden; border-radius: 16px; } .landing-mission-image img { width: 100%; height: 100%; object-fit: cover; mask-image: linear-gradient(to left, transparent, #000 60%); }
 .landing-mission h2 span { color: var(--primary); }
 .landing-mission-tag { margin-bottom: 16px; font-size: 11px; color: var(--primary); text-transform: uppercase; letter-spacing: .1em; font-weight: 700; }
 .landing-mission-copy > p:not(.landing-mission-tag) { margin-bottom: 16px; font-size: 13px; color: var(--text-muted); line-height: 1.8; }

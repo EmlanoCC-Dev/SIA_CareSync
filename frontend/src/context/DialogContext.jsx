@@ -32,7 +32,8 @@ function ActionDialog({ kind = 'alert', title, message, confirmText = 'Got it', 
   const settled = useRef(false);
   const id = useId();
   const [value, setValue] = useState(defaultValue);
-  const isPrompt = kind === 'prompt';
+  const isCancelDecline = kind === 'cancel-decline';
+  const isPrompt = kind === 'prompt' || isCancelDecline;
   const canCancel = kind !== 'alert';
   const Icon = danger ? AlertCircle : CalendarCheck;
 
@@ -57,6 +58,12 @@ function ActionDialog({ kind = 'alert', title, message, confirmText = 'Got it', 
     }}>
       <form onSubmit={event => {
         event.preventDefault();
+        if (isCancelDecline) {
+          const action = event.nativeEvent.submitter?.value;
+          if (!['cancel', 'decline'].includes(action) || (action === 'decline' && !value.trim())) return;
+          finish({ action, reason: value.trim() });
+          return;
+        }
         if (isPrompt && required && !value.trim()) return;
         finish(isPrompt ? value.trim() : true);
       }}>
@@ -67,13 +74,16 @@ function ActionDialog({ kind = 'alert', title, message, confirmText = 'Got it', 
         <div className="modal-body">
           <p id={`${id}-message`} className="care-dialog-message">{message}</p>
           {isPrompt && <div className="care-dialog-field">
-            <label className="form-label" htmlFor={`${id}-reason`}>Reason {required ? '(required)' : '(optional)'}</label>
+            <label className="form-label" htmlFor={`${id}-reason`}>Reason {isCancelDecline ? '(required to decline)' : required ? '(required)' : '(optional)'}</label>
             <textarea id={`${id}-reason`} className="form-textarea" rows={3} value={value} onChange={event => setValue(event.target.value)} required={required} autoFocus />
           </div>}
         </div>
         <div className="modal-footer">
           {canCancel && <button type="button" className="btn btn-secondary" onClick={dismiss} autoFocus={!isPrompt}>{cancelText}</button>}
-          <button type="submit" className={`btn ${danger ? 'btn-danger' : 'btn-primary'}`} disabled={isPrompt && required && !value.trim()} autoFocus={!canCancel}>{confirmText}</button>
+          {isCancelDecline ? <>
+            <button type="submit" className="btn btn-danger" value="cancel">Cancel</button>
+            <button type="submit" className="btn btn-danger" value="decline" disabled={!value.trim()}>Decline</button>
+          </> : <button type="submit" className={`btn ${danger ? 'btn-danger' : 'btn-primary'}`} disabled={isPrompt && required && !value.trim()} autoFocus={!canCancel}>{confirmText}</button>}
         </div>
       </form>
     </dialog>
