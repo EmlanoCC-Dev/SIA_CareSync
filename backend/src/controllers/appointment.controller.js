@@ -13,6 +13,7 @@ const { UPLOAD_ROOT } = require('../middleware/upload');
 const { getBucket, gridfsId, discardUpload } = require('../services/fileStorage.service');
 const Appointment = require('../models/Appointment');
 const { pipeline } = require('node:stream');
+const env = require('../config/env');
 
 async function requestCorrection(req, res, next) {
   try { res.json({ success: true, data: await appointmentService.requestCorrection(req.params.id, req.user, req.body) }); }
@@ -207,22 +208,22 @@ async function downloadDocument(req, res, next) {
       throw Object.assign(new Error('Uploaded document not found'), { statusCode: 404 });
     }
     const storedId = gridfsId(document.url);
-    if (storedId) {
-      const bucket = getBucket();
-      const file = await bucket.find({ _id: storedId }).next();
-      if (!file) throw Object.assign(new Error('Uploaded document not found'), { statusCode: 404 });
-      res.attachment(path.basename(document.filename));
-      res.set({ 'Content-Type': 'application/octet-stream', 'Content-Length': String(file.length),
-        'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' });
-      pipeline(bucket.openDownloadStream(storedId), res, err => { if (err) next(err); });
-      return;
-    }
     const candidate = path.resolve(UPLOAD_ROOT, document.url.slice('/uploads/'.length));
     const inside = (root, file) => {
       const relative = path.relative(root, file);
       return relative && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
     };
     if (!inside(UPLOAD_ROOT, candidate)) throw Object.assign(new Error('Invalid document path'), { statusCode: 403 });
+    if (storedId || env.UPLOAD_STORAGE === 'gridfs') {
+      const bucket = getBucket();
+      const file = await bucket.find(storedId ? { _id: storedId } : { 'metadata.legacyUrl': document.url }).next();
+      if (!file) throw Object.assign(new Error('Uploaded document not found'), { statusCode: 404 });
+      res.attachment(path.basename(document.filename));
+      res.set({ 'Content-Type': 'application/octet-stream', 'Content-Length': String(file.length),
+        'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' });
+      pipeline(bucket.openDownloadStream(file._id), res, err => { if (err) next(err); });
+      return;
+    }
     const root = await fs.realpath(UPLOAD_ROOT);
     const file = await fs.realpath(candidate);
     if (!inside(root, file)) throw Object.assign(new Error('Invalid document path'), { statusCode: 403 });

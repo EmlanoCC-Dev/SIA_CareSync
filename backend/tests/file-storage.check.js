@@ -17,19 +17,20 @@ const storage = require('../src/services/fileStorage.service');
 const files = new Map(), cleared = [];
 let reads = 0, failWrite = false, loseAcknowledgement = false;
 const bucket = {
-  openUploadStream(filename) {
+  openUploadStream(filename, { metadata } = {}) {
     const id = new mongoose.Types.ObjectId(), chunks = [];
     const stream = new Writable({
       write(chunk, _encoding, callback) { if (failWrite) return callback(new Error('PRIVATE_WRITE_FAILURE')); chunks.push(Buffer.from(chunk)); callback(); },
       final(callback) {
         const data = Buffer.concat(chunks);
-        stream.gridFSFile = { _id: id, filename, length: data.length };
+        stream.gridFSFile = { _id: id, filename, length: data.length, metadata };
         files.set(String(id), { ...stream.gridFSFile, data }); callback();
       },
     });
     stream.id = id; return stream;
   },
-  find({ _id }) { reads++; return { next: async () => files.get(String(_id)) || null }; },
+  find(filter) { reads++; return { next: async () => filter._id ? files.get(String(filter._id)) || null
+    : [...files.values()].find(file => file.metadata?.legacyUrl === filter['metadata.legacyUrl']) || null }; },
   openDownloadStream(id) { return Readable.from(files.get(String(id)).data); },
   async delete(id) { files.delete(String(id)); },
 };
@@ -123,6 +124,32 @@ async function main() {
   mongoose.connection.db = { collection: name => ({ deleteMany: async filter => { assert.deepEqual(filter, {}); cleared.push(name); } }) };
   try { await storage.clearStoredFiles(); } finally { mongoose.connection.db = previousDb; }
   assert.deepEqual(cleared, ['medicalFiles.chunks', 'medicalFiles.files']);
+  const { copyBundle } = require('../scripts/import-legacy-uploads');
+  const legacyData = Buffer.from('legacy medical bytes');
+  const entry = { url: '/uploads/patient/appointment/lab_results/legacy.pdf', data: legacyData.toString('base64'),
+    sha256: require('node:crypto').createHash('sha256').update(legacyData).digest('hex') };
+  const beforeCopy = files.size;
+  assert.equal(await copyBundle([entry], bucket), 1);
+  assert.equal(await copyBundle([entry], bucket), 1);
+  assert.equal(files.size, beforeCopy + 1, 'Retry must reuse the verified copy');
+  await assert.rejects(copyBundle([{ ...entry, sha256: 'invalid' }], bucket));
+  await assert.rejects(copyBundle([{ ...entry, url: '/uploads/../.env' }], bucket));
+  await assert.rejects(copyBundle([entry, entry], bucket));
+  const legacyDoc = { _id: id(70), filename: 'Legacy.pdf', url: entry.url, version: 1, versions: [], uploadedBy: id(1) };
+  record.documents.push(legacyDoc);
+  response = await call(`/documents/${legacyDoc._id}/download`, id(2));
+  assert.equal(response.status, 200); assert.equal(await response.text(), legacyData.toString());
+  const beforeDenied = reads;
+  assert.equal((await call(`/documents/${legacyDoc._id}/download`, id(3))).status, 403);
+  assert.equal(reads, beforeDenied);
+  legacyDoc.versions = [{ ...legacyDoc, versions: undefined }];
+  legacyDoc.version = 2; legacyDoc.url = record.documents[0].url;
+  response = await call(`/documents/${legacyDoc._id}/versions/1/download`, id(2));
+  assert.equal(response.status, 200); assert.equal(await response.text(), legacyData.toString());
+  legacyDoc.url = '/uploads/missing.pdf';
+  assert.equal((await call(`/documents/${legacyDoc._id}/download`, id(2))).status, 404);
+  legacyDoc.url = '/uploads/../.env';
+  assert.equal((await call(`/documents/${legacyDoc._id}/download`, id(2))).status, 403);
   console.log('Passed GridFS uploads, protected/versioned downloads, archiving, size limits, failure cleanup, migration paths and reset cleanup. No live database used.');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; }).finally(async () => { server?.close(); await fs.unlink(fixture).catch(error => { if (error.code !== 'ENOENT') throw error; }); });
