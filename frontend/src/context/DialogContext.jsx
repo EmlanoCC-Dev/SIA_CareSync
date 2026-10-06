@@ -51,7 +51,7 @@ function ActionDialog({ kind = 'alert', title, message, confirmText = 'Got it', 
   const dismiss = () => finish(isPrompt ? null : false);
 
   return (
-    <dialog ref={dialog} className="modal-content care-dialog" aria-labelledby={`${id}-title`} aria-describedby={`${id}-message`} onCancel={event => {
+    <dialog ref={dialog} className="modal-content care-dialog action-dialog" aria-labelledby={`${id}-title`} aria-describedby={`${id}-message`} onCancel={event => {
       event.preventDefault();
       dismiss();
     }}>

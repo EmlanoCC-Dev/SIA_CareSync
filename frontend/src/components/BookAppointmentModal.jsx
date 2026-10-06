@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { api } from '../services/api';
+import LoadError from './LoadError';
+import { dateKey } from '../utils/dates';
 import { X, Calendar, Clock, User, AlertCircle, CheckCircle2, Sparkles, Ban } from 'lucide-react';
 
 const TIME_SLOTS = [
@@ -39,7 +41,7 @@ function isSlotPassed(dateStr, timeStr, systemTimeData) {
 
   let hours = parseInt(match[1], 10);
   const minutes = parseInt(match[2], 10);
-  const meridian = match[3] ? match[3].toUpperCase() : null;
+  const meridian = (match[3] || timeStr.match(/\b(AM|PM)\b/i)?.[1])?.toUpperCase();
   if (meridian === 'PM' && hours < 12) hours += 12;
   if (meridian === 'AM' && hours === 12) hours = 0;
 
@@ -50,6 +52,13 @@ function isSlotPassed(dateStr, timeStr, systemTimeData) {
 }
 
 export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
+  const dialog = useRef(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const node = dialog.current;
+    node.showModal();
+    return () => node.close();
+  }, [isOpen]);
   const [doctors, setDoctors] = useState([]);
   const [doctorId, setDoctorId] = useState('');
   const [date, setDate] = useState('');
@@ -57,6 +66,9 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [doctorsError, setDoctorsError] = useState('');
+  const [slotsError, setSlotsError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
   const [systemTimeStatus, setSystemTimeStatus] = useState(null);
 
   // Dynamic slot management state
@@ -65,38 +77,47 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
   const [selectedSlotId, setSelectedSlotId] = useState(null);
 
   useEffect(() => {
+    let active = true;
     if (isOpen) {
       setError('');
+      setDoctorsError('');
       api.getDoctors()
         .then((res) => {
+          if (!active) return;
           if (res.success && res.data) {
             setDoctors(res.data);
             if (res.data.length > 0) {
-              setDoctorId(res.data[0]._id);
+              setDoctorId(current => current || res.data[0]._id);
             }
           }
         })
-        .catch((err) => console.error('Error fetching doctors:', err));
+        .catch(() => { if (active) setDoctorsError('The doctor list could not be loaded.'); });
 
       api.getSystemTime()
         .then((res) => {
+          if (!active) return;
           if (res.success && res.data) {
             setSystemTimeStatus(res.data);
           }
         })
         .catch(() => {});
     }
-  }, [isOpen]);
+    return () => { active = false; };
+  }, [isOpen, reloadKey]);
 
   // Fetch doctor's slots dynamically when doctor and date change
   useEffect(() => {
-    if (doctorId && date) {
+    let active = true;
+    setSlotsError('');
+    setSelectedSlotId(null);
+    if (isOpen && doctorId && date) {
       setLoadingSlots(true);
       Promise.all([
         api.getSlots({ doctor: doctorId, date }),
         api.getSystemTime().catch(() => null),
       ])
         .then(([slotRes, timeRes]) => {
+          if (!active) return;
           if (timeRes && timeRes.success) {
             setSystemTimeStatus(timeRes.data);
           }
@@ -124,15 +145,19 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
           }
         })
         .catch(() => {
+          if (!active) return;
+          setSlotsError('Available slots could not be loaded.');
           setAllSlots([]);
           setSelectedSlotId(null);
         })
-        .finally(() => setLoadingSlots(false));
+        .finally(() => { if (active) setLoadingSlots(false); });
     } else {
       setAllSlots([]);
       setSelectedSlotId(null);
+      setLoadingSlots(false);
     }
-  }, [doctorId, date]);
+    return () => { active = false; };
+  }, [isOpen, doctorId, date, reloadKey]);
 
   // Compute processed slots with isTaken and isPassed flags
   const processedSlots = useMemo(() => {
@@ -199,24 +224,25 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
 
   // Get today's date formatted as YYYY-MM-DD
   const today = systemTimeStatus?.currentTime
-    ? new Date(systemTimeStatus.currentTime).toISOString().split('T')[0]
-    : new Date().toISOString().split('T')[0];
+    ? dateKey(new Date(systemTimeStatus.currentTime))
+    : dateKey(new Date());
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '560px' }}>
+      <dialog ref={dialog} className="modal-content care-dialog booking-dialog" style={{ maxWidth: '560px' }} aria-labelledby="booking-title"
+        onCancel={event => { if (loading) event.preventDefault(); else onClose(); }}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Calendar size={20} color="var(--primary)" />
-            <h3>Book New Appointment</h3>
+            <h3 id="booking-title">Book New Appointment</h3>
           </div>
-          <button onClick={onClose} aria-label="Close booking form" className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
+          <button onClick={onClose} disabled={loading} aria-label="Close booking form" className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
             <X size={18} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
+            <LoadError message={doctorsError || slotsError} onRetry={() => setReloadKey(key => key + 1)} loading={loading || loadingSlots} />
             {error && (
               <div className="alert alert-error">
                 <AlertCircle size={16} />
@@ -381,7 +407,7 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
           </div>
 
           <div className="modal-footer">
-            <button type="button" onClick={onClose} className="btn btn-secondary">
+            <button type="button" onClick={onClose} disabled={loading} className="btn btn-secondary">
               Cancel
             </button>
             <button
@@ -394,7 +420,6 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </dialog>
   );
 }

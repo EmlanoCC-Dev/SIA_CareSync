@@ -1,0 +1,28 @@
+sequenceDiagram
+    participant Staff
+    participant ReactUI
+    participant ExpressAPI
+    participant AppointmentService
+    participant MongoDB
+    participant EventHandlers
+    participant GmailSMTP
+    Staff->>ReactUI: Approve assigned Pending booking
+    ReactUI->>ExpressAPI: PATCH approve with Bearer token
+    ExpressAPI->>MongoDB: Read current user and appointment
+    MongoDB-->>ExpressAPI: Active account and accessible appointment
+    ExpressAPI->>AppointmentService: approve(appointmentId, actorId)
+    AppointmentService->>MongoDB: Conditional Confirmed update and history
+    MongoDB-->>AppointmentService: Updated appointment or conflict
+    AppointmentService->>MongoDB: Confirm owned slot reservation
+    MongoDB-->>AppointmentService: Reservation confirmation
+    AppointmentService->>EventHandlers: Emit appointment approval event
+    par Asynchronous side effects
+    EventHandlers->>MongoDB: Append audit log and private notifications
+    EventHandlers->>GmailSMTP: Send eligible patient confirmation
+    GmailSMTP-->>EventHandlers: Accepted or failed
+    EventHandlers->>MongoDB: Record delivery status and sentAt
+    and Clinical response proceeds independently
+    AppointmentService-->>ExpressAPI: Updated appointment
+    ExpressAPI-->>ReactUI: 200 JSON success
+    ReactUI-->>Staff: Updated appointment table
+    end

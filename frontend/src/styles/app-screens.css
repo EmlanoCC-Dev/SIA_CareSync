@@ -3,8 +3,9 @@
 .appointment-patient-details { overflow-wrap: anywhere; }
 .appointment-patient-contact { color: var(--text-muted); font-size: 12px; }
 .appointment-visit-source { margin-top: 4px; color: var(--primary-hover); font-size: 11px; font-weight: 650; }
-.navbar { position: sticky; top: 0; flex: 0 0 var(--sidebar-width); width: var(--sidebar-width); height: 100dvh; padding: 28px 20px 20px; background: var(--bg-main); border-right: 1px solid var(--border); z-index: 100; }
-.navbar-inner { display: flex; flex-direction: column; height: 100%; gap: 24px; }
+.navbar { position: sticky; top: 0; flex: 0 0 var(--sidebar-width); width: var(--sidebar-width); height: 100dvh; padding: 28px 20px 20px; overflow-y: auto; background: var(--bg-main); border-right: 1px solid var(--border); z-index: 100; }
+.navbar-inner { display: flex; flex-direction: column; min-height: 100%; gap: 24px; }
+.navbar-inner > div { flex-shrink: 0; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--text-main); text-decoration: none; font-size: 19px; font-weight: 800; letter-spacing: -.05em; }
 .brand em { color: var(--primary); font-style: normal; }
 .nav-brand-mark, .auth-mini-brand span { position: relative; display: block; width: 40px; height: 40px; overflow: hidden; border-radius: 10px; flex-shrink: 0; }
@@ -24,8 +25,10 @@
 .dashboard-page .table-container { width: calc(100% - 48px); margin: 0 24px 24px; } .dashboard-page table { min-width: 660px; }
 .patient-dashboard table, .staff-dashboard table, .admin-dashboard table { min-width: 960px; }
 .dashboard-page td .btn { white-space: nowrap; }
-.dashboard-tabs { position: fixed; top: 152px; left: 16px; width: calc(var(--sidebar-width) - 32px); z-index: 110; display: flex !important; flex-direction: column; align-items: stretch; gap: 6px !important; margin: 0 !important; padding: 0 !important; border: 0 !important; }
+.dashboard-tabs { display: flex; flex-direction: column; align-items: stretch; gap: 6px; width: 100%; margin: 0; padding: 0; border: 0; }
 .dashboard-tabs::before { content: 'WORKSPACE'; padding: 0 14px 10px; color: var(--text-light); font-size: 10px; font-weight: 700; letter-spacing: .12em; }
+.load-error { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.load-error > span { flex: 1 1 240px; }
 .dashboard-tabs .btn { min-height: 44px; padding: 12px 14px; justify-content: flex-start; color: var(--text-muted); border-color: transparent; background: transparent; text-align: left; box-shadow: none; font-size: 12px; }
 .dashboard-tabs .btn svg { width: 18px; height: 18px; } .dashboard-tabs .btn:hover { background: #eaf0ef; color: var(--text-main); }
 .dashboard-tabs .btn-primary { background: var(--primary-light); color: var(--primary-hover); }

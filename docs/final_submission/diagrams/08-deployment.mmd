@@ -1,0 +1,10 @@
+flowchart LR
+    subgraph device["Documented local demonstration device"]
+        browser["Chrome browser"] -->|"HTTP localhost:3000"| vite["Vite development server"]
+        vite -->|"Development proxy for /api"| api["Node.js Express backend:5000"]
+        api <-->|"File I/O"| disk[("Local backend/uploads")]
+        settings["Private backend/.env"] -.-> api
+    end
+    api <-->|"Configured MONGO_URI"| mongo[("MongoDB local service or Atlas")]
+    api -->|"SMTP TLS port 465"| gmail["Gmail SMTP"]
+    gmail -->|"Email"| recipient["Patient inbox"]

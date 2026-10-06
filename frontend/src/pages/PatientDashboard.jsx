@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
+import WorkspaceNavigation from '../components/WorkspaceNavigation';
+import LoadError from '../components/LoadError';
 import { useDialog } from '../context/DialogContext';
 import { useAuth } from '../context/AuthContext';
 import BookAppointmentModal from '../components/BookAppointmentModal';
@@ -12,21 +14,23 @@ export default function PatientDashboard() {
   const { user } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
 
   const fetchAppointments = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const res = await api.getAppointments();
       if (res.success && res.data) {
         setAppointments(Array.isArray(res.data) ? res.data : []);
       } else {
-        setAppointments([]);
+        setLoadError('Appointments could not be loaded.');
       }
     } catch (err) {
-      console.error('Failed to load appointments:', err);
+      setLoadError('Appointments could not be loaded.');
     } finally {
       setLoading(false);
     }
@@ -94,10 +98,12 @@ export default function PatientDashboard() {
         </button>
       </div>
 
-      <nav className="dashboard-tabs" aria-label="Patient workspace">
+      <LoadError message={loadError} onRetry={fetchAppointments} loading={loading} />
+
+      <WorkspaceNavigation label="Patient workspace">
         <a className="btn btn-primary" href="#appointments" aria-current="page"><Calendar size={18} /> My appointments</a>
         <button className="btn btn-secondary" onClick={() => setIsBookingOpen(true)}><PlusCircle size={18} /> Book a visit</button>
-      </nav>
+      </WorkspaceNavigation>
 
       {/* Stats Cards */}
       <div className="stats-grid">
@@ -168,7 +174,7 @@ export default function PatientDashboard() {
               {appointments.length === 0 ? (
                 <tr>
                   <td colSpan={5} style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-                    {loading ? (
+                    {loadError ? 'Appointments are unavailable. Please retry.' : loading ? (
                       'Loading your appointments...'
                     ) : (
                       <div>

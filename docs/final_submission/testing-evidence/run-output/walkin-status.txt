@@ -1,0 +1,1 @@
+﻿Passed 35 walk-in HTTP checks: lifecycle, permissions, linked records, conflicts/recovery, events, and date/status filters.

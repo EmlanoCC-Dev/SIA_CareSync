@@ -143,4 +143,5 @@ export const api = {
   // ── System Time & Settings ──
   getSystemTime: () => request('/system/time'),
   setSystemTime: (data) => request('/system/time', { method: 'POST', body: data }),
+  clearDemoData: (confirmation) => request('/system/demo-reset', { method: 'POST', body: { confirmation } }),
 };

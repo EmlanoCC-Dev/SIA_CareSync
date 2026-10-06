@@ -1,0 +1,15 @@
+flowchart LR
+    patient["Patient"] -->|"Booking, reply, resubmission"| system(("CareSync"))
+    system -->|"Private records and updates"| patient
+    staff["Clinic Staff"] -->|"Review, arrivals and walk-ins"| system
+    system -->|"Schedules, queues and reports"| staff
+    doctor["Doctor"] -->|"Schedules and consultation records"| system
+    system -->|"Assigned visits and private queue"| doctor
+    admin["Administrator"] -->|"Accounts and authorized clinic actions"| system
+    system -->|"Audit logs and clinic reports"| admin
+    visitor["Public queue viewer"] -->|"Queue request"| system
+    system -->|"Tickets and status only"| visitor
+    walkin["Account-free walk-in patient"] -->|"Name and contact supplied through staff"| staff
+    system -->|"SMTP messages"| gmail["Gmail SMTP"]
+    gmail -->|"Transport acceptance or failure"| system
+    gmail -->|"OTP and eligible appointment email"| patient

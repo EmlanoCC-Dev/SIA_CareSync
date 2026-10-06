@@ -22,7 +22,7 @@ let _io = null;
 function registerSlotFreedHandler(io) {
   _io = io;
 
-  emitter.on(EVENTS.SLOT_FREED, async (data) => {
+  emitter.onAsync(EVENTS.SLOT_FREED, async (data) => {
     try {
       console.log(
         `🔓  [SlotFreed] Slot ${data.slot.startTime}-${data.slot.endTime} freed (${data.reason})`
@@ -49,7 +49,7 @@ function registerSlotFreedHandler(io) {
   });
 
   // Also broadcast when a walk-in is added (so public display updates)
-  emitter.on(EVENTS.WALKIN_ADDED, async () => {
+  emitter.onAsync(EVENTS.WALKIN_ADDED, async () => {
     if (_io) {
       const nowServing = await walkInService.getNowServing();
       _io.emit('nowServing:update', nowServing);
@@ -57,7 +57,7 @@ function registerSlotFreedHandler(io) {
   });
 
   // Broadcast when a walk-in is assigned a slot
-  emitter.on(EVENTS.WALKIN_SLOT_ASSIGNED, async () => {
+  emitter.onAsync(EVENTS.WALKIN_SLOT_ASSIGNED, async () => {
     if (_io) {
       const nowServing = await walkInService.getNowServing();
       _io.emit('nowServing:update', nowServing);

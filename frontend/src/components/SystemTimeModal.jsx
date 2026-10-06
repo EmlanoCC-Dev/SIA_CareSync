@@ -1,9 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
+import LoadError from './LoadError';
+import { dateKey } from '../utils/dates';
 import { X, Clock, Calendar, CheckCircle2, RotateCcw, AlertCircle, Sun, Moon, Sparkles } from 'lucide-react';
 
 export default function SystemTimeModal({ isOpen, onClose, onTimeChanged, canEdit = false }) {
+  const dialog = useRef(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const node = dialog.current;
+    node.showModal();
+    return () => node.close();
+  }, [isOpen]);
   const [status, setStatus] = useState({
     currentTime: new Date().toISOString(),
     isOpen: true,
@@ -15,6 +23,7 @@ export default function SystemTimeModal({ isOpen, onClose, onTimeChanged, canEdi
   const [inputTime, setInputTime] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [statusError, setStatusError] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -23,16 +32,17 @@ export default function SystemTimeModal({ isOpen, onClose, onTimeChanged, canEdi
   }, [isOpen]);
 
   const fetchStatus = async () => {
+    setStatusError('');
     try {
       const res = await api.getSystemTime();
       if (res.success && res.data) {
         setStatus(res.data);
         const d = new Date(res.data.currentTime);
-        setInputDate(d.toISOString().split('T')[0]);
+        setInputDate(dateKey(d));
         setInputTime(d.toTimeString().substring(0, 5));
       }
     } catch (err) {
-      console.error('Failed to load system time:', err);
+      setStatusError('Clinic time and operating status could not be loaded.');
     }
   };
 
@@ -86,7 +96,7 @@ export default function SystemTimeModal({ isOpen, onClose, onTimeChanged, canEdi
   const setPreset = (targetTimeStr, dayOffset = 0) => {
     const d = new Date(status.currentTime);
     d.setDate(d.getDate() + dayOffset);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = dateKey(d);
     const fullIso = `${dateStr}T${targetTimeStr}:00`;
     handleApplyCustomTime(fullIso);
   };
@@ -101,20 +111,21 @@ export default function SystemTimeModal({ isOpen, onClose, onTimeChanged, canEdi
     second: '2-digit',
   });
 
-  return createPortal(
-    <div className="modal-overlay system-time-overlay" role="dialog" aria-modal="true" aria-labelledby="system-time-title">
-      <div className="modal-content system-time-modal" style={{ maxWidth: '480px', width: '92%' }}>
+  return (
+      <dialog ref={dialog} className="modal-content care-dialog system-time-modal" style={{ maxWidth: '480px', width: '92%' }} aria-labelledby="system-time-title"
+        onCancel={event => { if (loading) event.preventDefault(); else onClose(); }}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Clock size={20} color="var(--primary)" />
             <h3 id="system-time-title" style={{ margin: 0 }}>System Time & Operating Hours</h3>
           </div>
-          <button onClick={onClose} aria-label="Close system time settings" className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
+          <button onClick={onClose} disabled={loading} aria-label="Close system time settings" className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
             <X size={18} />
           </button>
         </div>
 
         <div className="modal-body">
+          <LoadError message={statusError} onRetry={fetchStatus} loading={loading} />
           {error && (
             <div className="alert alert-error" style={{ marginBottom: '1rem' }}>
               <AlertCircle size={16} />
@@ -123,7 +134,7 @@ export default function SystemTimeModal({ isOpen, onClose, onTimeChanged, canEdi
           )}
 
           {/* Current Status Box */}
-          <div
+          {!statusError && <div
             style={{
               background: status.isOpen ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
               border: `1px solid ${status.isOpen ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
@@ -155,10 +166,10 @@ export default function SystemTimeModal({ isOpen, onClose, onTimeChanged, canEdi
                 ⚡ Custom Simulated Time Active
               </div>
             )}
-          </div>
+          </div>}
 
           {/* Quick Scenario Testing Presets */}
-          {canEdit && <>
+          {canEdit && !statusError && <>
           <div style={{ marginBottom: '1.25rem' }}>
             <label className="form-label" style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.5rem' }}>
               <Sparkles size={14} color="var(--primary)" />
@@ -265,12 +276,10 @@ export default function SystemTimeModal({ isOpen, onClose, onTimeChanged, canEdi
           {canEdit && <button type="button" onClick={handleResetToReal} disabled={loading} className="btn btn-secondary">
             <RotateCcw size={16} /> Reset to Real Time
           </button>}
-          <button type="button" onClick={onClose} className="btn btn-secondary">
+          <button type="button" onClick={onClose} disabled={loading} className="btn btn-secondary">
             Close
           </button>
         </div>
-      </div>
-    </div>,
-    document.body
+      </dialog>
   );
 }

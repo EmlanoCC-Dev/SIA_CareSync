@@ -2,7 +2,7 @@
 
 **Project:** Healthcare Appointment, Queue, and Patient Notification Integration System
 
-**Assessment date:** October 1, 2026; updated October 4, 2026 (Asia/Manila)
+**Assessment date:** October 1, 2026; documentation updated October 6, 2026 (Asia/Manila). Latest recorded application verification: October 4.
 
 **Specification:** `C:/Users/Adrian/Downloads/Final Project Specification_MWA.pdf`
 
@@ -13,6 +13,8 @@
 **Latest code review:** October 4, 2026, including the user-authorized Gmail SMTP implementation after pushed commit `8c503d3`. The user-authorized correction/resubmission workflow is now implemented: Pending -> Needs correction -> Pending, with reason-only patient edits, retained booking history, status history, and actor-attributed audit events. See the [correction walkthrough](261004_booking_corrections_and_resubmission_walkthrough.md). Gmail email is restricted to Patients for confirmation, decline, cancellation, and no-show. Routine and clinic-role updates remain in-app. Patient signup and password change/reset use purpose-bound email OTPs; Admin account creation remains direct. User creation/updates, document archiving, and manual/on-demand slot generation emit actor-attributed audit events. Clock-change auditing is excluded by the user because that clock is a testing tool. See the [audit walkthrough](261003_audit_coverage_walkthrough.md), [account/no-show walkthrough](261003_accounts_and_no_show_walkthrough.md), [scheduled queue walkthrough](261003_scheduled_arrival_and_combined_queue_walkthrough.md), and [Gmail email walkthrough](261004_gmail_email_notifications_walkthrough.md). Gmail authentication and stored delivery metadata were verified; the user confirmed actual appointment-email receipt with matching Notifications sent timestamps. Remaining live workflow verification is described below.
 
 ### Current remaining gaps at a glance
+
+**Paper/diagram drafting update (October 6):** A [15-section final-paper draft](../final_submission/final-paper.md), eight required diagrams plus ERD, printable paper/diagram atlas, and a [completion checklist](../final_submission/completion-checklist.md) are now prepared in `docs/final_submission/`. This closes the initial drafting gap, not final submission: title-page facts, validated clinic baseline, original-PDF comparison, case-level/live evidence, deployment and demonstrated backup/restore, attachments, slides, and confirmed contributions remain outstanding. No application tests were rerun for this documentation task; the draft cites the October 4 verification evidence.
 
 **Notification scope decision (October 4):** The user confirmed that paid SMS APIs are not feasible for this project. The approved delivery scope is Gmail SMTP email plus the existing in-app inbox. SMS is excluded from the implementation backlog and should be documented as a project limitation. This records the user's delivery constraint; it does not claim instructor approval of the specification mapping.
 
@@ -36,7 +38,7 @@
 | Verification/reliability | Notification delivery | Persistent private in-app inbox and Gmail SMTP email delivery are implemented. Gmail authentication and a stored sent result/timestamp passed; the user confirmed OTP receipt. The user confirmed appointment-email receipt with matching Notifications sent timestamps. Verify remaining recipient/read-state behavior. SMS is excluded under the user's resource constraint; reminders and durable retry are optional scope decisions. |
 | Verification | Formal correction/resubmission | Staff/Admin correction requests and patient reason-only resubmission are implemented with immutable snapshots, status history, audit metadata, and in-app notifications. Verify live MongoDB persistence and competing writes. |
 | Verification | Live database and complete patient journey | Isolated checks, live concurrency, and read-only OTP/audit/delivery metadata checks passed. The user confirmed password-change receipt and login behavior. Verify the remaining account and clinic journeys, aggregation, role restrictions, and downloads with real test accounts and MongoDB. |
-| Submission | Final paper and evidence package | Development notes, walkthroughs, and runnable checks exist. Complete the final paper, diagrams/ERD, categorized results, deployment and integration evidence, backup/restore demonstration, and submission materials. |
+| Submission | Final paper and evidence package | A 15-section paper draft and all eight diagrams plus ERD were prepared October 6; see `docs/final_submission/`. Finalize factual inputs and specification review, attach categorized/live results, deployment and integration evidence, demonstrated backup/restore, slides, and contribution records. |
 
 Priorities are a recommended implementation order, not severity scores from the specification. Scope-confirmation items are absent features whose exact required healthcare behavior remains unsettled. Submission gaps describe repository evidence; independently maintained deliverables may already exist elsewhere.
 

@@ -1,0 +1,1 @@
+﻿Passed account-edit/role/status HTTP checks, deactivated login/session/booking checks, and no-show expiry/conflict/retry checks.

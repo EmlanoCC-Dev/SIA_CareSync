@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useDialog } from '../context/DialogContext';
 import WorkingHoursEditor from './WorkingHoursEditor';
+import LoadError from './LoadError';
+import { dateKey } from '../utils/dates';
 import { Clock, Plus, Trash2, CheckCircle2, User, RefreshCw, Sparkles, Filter, ChevronDown } from 'lucide-react';
 
 export default function SlotManagement({ doctorId = null }) {
@@ -21,10 +23,11 @@ export default function SlotManagement({ doctorId = null }) {
   const [showGenerateForm, setShowGenerateForm] = useState(false);
   const [showWorkingHours, setShowWorkingHours] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const [doctorsError, setDoctorsError] = useState('');
   const [doctors, setDoctors] = useState([]);
   const [genData, setGenData] = useState({
     doctor: doctorId || '',
-    date: new Date().toISOString().split('T')[0],
+    date: dateKey(new Date()),
     startTime: '09:00',
     endTime: '17:00',
     duration: 15
@@ -43,13 +46,14 @@ export default function SlotManagement({ doctorId = null }) {
   }, [dateFilter, selectedDoctor, statusFilter, doctorId]);
 
   const fetchDoctors = async () => {
+    setDoctorsError('');
     try {
       const res = await api.getDoctors();
       if (res.success && res.data) {
         setDoctors(res.data);
       }
     } catch (err) {
-      console.error('Failed to load doctors:', err);
+      setDoctorsError('The doctor list could not be loaded.');
     }
   };
 
@@ -71,12 +75,10 @@ export default function SlotManagement({ doctorId = null }) {
         setSlots(res.data);
         setCurrentDate(res.date);
       } else {
-        setSlots([]);
+        setLoadError('Slots could not be loaded.');
       }
     } catch (err) {
-      console.error('Failed to load slots:', err);
       setLoadError(err.message || 'Failed to load slots');
-      setSlots([]);
     } finally {
       setLoading(false);
     }
@@ -289,7 +291,8 @@ export default function SlotManagement({ doctorId = null }) {
         </div>
       </div>
 
-      {loadError && <p className="alert alert-error" role="alert">{loadError}</p>}
+      <LoadError message={loadError} onRetry={fetchSlots} loading={loading} />
+      <LoadError message={doctorsError} onRetry={fetchDoctors} loading={loading} />
       {showWorkingHours && <WorkingHoursEditor doctorId={doctorId} doctors={doctors} onSaved={fetchSlots} />}
 
       {/* Metric summary badges */}

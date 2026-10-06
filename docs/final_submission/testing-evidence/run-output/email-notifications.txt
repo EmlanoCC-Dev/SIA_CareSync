@@ -1,0 +1,1 @@
+﻿Passed Gmail transport, notification routing, status logging, privacy, and failure checks. No real email sent.

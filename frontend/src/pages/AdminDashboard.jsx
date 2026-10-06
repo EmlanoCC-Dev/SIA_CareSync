@@ -7,6 +7,8 @@ import AddUserModal from '../components/AddUserModal';
 import AssignSlotModal from '../components/AssignSlotModal';
 import SlotManagement from '../components/SlotManagement';
 import ReportsPage from './ReportsPage';
+import WorkspaceNavigation from '../components/WorkspaceNavigation';
+import LoadError from '../components/LoadError';
 import { ShieldCheck, Users, Calendar, ShieldAlert, CheckCircle2, History, RefreshCw, UserPlus, Filter, Search } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -14,9 +16,13 @@ export default function AdminDashboard() {
   const [appointments, setAppointments] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadErrors, setLoadErrors] = useState({});
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [assignment, setAssignment] = useState(null);
+  const [resetConfirmation, setResetConfirmation] = useState('');
+  const [resetting, setResetting] = useState(false);
+  const [resetFeedback, setResetFeedback] = useState(null);
 
   // User Directory filters & modal state
   const [userRoleFilter, setUserRoleFilter] = useState('');
@@ -26,19 +32,19 @@ export default function AdminDashboard() {
 
   const loadData = async () => {
     setLoading(true);
+    setLoadErrors({});
     try {
-      const [aptRes, userRes] = await Promise.all([
-        api.getAppointments().catch(() => ({ success: false, data: [] })),
-        api.getUsers().catch(() => ({ success: false, data: [] })),
-      ]);
-      if (aptRes.success && aptRes.data) {
-        setAppointments(Array.isArray(aptRes.data) ? aptRes.data : []);
-      }
-      if (userRes.success && userRes.data) {
-        setUsers(Array.isArray(userRes.data) ? userRes.data : []);
-      }
-    } catch (err) {
-      console.error('Failed to load admin data:', err);
+      const results = await Promise.allSettled([api.getAppointments(), api.getUsers()]);
+      const failures = {};
+      results.forEach((result, index) => {
+        const key = index === 0 ? 'appointments' : 'users';
+        if (result.status === 'fulfilled' && result.value.success && Array.isArray(result.value.data)) {
+          (index === 0 ? setAppointments : setUsers)(result.value.data);
+        } else {
+          failures[key] = index === 0 ? 'Appointments could not be loaded.' : 'User directory could not be loaded.';
+        }
+      });
+      setLoadErrors(failures);
     } finally {
       setLoading(false);
     }
@@ -51,6 +57,28 @@ export default function AdminDashboard() {
   const openTimeline = (apt) => {
     setSelectedAppointment(apt);
     setTimelineOpen(true);
+  };
+
+  const clearDemoData = async (event) => {
+    event.preventDefault();
+    if (resetting || resetConfirmation !== 'CLEAR DEMO DATA') return;
+    setResetting(true);
+    setResetFeedback(null);
+    try {
+      const result = await api.clearDemoData(resetConfirmation);
+      setResetConfirmation('');
+      setSelectedAppointment(null);
+      setTimelineOpen(false);
+      setAssignment(null);
+      setEditingUser(null);
+      setIsAddUserModalOpen(false);
+      setResetFeedback({ success: true, message: result.message });
+      await loadData();
+    } catch (err) {
+      setResetFeedback({ success: false, message: err.message });
+    } finally {
+      setResetting(false);
+    }
   };
 
   // Filter users by role and search query
@@ -77,11 +105,13 @@ export default function AdminDashboard() {
             Oversee appointments, manage your care team, and review clinic activity.
           </p>
         </div>
-        <button onClick={loadData} className="btn btn-secondary">
+        <button onClick={loadData} className="btn btn-secondary" disabled={resetting || loading}>
           <RefreshCw size={16} className={loading ? 'spin' : ''} />
           <span>Refresh All</span>
         </button>
       </div>
+
+      <LoadError message={Object.values(loadErrors).join(' ')} onRetry={loadData} loading={loading || resetting} />
 
       {/* Top Metrics */}
       {activeTab !== 'reports' && <div className="stats-grid">
@@ -117,9 +147,10 @@ export default function AdminDashboard() {
       </div>}
 
       {/* Navigation Tabs */}
-      <div className="dashboard-tabs" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+      <WorkspaceNavigation label="Administration workspace">
         <button
           onClick={() => setActiveTab('audit')}
+          disabled={resetting}
           className={`btn btn-sm ${activeTab === 'audit' ? 'btn-primary' : 'btn-secondary'}`}
         >
           <ShieldAlert size={15} />
@@ -127,6 +158,7 @@ export default function AdminDashboard() {
         </button>
         <button
           onClick={() => setActiveTab('appointments')}
+          disabled={resetting}
           className={`btn btn-sm ${activeTab === 'appointments' ? 'btn-primary' : 'btn-secondary'}`}
         >
           <Calendar size={15} />
@@ -134,19 +166,47 @@ export default function AdminDashboard() {
         </button>
         <button
           onClick={() => setActiveTab('users')}
+          disabled={resetting}
           className={`btn btn-sm ${activeTab === 'users' ? 'btn-primary' : 'btn-secondary'}`}
         >
           <Users size={15} />
           <span>User Directory</span>
         </button>
-        <button className={`btn btn-sm ${activeTab === 'slots' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('slots')}>Slot Management</button>
-        <button className={`btn btn-sm ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('reports')}>Reports</button>
-      </div>
+        <button className={`btn btn-sm ${activeTab === 'slots' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('slots')} disabled={resetting}>Slot Management</button>
+        <button className={`btn btn-sm ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('reports')} disabled={resetting}>Reports</button>
+        <button className={`btn btn-sm ${activeTab === 'demo' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('demo')} disabled={resetting}>Demo reset</button>
+      </WorkspaceNavigation>
 
       {/* Tab 1: Audit Logs */}
       {activeTab === 'audit' && <AuditLogViewer />}
       {activeTab === 'slots' && <SlotManagement />}
       {activeTab === 'reports' && <ReportsPage />}
+
+      {activeTab === 'demo' && (
+        <section className="card" aria-labelledby="demo-reset-title" style={{ padding: '24px' }}>
+          <h3 id="demo-reset-title" style={{ marginBottom: '1rem' }}>Clear data for a fresh demo</h3>
+          <p style={{ marginBottom: '1rem' }}>
+            Keep all doctor and staff accounts, including their login details and doctor working hours,
+            plus your current admin account. Delete all other accounts and clinic data:
+            appointments, walk-ins, generated slots, comments, notifications, audit logs,
+            verification codes, and uploaded documents. The system clock returns to real time.
+          </p>
+          <p style={{ color: 'var(--rose)', marginBottom: '1.5rem' }}>
+            This permanently deletes the data and cannot be undone. Pause activity in other tabs before clearing.
+          </p>
+          {resetFeedback && <div className={`alert alert-${resetFeedback.success ? 'success' : 'error'}`} role={resetFeedback.success ? 'status' : 'alert'}>{resetFeedback.message}</div>}
+          <form onSubmit={clearDemoData} style={{ maxWidth: '440px' }} aria-busy={resetting}>
+            <div className="form-group">
+              <label className="form-label" htmlFor="demo-reset-confirmation">Type CLEAR DEMO DATA to confirm</label>
+              <input id="demo-reset-confirmation" className="form-input" value={resetConfirmation}
+                onChange={event => setResetConfirmation(event.target.value)} autoComplete="off" spellCheck={false} disabled={resetting} />
+            </div>
+            <button type="submit" className="btn btn-danger" disabled={resetting || resetConfirmation !== 'CLEAR DEMO DATA'}>
+              {resetting ? 'Clearing demo data...' : 'Permanently clear demo data'}
+            </button>
+          </form>
+        </section>
+      )}
 
       {/* Tab 2: Appointments */}
       {activeTab === 'appointments' && (
@@ -168,7 +228,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {appointments.length === 0 && <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{loading ? 'Loading appointments...' : 'No appointments have been booked yet.'}</td></tr>}
+                {appointments.length === 0 && <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{loading ? 'Loading appointments...' : loadErrors.appointments ? 'Appointments are unavailable. Please retry.' : 'No appointments have been booked yet.'}</td></tr>}
                 {appointments.map((apt) => (
                   <tr key={apt._id}>
                     <td>
@@ -276,7 +336,7 @@ export default function AdminDashboard() {
                 {filteredUsers.length === 0 ? (
                   <tr>
                     <td colSpan={7} style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-                      No users match the selected role or search criteria.
+                      {loading ? 'Loading users...' : loadErrors.users ? 'User directory is unavailable. Please retry.' : 'No users match the selected role or search criteria.'}
                     </td>
                   </tr>
                 ) : (

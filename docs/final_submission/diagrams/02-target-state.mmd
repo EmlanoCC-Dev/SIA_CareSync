@@ -1,0 +1,23 @@
+%%{init: {'flowchart': {'rankSpacing': 22, 'nodeSpacing': 24}, 'themeVariables': {'fontSize': '20px'}}}%%
+flowchart TB
+    start([Patient requests care]) --> kind{"Scheduled or walk-in?"}
+    kind -->|Scheduled| book["Patient submits booking"]
+    book --> pending["Pending: assign doctor and slot if needed"]
+    pending --> review{"Staff or Admin review"}
+    review -->|Correct| correction["Needs correction: explain requested change"]
+    correction --> resubmit["Patient revises reason and resubmits"]
+    resubmit --> pending
+    review -->|Decline| decline["Declined: release reservation and notify"]
+    review -->|Approve| confirmed["Confirmed: confirm slot and notify"]
+    confirmed --> arrives{"Patient arrives in time?"}
+    arrives -->|No| missed["No-show: clean up missed reservation"]
+    arrives -->|Yes| scheduled["Check in and issue daily A- ticket"]
+    kind -->|Walk-in| register["Staff registers name and contact; issue ticket"]
+    register --> assign["Assign available doctor and slot"]
+    assign --> walkin["Check in walk-in"]
+    scheduled --> waiting["Combined ticket-only public queue"]
+    walkin --> waiting
+    waiting --> consult["Authorized clinic user starts consultation"]
+    consult --> record["Save notes and documents; retain previous versions"]
+    record --> complete["Complete visit and synchronize linked records"]
+    complete --> finish([Reports, private history and in-app updates])

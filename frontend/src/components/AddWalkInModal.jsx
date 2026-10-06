@@ -1,8 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import { X, UserPlus, AlertCircle, Clock } from 'lucide-react';
 
 export default function AddWalkInModal({ isOpen, onClose, onAdded }) {
+  const dialog = useRef(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const node = dialog.current;
+    node.showModal();
+    return () => node.close();
+  }, [isOpen]);
   const [formData, setFormData] = useState({
     name: '',
     contactNumber: ''
@@ -41,11 +48,11 @@ export default function AddWalkInModal({ isOpen, onClose, onAdded }) {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '420px' }}>
+      <dialog ref={dialog} className="modal-content care-dialog walkin-dialog" style={{ maxWidth: '420px' }} aria-labelledby="walkin-title"
+        onCancel={event => { if (loading) event.preventDefault(); else onClose(); }}>
         <div className="modal-header">
-          <h3>Add Walk-In Patient</h3>
-          <button className="btn-icon" onClick={onClose} aria-label="Close walk-in form">
+          <h3 id="walkin-title">Add Walk-In Patient</h3>
+          <button className="btn-icon" onClick={onClose} disabled={loading} aria-label="Close walk-in form">
             <X size={20} />
           </button>
         </div>
@@ -133,7 +140,6 @@ export default function AddWalkInModal({ isOpen, onClose, onAdded }) {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </dialog>
   );
 }

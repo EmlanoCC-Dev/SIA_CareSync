@@ -8,6 +8,7 @@ const { setCustomTime, getOperatingStatus } = require('../config/systemTime');
 const { autoMarkNoShows } = require('../services/appointment.service');
 const { authorize } = require('../middleware/auth');
 const { parseDateOnly } = require('../utils/timeHelper');
+const { clearDemoData } = require('../services/demoReset.service');
 
 const router = Router();
 
@@ -43,6 +44,16 @@ router.post('/time', authorize('Admin'), async (req, res, next) => {
     res.json({ success: true,
       message: validReset ? 'Reset to actual real-time clock' : 'Custom system time updated',
       data: getOperatingStatus() });
+  } catch (err) { next(err); }
+});
+
+router.post('/demo-reset', authorize('Admin'), async (req, res, next) => {
+  try {
+    if (req.body?.confirmation !== 'CLEAR DEMO DATA') {
+      throw Object.assign(new Error('Type CLEAR DEMO DATA to confirm the reset'), { statusCode: 400 });
+    }
+    const data = await clearDemoData(req.user._id);
+    res.json({ success: true, message: 'Demo data cleared. Doctor, staff, and your admin account were kept.', data });
   } catch (err) { next(err); }
 });
 

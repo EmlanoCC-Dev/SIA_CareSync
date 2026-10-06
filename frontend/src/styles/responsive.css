@@ -1,11 +1,12 @@
 ﻿@media (max-width: 1100px), (max-height: 700px) {
   .app-container { flex-direction: column; }
-  .navbar { position: relative; width: 100%; height: auto; flex-basis: auto; padding: 16px 24px; border-right: 0; border-bottom: 1px solid var(--border); }
+  .navbar { position: relative; width: 100%; height: auto; flex-basis: auto; padding: 16px 24px; overflow: visible; border-right: 0; border-bottom: 1px solid var(--border); }
   .navbar-inner { flex-direction: row; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
   .brand-caption { display: none; } .navbar-tools { margin: 0; flex-direction: row; align-items: center; flex-wrap: wrap; } .navbar-tools time { display: none; }
   .navbar-user { flex-direction: row; margin: 0; padding: 0; border: 0; align-items: center; } .navbar-user > div { display: none; }
   .main-content { width: 100%; padding: 28px 24px; }
-  .dashboard-tabs { position: static; flex-direction: row; flex-wrap: wrap; width: 100%; margin-bottom: 24px !important; gap: 8px !important; }
+  #workspace-navigation { order: 1; flex-basis: 100%; }
+  .dashboard-tabs { flex-direction: row; flex-wrap: wrap; gap: 8px; }
   .dashboard-tabs::before { display: none; } .dashboard-tabs .btn { background: white; border-color: var(--border); }
   .dashboard-tabs .btn-primary { background: var(--primary-light); border-color: rgb(8 127 117 / 20%); } .dashboard-tabs .btn-primary::after { display: none; }
 }

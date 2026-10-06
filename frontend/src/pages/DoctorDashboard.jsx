@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import WorkspaceNavigation from '../components/WorkspaceNavigation';
+import LoadError from '../components/LoadError';
 import { useDialog } from '../context/DialogContext';
 import { useAuth } from '../context/AuthContext';
 import StatusTimelineModal from '../components/StatusTimelineModal';
@@ -28,6 +30,7 @@ export default function DoctorDashboard() {
   const { user } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
@@ -38,15 +41,16 @@ export default function DoctorDashboard() {
 
   const fetchAppointments = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const res = await api.getAppointments();
       if (res.success && res.data) {
         setAppointments(Array.isArray(res.data) ? res.data : []);
       } else {
-        setAppointments([]);
+        setLoadError('Consultations could not be loaded.');
       }
     } catch (err) {
-      console.error('Failed to load consultations:', err);
+      setLoadError('Consultations could not be loaded.');
     } finally {
       setLoading(false);
     }
@@ -124,11 +128,13 @@ export default function DoctorDashboard() {
             Manage your schedule, see waiting patients, and record their care.
           </p>
         </div>
-        <button onClick={fetchAppointments} className="btn btn-secondary">
+        <button onClick={fetchAppointments} className="btn btn-secondary" disabled={loading}>
           <RefreshCw size={16} className={loading ? 'spin' : ''} />
           <span>Refresh</span>
         </button>
       </div>
+
+      <LoadError message={loadError} onRetry={fetchAppointments} loading={loading} />
 
       {activeTab !== 'reports' && <div className="stats-grid">
         <div className="stat-card">
@@ -164,7 +170,7 @@ export default function DoctorDashboard() {
       </div>}
 
       {/* Navigation Tabs */}
-      <div className="dashboard-tabs" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+      <WorkspaceNavigation label="Doctor workspace">
         <button
           className={`btn ${activeTab === 'appointments' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setActiveTab('appointments')}
@@ -184,7 +190,7 @@ export default function DoctorDashboard() {
           <Users size={16} /> Walk-in Queue
         </button>
         <button className={`btn ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('reports')}>Reports</button>
-      </div>
+      </WorkspaceNavigation>
 
       {activeTab === 'appointments' && (
         <div className="card">
@@ -233,7 +239,7 @@ export default function DoctorDashboard() {
                 {filteredAppointments.length === 0 ? (
                   <tr>
                     <td colSpan={5} style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-                      {loading ? 'Loading consultations...' : 'No consultations matching the filter.'}
+                      {loading ? 'Loading consultations...' : loadError ? 'Consultations are unavailable. Please retry.' : 'No consultations matching the filter.'}
                     </td>
                   </tr>
                 ) : (

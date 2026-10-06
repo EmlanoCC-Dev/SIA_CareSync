@@ -244,8 +244,8 @@ try {
         await evaluate(`[...document.querySelectorAll('.modal-body button')].find(button => button.textContent.includes('Upload replacement')).click()`);
         await waitFor(`window.historyData.documents[0].version === 3 && !document.querySelector('.record-replacement-notice')`);
         await evaluate(`document.querySelector('button[title="Archive document"]').click()`);
-        await waitFor(`!!document.querySelector('.care-dialog[open] button[type=submit]')`);
-        await evaluate(`document.querySelector('.care-dialog[open] button[type=submit]').click()`);
+        await waitFor(`!!document.querySelector('.action-dialog[open] button[type=submit]')`);
+        await evaluate(`document.querySelector('.action-dialog[open] button[type=submit]').click()`);
         await waitFor(`!document.querySelector('.consultation-document-row') && document.querySelector('.record-versions').textContent.includes('Archived')`);
         assert.equal(await evaluate('window.historyData.documents[0].versions.length'), 3);
         await evaluate(`(() => { const input = document.querySelector('#consultation-notes'); Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(input, 'Delayed save'); input.dispatchEvent(new Event('input', { bubbles: true })); })()`);

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import WorkspaceNavigation from '../components/WorkspaceNavigation';
+import LoadError from '../components/LoadError';
 import { useDialog } from '../context/DialogContext';
 import { useAuth } from '../context/AuthContext';
 import StatusTimelineModal from '../components/StatusTimelineModal';
@@ -15,6 +17,7 @@ export default function StaffDashboard() {
   const { user } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
@@ -23,15 +26,16 @@ export default function StaffDashboard() {
 
   const fetchAppointments = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const res = await api.getAppointments({ status: statusFilter || undefined });
       if (res.success && res.data) {
         setAppointments(Array.isArray(res.data) ? res.data : []);
       } else {
-        setAppointments([]);
+        setLoadError('Appointments could not be loaded.');
       }
     } catch (err) {
-      console.error('Failed to load appointments:', err);
+      setLoadError('Appointments could not be loaded.');
     } finally {
       setLoading(false);
     }
@@ -132,11 +136,13 @@ export default function StaffDashboard() {
             Review appointment requests, check in patients, and coordinate the walk-in queue.
           </p>
         </div>
-        <button onClick={fetchAppointments} className="btn btn-secondary">
+        <button onClick={fetchAppointments} className="btn btn-secondary" disabled={loading}>
           <RefreshCw size={16} className={loading ? 'spin' : ''} />
           <span>Refresh</span>
         </button>
       </div>
+
+      <LoadError message={loadError} onRetry={fetchAppointments} loading={loading} />
 
       {/* Stats Cards */}
       {activeTab !== 'reports' && <div className="stats-grid">
@@ -183,7 +189,7 @@ export default function StaffDashboard() {
       </div>}
 
       {/* Navigation Tabs */}
-      <div className="dashboard-tabs" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+      <WorkspaceNavigation label="Staff workspace">
         <button
           className={`btn ${activeTab === 'appointments' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setActiveTab('appointments')}
@@ -203,7 +209,7 @@ export default function StaffDashboard() {
           <Users size={16} /> Walk-in Queue
         </button>
         <button className={`btn ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('reports')}>Reports</button>
-      </div>
+      </WorkspaceNavigation>
 
       {activeTab === 'appointments' && (
         <div className="card">
@@ -252,7 +258,7 @@ export default function StaffDashboard() {
                 {appointments.length === 0 ? (
                   <tr>
                     <td colSpan={6} style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-                      {loading ? 'Fetching queue...' : 'No appointments matching current filter.'}
+                      {loading ? 'Fetching queue...' : loadError ? 'Appointments are unavailable. Please retry.' : 'No appointments matching current filter.'}
                     </td>
                   </tr>
                 ) : (

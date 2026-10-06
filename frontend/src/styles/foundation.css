@@ -114,7 +114,7 @@ td strong { font-size: 13px; } tr:last-child td { border-bottom: 0; } tbody tr:h
 .care-dialog-heading.is-danger { color: var(--rose); }
 .care-dialog-message { color: var(--text-muted); font-size: 13px; overflow-wrap: anywhere; }
 .care-dialog-field { margin-top: 20px; }
-.system-time-modal { display: flex; flex-direction: column; } .system-time-modal .modal-body { min-height: 0; flex: 1; max-height: none; } .system-time-modal .modal-header, .system-time-modal .modal-footer { flex-shrink: 0; }
+.system-time-modal[open] { display: flex; flex-direction: column; } .system-time-modal .modal-body { min-height: 0; flex: 1; max-height: none; } .system-time-modal .modal-header, .system-time-modal .modal-footer { flex-shrink: 0; }
 .alert { display: flex; align-items: center; gap: 8px; padding: 12px 16px; margin-bottom: 20px; border-radius: 8px; font-size: 13px; }
 .alert-error { background: var(--rose-light); color: var(--rose); border: 1px solid rgb(180 62 80 / 15%); } .alert-success { background: var(--emerald-light); color: var(--emerald); border: 1px solid rgb(35 118 80 / 15%); }
 .timeline { position: relative; padding-left: 28px; } .timeline::before { content: ''; position: absolute; left: 6px; top: 8px; bottom: 8px; width: 2px; background: var(--border); }

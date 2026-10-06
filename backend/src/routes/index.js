@@ -26,6 +26,7 @@ const systemRoutes = require('./system.routes');
 
 const router = Router();
 const { protect } = require('../middleware/auth');
+router.use(require('../services/demoReset.service').guardDemoReset);
 
 // Exact public exceptions; every other API request requires a verified login.
 const publicRequests = new Set([

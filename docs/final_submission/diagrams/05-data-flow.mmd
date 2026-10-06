@@ -1,0 +1,25 @@
+flowchart LR
+    users["Authenticated roles"] -->|"Credentials"| identity(("1.0 Access"))
+    identity <-->|"Accounts and challenges"| accounts[("D1 Accounts and OTP")]
+    identity -->|"OTP request"| mail["Gmail SMTP"]
+    users -->|"Booking and review"| booking(("2.0 Booking"))
+    booking <-->|"Visits and reservations"| visits[("D2 Visits and schedules")]
+    users -->|"Arrival details"| queue(("3.0 Queue"))
+    queue <-->|"Walk-in records"| walks[("D3 Walk-ins")]
+    queue <-->|"Visit and slot states"| visits
+    queue -->|"Tickets and status only"| public["Public viewer"]
+    users -->|"Notes, files, comments"| records(("4.0 Records"))
+    records <-->|"Content and versions"| visits
+    records <-->|"File bytes"| files[("D4 Protected files")]
+    records <-->|"Private discussion"| comments[("D5 Comments")]
+    booking -->|"Clinical event"| events(("5.0 Events"))
+    queue -->|"Clinical event"| events
+    records -->|"Clinical event"| events
+    identity -->|"Account event"| events
+    events -->|"Actor and target"| audit[("D6 Audit logs")]
+    events -->|"Inbox and delivery"| inbox[("D7 Notifications")]
+    events -->|"Eligible email"| mail
+    mail -->|"Delivery result"| events
+    events -->|"Private updates"| users
+    visits -->|"Filtered visits"| reports(("6.0 Reports"))
+    reports -->|"Scoped aggregates"| clinic["Clinic roles"]

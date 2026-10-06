@@ -1,0 +1,15 @@
+flowchart TB
+    browser["Browser: React pages, forms and API client"] -->|"HTTP JSON and multipart"| api
+    subgraph backend["One Node.js and Express backend process"]
+        api["Routes and authentication middleware"] --> controllers["Controllers and response handling"]
+        controllers --> services["Appointment, slot, queue, account and report services"]
+        services --> models["Mongoose models"]
+        services --> emitter["Process-local EventEmitter"]
+        emitter -.-> handlers["Audit, notification and slot-freed handlers"]
+        handlers --> models
+        handlers --> email["Nodemailer email service"]
+        services --> upload["Protected upload and download handling"]
+    end
+    models <-->|"Queries and conditional writes"| db[("MongoDB")]
+    upload <-->|"File bytes"| files[("backend/uploads")]
+    email -->|"SMTP over TLS"| smtp["Gmail SMTP"]

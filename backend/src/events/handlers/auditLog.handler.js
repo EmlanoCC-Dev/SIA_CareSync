@@ -43,7 +43,7 @@ function registerAuditHandlers() {
   ];
 
   for (const { event, action } of auditableEvents) {
-    emitter.on(event, async (data) => {
+    emitter.onAsync(event, async (data) => {
       try {
         await auditLogService.logAction({
           action,

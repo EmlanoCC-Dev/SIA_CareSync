@@ -1,0 +1,102 @@
+erDiagram
+    User {
+        ObjectId _id PK
+        string email UK
+        string role
+        string status
+        number tokenVersion
+        array workingHours
+    }
+    Appointment {
+        ObjectId _id PK
+        ObjectId patient FK
+        ObjectId doctor FK
+        ObjectId slot FK
+        ObjectId walkIn FK
+        string status
+        date date
+        number bookingRevision
+        array bookingHistory
+        array statusHistory
+        array noteVersions
+        array documents
+        array archivedDocuments
+    }
+    Slot {
+        ObjectId _id PK
+        ObjectId doctor FK
+        ObjectId appointment FK
+        string startTime
+        string endTime
+        string status
+        ObjectId reservationOperation
+    }
+    WalkIn {
+        ObjectId _id PK
+        string name
+        string contactNumber
+        string queueDay
+        number queueNumber
+        ObjectId assignedSlot FK
+        ObjectId appointment FK
+    }
+    SlotPlan {
+        string _id PK
+        ObjectId doctor FK
+        date date
+        number revision
+        array slots
+    }
+    AssignmentRecovery {
+        ObjectId _id PK
+        ObjectId appointment
+        ObjectId slot
+        ObjectId walkIn
+        string kind
+        string state
+    }
+    AppointmentComment {
+        ObjectId _id PK
+        ObjectId appointment FK
+        ObjectId author FK
+        string message
+        string authorRole
+    }
+    Notification {
+        ObjectId _id PK
+        ObjectId user FK
+        ObjectId appointment FK
+        string type
+        date readAt
+        object emailDelivery
+    }
+    AuditLog {
+        ObjectId _id PK
+        ObjectId performedBy FK
+        string targetModel
+        ObjectId targetId
+        object changes
+        date timestamp
+    }
+    EmailOtp {
+        string _id PK
+        ObjectId user FK
+        string codeHash
+        date expiresAt
+        date consumedAt
+        date purgeAt
+    }
+    User |o..o{ Appointment : patient
+    User |o..o{ Appointment : assigned_doctor
+    User ||..o{ Slot : owns
+    User ||..o{ SlotPlan : configures
+    WalkIn |o..o| Appointment : visit_link
+    Slot |o..o{ Appointment : referenced_by
+    Appointment |o..o| Slot : current_reservation
+    Slot |o..o{ WalkIn : assigned_slot
+    Appointment ||..o{ AppointmentComment : discussion
+    User ||..o{ AppointmentComment : authors
+    User ||..o{ Notification : recipient
+    Appointment |o..o{ Notification : related_visit
+    User |o..o{ AuditLog : actor
+    User |o..o{ EmailOtp : bound_account

@@ -1,0 +1,13 @@
+flowchart TB
+    start([Patient seeks a consultation]) --> contact["Call or visit the clinic"]
+    contact --> check["Staff checks a separate schedule or log"]
+    check --> available{"Time available?"}
+    available -->|No| revise["Offer another time or ask patient to return"]
+    revise --> contact
+    available -->|Yes| record["Record booking and communicate details manually"]
+    record --> arrival["Patient arrives and staff records arrival"]
+    arrival --> queue["Staff coordinates waiting patients with doctor"]
+    queue --> consult["Doctor conducts consultation"]
+    consult --> notes["Record notes and keep documents separately"]
+    notes --> reports["Staff manually consolidates records and summaries"]
+    reports --> finish([Visit recorded])

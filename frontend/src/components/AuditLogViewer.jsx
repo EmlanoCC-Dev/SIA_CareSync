@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import LoadError from './LoadError';
 import { ShieldAlert, RefreshCw, Clock, User, FileText, ChevronDown, ChevronRight, CheckCircle2, Code2, Tag, Calendar, AlertCircle } from 'lucide-react';
 
 const ACTION_LABELS = {
@@ -37,6 +38,7 @@ const formatLabel = (value = '') => value
 export default function AuditLogViewer() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [expandedJson, setExpandedJson] = useState({});
 
   const toggleJson = (id) => {
@@ -48,17 +50,17 @@ export default function AuditLogViewer() {
 
   const fetchLogs = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const res = await api.getAuditLogs();
       if (res.success && res.data) {
         const logsList = Array.isArray(res.data) ? res.data : (res.data.logs || []);
         setLogs(logsList);
       } else {
-        setLogs([]);
+        setLoadError('Audit records could not be loaded.');
       }
     } catch (err) {
-      console.error('Failed to fetch audit logs:', err);
-      setLogs([]);
+      setLoadError('Audit records could not be loaded.');
     } finally {
       setLoading(false);
     }
@@ -205,11 +207,13 @@ export default function AuditLogViewer() {
             </p>
           </div>
         </div>
-        <button onClick={fetchLogs} className="btn btn-secondary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+        <button onClick={fetchLogs} className="btn btn-secondary btn-sm" disabled={loading} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
           <RefreshCw size={14} className={loading ? 'spin' : ''} />
           <span>Refresh</span>
         </button>
       </div>
+
+      <LoadError message={loadError} onRetry={fetchLogs} loading={loading} />
 
       <div className="table-container">
         <table>
@@ -226,7 +230,7 @@ export default function AuditLogViewer() {
             {logs.length === 0 ? (
               <tr>
                 <td colSpan={5} style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-                  {loading ? 'Loading audit records...' : 'No audit logs recorded yet.'}
+                  {loading ? 'Loading audit records...' : loadError ? 'Audit records are unavailable. Please retry.' : 'No audit logs recorded yet.'}
                 </td>
               </tr>
             ) : (

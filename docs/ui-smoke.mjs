@@ -23,6 +23,7 @@ appointments.push({ ...appointments[1], _id: 'arrived-appointment', status: 'Che
 appointments.push({ _id: 'flexible-appointment', patient, doctor: null, slot: null, status: 'Pending', date: '2026-10-01', timeSlot: '09:00 - 09:30 AM', reason: 'Flexible consultation', statusHistory: [] });
 appointments.push({ _id: 'walkin-appointment', patient: null, walkIn: { _id: 'walkin-visit', name: 'Sofia Cruz', contactNumber: '09181234567', queueNumber: 41 }, doctor, slot: 'walkin-slot', status: 'No-show', date: '2026-10-01', timeSlot: '09:00–09:15', reason: 'Walk-in consultation', statusHistory: [] });
 appointments.push({ _id: 'missing-patient-details', patient: null, walkIn: 'unavailable-walkin-reference', doctor, status: 'No-show', date: '2026-10-01', timeSlot: '09:15–09:30', reason: 'Walk-in consultation', statusHistory: [] });
+const initialAppointments = structuredClone(appointments);
 let role = null;
 let empty = false;
 const errors = [];
@@ -31,6 +32,8 @@ let failNextMutation = false;
 let walkIns = [];
 let notifications = [];
 let failNextNotificationGet = false;
+let clinicTime = '2026-10-01T01:00:00Z';
+const failedReads = new Set();
 let directoryUsers = [patient, doctor].map(user => ({ ...user, status: 'Active', createdAt: '2026-01-01', contactNumber: '09171234567' }));
 const auditLogs = [
   { _id: 'audit-user', action: 'USER_CREATED', targetModel: 'User', targetId: 'created-user', changes: { user: { firstName: 'Created', lastName: 'Staff', role: 'Staff' }, creationMethod: 'Admin creation' } },
@@ -39,6 +42,7 @@ const auditLogs = [
 ].map(row => ({ ...row, timestamp: '2026-10-03T02:00:00Z', performedBy: { ...patient, role: 'Admin' } }));
 try {
   const page = await browser.newPage();
+  await page.emulateTimezone('Asia/Manila');
   await (await page.createCDPSession()).send('Browser.setDownloadBehavior', { behavior: 'deny' });
   page.on('pageerror', error => errors.push(error.message));
   page.on('dialog', async dialog => {
@@ -49,6 +53,9 @@ try {
   page.on('request', request => {
     const url = new URL(request.url());
     if (!url.pathname.startsWith('/api/')) return request.continue();
+    if (request.method() === 'GET' && failedReads.has(url.pathname)) {
+      return request.respond({ status: 503, contentType: 'application/json', body: JSON.stringify({ success: false, message: 'This list is temporarily unavailable.' }) });
+    }
     if (url.pathname.startsWith('/api/notifications')) {
       assert.equal(request.headers().authorization, 'Bearer ui-smoke-mock', 'Notifications must send the login token');
       if (request.method() === 'GET' && failNextNotificationGet) {
@@ -101,7 +108,7 @@ try {
     else if (url.pathname === '/api/audit-logs') data = { logs: empty ? [] : auditLogs, total: empty ? 0 : auditLogs.length, page: 1, limit: 50 };
     else if (url.pathname === '/api/appointments') data = empty ? [] : appointments.filter(item => role !== 'Patient' || item.patient?._id === patient._id);
     else if (url.pathname.match(/^\/api\/appointments\/[^/]+\/versions$/)) data = { notes: [], documents: [], notesRevision: 0 };
-    else if (url.pathname === '/api/system/time') data = { currentTime: '2026-10-01T01:00:00Z', isOpen: true, isCustom: false, openTime: '08:30', closeTime: '17:00' };
+    else if (url.pathname === '/api/system/time') data = { currentTime: clinicTime, isOpen: true, isCustom: false, openTime: '08:30', closeTime: '17:00' };
     else if (url.pathname === '/api/slots') data = [{ _id: 'slot-1', doctor, date: '2026-10-01', startTime: '10:00', endTime: '10:30', status: 'Available' }];
     else if (url.pathname === '/api/walkins') data = walkIns.filter(row => !url.searchParams.get('status') || row.status === url.searchParams.get('status'));
     else if (url.pathname === '/api/walkins/now-serving') data = { nowServing: empty ? null : { queueNumber: 'A-7', status: 'In Progress' }, serving: empty ? [] : [{ queueNumber: 'A-7', status: 'In Progress' }, { queueNumber: 11, status: 'In Progress' }], upcoming: empty ? [] : [{ queueNumber: 'A-8', status: 'Checked In' }, { queueNumber: 12, status: 'Waiting' }] };
@@ -115,50 +122,80 @@ try {
     }, { selector, text });
     assert(found, `Missing control: ${text}`);
   };
-  const check = async name => {
+  const check = async (name, narrow = false) => {
     console.log(`Checking ${name}`);
     await page.evaluate(() => document.fonts.ready);
     await page.evaluate(() => Promise.all(document.getAnimations().filter(animation => Number.isFinite(animation.effect.getComputedTiming().endTime)).map(animation => animation.finished.catch(() => {}))));
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${name}: page overflows horizontally`);
     assert(await page.evaluate(() => [...document.images].every(image => image.complete && image.naturalWidth > 0)), `${name}: broken image`);
+    const layoutErrors = await page.evaluate(() => {
+      const issues = [];
+      const nav = document.querySelector('.dashboard-tabs');
+      const sidebar = document.querySelector('.navbar');
+      if (nav && sidebar && getComputedStyle(sidebar).position === 'sticky') {
+        if (!sidebar.contains(nav)) issues.push('Workspace navigation is outside the sidebar');
+        const tools = document.querySelector('.navbar-tools');
+        if (nav.getBoundingClientRect().bottom > tools.getBoundingClientRect().top + 1) issues.push('Workspace navigation overlaps clinic tools');
+      }
+      if (nav) {
+        const controls = [...nav.querySelectorAll('button, a')].map(item => item.getBoundingClientRect());
+        for (let i = 0; i < controls.length; i++) for (let j = i + 1; j < controls.length; j++) {
+          const a = controls[i], b = controls[j];
+          if (Math.min(a.right, b.right) > Math.max(a.left, b.left) + 1 && Math.min(a.bottom, b.bottom) > Math.max(a.top, b.top) + 1) issues.push('Workspace controls overlap');
+        }
+      }
+      for (const modal of document.querySelectorAll('dialog[open], .modal-overlay .modal-content')) {
+        const box = modal.getBoundingClientRect();
+        if (box.width && (box.left < -1 || box.right > innerWidth + 1 || box.top < -1 || box.bottom > innerHeight + 1)) issues.push('Dialog extends outside the viewport');
+        if (modal.scrollWidth > modal.clientWidth + 1) issues.push('Dialog content overflows horizontally');
+      }
+      return issues;
+    });
+    assert.deepEqual(layoutErrors, [], `${name}: layout errors`);
     await page.screenshot({ path: join(screenshots, `${name}.png`), fullPage: true });
+    if (!narrow && page.viewport().width === 1440 && await page.$('dialog[open], .modal-overlay .modal-content')) {
+      const previous = page.viewport();
+      await page.setViewport({ width: 320, height: 640 });
+      await check(`${name}-320x640`, true);
+      await page.setViewport(previous);
+    }
   };
   const actionDialog = async (selector, action, { reason, required = false, defaultReason } = {}) => {
     const before = mutations.length;
     await page.click(selector);
-    await page.waitForSelector('.care-dialog[open]');
+    await page.waitForSelector('.action-dialog[open]');
     assert.equal(mutations.length, before, `${action}: mutated before confirmation`);
     for (let i = 0; i < 8; i++) await page.keyboard.press('Tab');
     // Native dialogs can tab into browser chrome; background app controls must remain inert.
-    assert(await page.evaluate(() => document.activeElement === document.body || document.activeElement.closest('.care-dialog') !== null), `${action}: focus reached a background control`);
+    assert(await page.evaluate(() => document.activeElement === document.body || document.activeElement.closest('.action-dialog') !== null), `${action}: focus reached a background control`);
     await page.keyboard.press('Escape');
-    await page.waitForSelector('.care-dialog', { hidden: true });
+    await page.waitForSelector('.action-dialog', { hidden: true });
     assert.equal(mutations.length, before, `${action}: Escape performed action`);
     assert(await page.evaluate(selector => document.activeElement.matches(selector), selector), `${action}: focus was not restored`);
     await page.click(selector);
-    await page.waitForSelector('.care-dialog[open]');
-    await click('.care-dialog button', 'Keep unchanged');
-    await page.waitForSelector('.care-dialog', { hidden: true });
+    await page.waitForSelector('.action-dialog[open]');
+    await click('.action-dialog button', 'Keep unchanged');
+    await page.waitForSelector('.action-dialog', { hidden: true });
     assert.equal(mutations.length, before, `${action}: dismissal performed action`);
     await page.click(selector);
-    await page.waitForSelector('.care-dialog[open]');
-    if (defaultReason) assert.equal(await page.$eval('.care-dialog textarea', input => input.value), defaultReason);
+    await page.waitForSelector('.action-dialog[open]');
+    if (defaultReason) assert.equal(await page.$eval('.action-dialog textarea', input => input.value), defaultReason);
     if (required) {
-      assert(await page.$eval('.care-dialog button[type="submit"]', button => button.disabled), `${action}: empty reason allowed`);
-      await page.type('.care-dialog textarea', '   ');
-      assert(await page.$eval('.care-dialog button[type="submit"]', button => button.disabled), `${action}: whitespace reason allowed`);
+      assert(await page.$eval('.action-dialog button[type="submit"]', button => button.disabled), `${action}: empty reason allowed`);
+      await page.type('.action-dialog textarea', '   ');
+      assert(await page.$eval('.action-dialog button[type="submit"]', button => button.disabled), `${action}: whitespace reason allowed`);
     }
     if (reason !== undefined) {
-      await page.$eval('.care-dialog textarea', input => { input.value = ''; input.dispatchEvent(new Event('input', { bubbles: true })); });
-      await page.click('.care-dialog textarea', { clickCount: 3 });
+      await page.$eval('.action-dialog textarea', input => { input.value = ''; input.dispatchEvent(new Event('input', { bubbles: true })); });
+      await page.click('.action-dialog textarea', { clickCount: 3 });
       await page.keyboard.press('Backspace');
-      await page.type('.care-dialog textarea', reason);
+      await page.type('.action-dialog textarea', reason);
     }
     await check(`${role.toLowerCase()}-${action.replaceAll(' ', '-')}-${page.viewport().width}`);
     const response = page.waitForResponse(response => response.request().method() !== 'GET' && response.url().includes('/api/'));
-    await click('.care-dialog button[type="submit"]', action);
+    await click('.action-dialog button[type="submit"]', action);
     await response;
-    await page.waitForSelector('.care-dialog', { hidden: true });
+    await page.waitForSelector('.action-dialog', { hidden: true });
     assert.equal(mutations.length, before + 1, `${action}: expected one mutation`);
     return mutations.at(-1);
   };
@@ -183,6 +220,7 @@ try {
     await page.waitForSelector('dialog', { hidden: true });
     for (const nextRole of ['Patient', 'Doctor', 'Staff', 'Admin']) {
       role = nextRole;
+      appointments.splice(0, appointments.length, ...structuredClone(initialAppointments));
       notifications = Array.from({ length: 25 }, (_, index) => ({ _id: `notification-${index}`, title: index === 0 ? (role === 'Doctor' ? 'Appointment request assigned' : role === 'Patient' ? 'Appointment request received' : 'New appointment request') : 'Appointment confirmed',
         message: index === 0 ? 'An appointment request for Oct 2, 2026, 10:00–10:15 is pending clinic review.' : 'The appointment for Oct 2, 2026, 10:00–10:15 has been confirmed.',
         createdAt: '2026-10-02T02:00:00Z', readAt: index < 2 ? null : '2026-10-02T02:05:00Z' }));
@@ -195,6 +233,47 @@ try {
       await page.waitForSelector('.dashboard-page');
       await page.waitForFunction(() => document.querySelector('tbody tr'));
       await check(`${role.toLowerCase()}-${width}`);
+      if (width === 1440) {
+        for (const viewport of [{ width: 1920, height: 870 }, { width: 1280, height: 720 }, { width: 1120, height: 701 }, { width: 1100, height: 900 }, { width: 1440, height: 650 }, { width: 768, height: 1024 }, { width: 320, height: 640 }]) {
+          await page.setViewport(viewport);
+          await check(`${role.toLowerCase()}-navigation-${viewport.width}x${viewport.height}`);
+        }
+        await page.setViewport({ width: 1440, height: 960 });
+      }
+      failedReads.add('/api/appointments');
+      if (role === 'Admin') failedReads.add('/api/users');
+      await page.reload();
+      await page.waitForSelector('.dashboard-page > .load-error');
+      await page.waitForFunction(() => document.querySelector('tbody')?.textContent.includes('unavailable'));
+      assert(!(await page.$eval('tbody', element => element.textContent)).includes('No appointments'), 'Failed load must not claim an empty list');
+      await check(`${role.toLowerCase()}-load-error-${width}`);
+      failedReads.delete('/api/appointments');
+      await click('.dashboard-page > .load-error button', 'Retry');
+      await page.waitForSelector('tbody .badge');
+      if (role === 'Admin') {
+        await page.waitForFunction(() => document.querySelector('.dashboard-page > .load-error')?.textContent.includes('User directory'));
+        assert(!(await page.$eval('.dashboard-page > .load-error', element => element.textContent)).includes('Appointments could'), 'Successful appointment load must clear its error independently');
+        await check(`admin-partial-load-error-${width}`);
+        failedReads.delete('/api/users');
+        await click('.dashboard-page > .load-error button', 'Retry');
+      }
+      await page.waitForSelector('.dashboard-page > .load-error', { hidden: true });
+      await check(`${role.toLowerCase()}-load-recovered-${width}`);
+      if (width === 1440) {
+        const previousRows = await page.$$eval('tbody tr', rows => rows.length);
+        failedReads.add('/api/appointments');
+        // The patient portal uses the same retry loader after a failed booking-list request.
+        if (role === 'Patient') {
+          await page.reload();
+        } else {
+          await click('.page-header button', 'Refresh');
+        }
+        await page.waitForSelector('.dashboard-page > .load-error');
+        if (role !== 'Patient') assert.equal(await page.$$eval('tbody tr', rows => rows.length), previousRows, 'Failed refresh must preserve previously loaded rows');
+        failedReads.clear();
+        await click('.dashboard-page > .load-error button', 'Retry');
+        await page.waitForSelector('.dashboard-page > .load-error', { hidden: true });
+      }
       if (role !== 'Patient') {
         const cells = await page.$$eval('.appointment-patient-details', elements => elements.map(element => element.textContent));
         assert(cells.some(text => text.includes('Sofia Cruz') && text.includes('09181234567') && text.includes('Walk-in · Queue #41')), `${role}: walk-in identity missing`);
@@ -239,16 +318,34 @@ try {
       await page.waitForSelector('.notification-dialog [role="alert"]', { hidden: true });
       await page.click('[aria-label="Close notifications"]');
       await page.waitForSelector('.notification-dialog', { hidden: true });
+      failedReads.add('/api/system/time');
+      clinicTime = '2026-09-30T17:00:00Z'; // October 1, 01:00 in Manila; UTC is still September 30.
       await page.click('button[title="Clinic clock and operating hours"]');
+      await page.waitForSelector('.system-time-modal .load-error');
+      assert(!(await page.$eval('.system-time-modal', element => element.textContent)).includes('CURRENT SYSTEM TIME'), 'Failed clock load must not show a fabricated current status');
+      await check(`clinic-clock-load-error-${role.toLowerCase()}-${width}`);
+      failedReads.clear();
+      await click('.system-time-modal .load-error button', 'Retry');
+      await page.waitForSelector('.system-time-modal .load-error', { hidden: true });
+      for (let index = 0; index < 10; index++) await page.keyboard.press('Tab');
+      assert(await page.evaluate(() => document.activeElement === document.body || document.activeElement.closest('.system-time-modal') !== null), 'Clock settings must contain keyboard focus');
+      const beforeClockDismissal = mutations.length;
+      await page.keyboard.press('Escape');
+      await page.waitForSelector('.system-time-modal', { hidden: true });
+      assert.equal(mutations.length, beforeClockDismissal, 'Escape must not change clinic time');
+      await page.click('button[title="Clinic clock and operating hours"]');
+      await page.waitForSelector('.system-time-modal[open]');
       await page.waitForSelector('.system-time-modal');
       assert.equal(!!await page.$('.system-time-modal form'), role === 'Admin', `${role}: clock editing must be Admin-only`);
       await check(`clinic-clock-${role.toLowerCase()}-${width}`);
       if (role === 'Admin') {
+        assert.equal(await page.$eval('.system-time-modal input[type="date"]', input => input.value), '2026-10-01', 'Clock date must use Manila time at midnight');
         const clockRequest = page.waitForRequest(request => request.url().endsWith('/api/system/time') && request.method() === 'POST');
         await click('.system-time-modal button', 'Opening');
         assert.equal(JSON.parse((await clockRequest).postData()).time, '2026-10-01T08:30:00');
         await page.waitForSelector('.system-time-modal', { hidden: true });
       } else await page.click('.system-time-modal .modal-header button');
+      clinicTime = '2026-10-01T01:00:00Z';
       assert(await page.$('.badge-In-Progress'), `${role}: multiword status badge is missing`);
       if (width === 1440) assert(await page.evaluate(() => document.querySelector('.dashboard-tabs').getBoundingClientRect().bottom < document.querySelector('.navbar-tools').getBoundingClientRect().top), `${role}: sidebar overlaps`);
       if (role === 'Patient' || role === 'Doctor' || role === 'Staff') {
@@ -270,19 +367,47 @@ try {
         if (role === 'Patient') {
           failNextMutation = true;
           await page.click(`button[title="${cancelTitle}"]`);
-          await page.waitForSelector('.care-dialog[open]');
-          await click('.care-dialog button[type="submit"]', 'Cancel appointment');
-          await page.waitForFunction(() => document.querySelector('.care-dialog')?.textContent.includes('Mock action failed'));
+          await page.waitForSelector('.action-dialog[open]');
+          await click('.action-dialog button[type="submit"]', 'Cancel appointment');
+          await page.waitForFunction(() => document.querySelector('.action-dialog')?.textContent.includes('Mock action failed'));
           await check(`error-notice-${width}`);
-          await click('.care-dialog button', 'Got it');
-          await page.waitForSelector('.care-dialog', { hidden: true });
+          await click('.action-dialog button', 'Got it');
+          await page.waitForSelector('.action-dialog', { hidden: true });
         }
       }
       if (role === 'Patient') {
+        clinicTime = '2026-09-30T17:00:00Z';
+        failedReads.add('/api/users/doctors');
         await click('.page-header button', 'Book');
-        await page.waitForSelector('.modal-content');
+        await page.waitForSelector('.booking-dialog .load-error');
+        await check(`booking-doctors-error-${width}`);
+        failedReads.clear();
+        await click('.booking-dialog .load-error button', 'Retry');
+        await page.waitForSelector('.booking-dialog .load-error', { hidden: true });
+        await page.waitForFunction(() => document.querySelector('.booking-dialog select').value === 'doctor-1');
+        assert.equal(await page.$eval('.booking-dialog input[type="date"]', input => input.min), '2026-10-01', 'Booking minimum date must use Manila time at midnight');
+        clinicTime = '2026-10-01T01:00:00Z';
+        failedReads.add('/api/slots');
+        await page.$eval('.booking-dialog input[type="date"]', input => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '2026-10-01'); input.dispatchEvent(new Event('input', { bubbles: true })); });
+        await page.waitForSelector('.booking-dialog .load-error');
+        assert(await page.$eval('.booking-dialog button[type="submit"]', button => button.disabled), 'Booking must stay disabled after a failed slot load');
+        await check(`booking-slots-error-${width}`);
+        failedReads.clear();
+        await click('.booking-dialog .load-error button', 'Retry');
+        await page.waitForSelector('.booking-dialog .slot-chip');
+        await page.waitForSelector('.booking-dialog .load-error', { hidden: true });
         await check(`booking-${width}`);
-        await page.click('.modal-header button');
+        await page.select('.booking-dialog select', '');
+        await page.waitForFunction(() => document.querySelectorAll('.booking-dialog select').length === 2);
+        const timeOptions = await page.$$eval('.booking-dialog select:last-of-type option', options => options.map(option => ({ value: option.value, disabled: option.disabled })));
+        assert(timeOptions.some(option => option.value === '08:00 - 08:30 AM' && option.disabled), 'Past morning time must be disabled');
+        assert(timeOptions.some(option => option.value === '01:00 - 01:30 PM' && !option.disabled), 'Afternoon time must stay available at 09:00 AM');
+        for (let i = 0; i < 10; i++) await page.keyboard.press('Tab');
+        assert(await page.evaluate(() => document.activeElement === document.body || document.activeElement.closest('.booking-dialog') !== null), 'Booking keyboard focus must stay inside the dialog');
+        const beforeBookingDismissal = mutations.length;
+        await page.keyboard.press('Escape');
+        await page.waitForSelector('.booking-dialog', { hidden: true });
+        assert.equal(mutations.length, beforeBookingDismissal, 'Escape must not book an appointment');
         await click('td button', 'History');
         await page.waitForSelector('.timeline');
         await check(`history-${width}`);
@@ -314,25 +439,40 @@ try {
           await doctorDownload;
           assert((await actionDialog('button[title="Archive document"]', 'Archive document')).path.endsWith('/documents/document-1'));
           await click('.modal-footer button', 'Complete Consultation');
-          await page.waitForSelector('.care-dialog[open]');
+          await page.waitForSelector('.action-dialog[open]');
           await check(`complete-consultation-${width}`);
-          await click('.care-dialog button', 'Keep unchanged');
-          await page.waitForSelector('.care-dialog', { hidden: true });
+          await click('.action-dialog button', 'Keep unchanged');
+          await page.waitForSelector('.action-dialog', { hidden: true });
           await page.click('.modal-header button');
         }
+        if (role === 'Staff') failedReads.add('/api/users/doctors');
         await click('.dashboard-tabs button', role === 'Staff' ? 'Slot Management' : 'My Slots');
         await page.waitForSelector('.slot-doctor-toggle, tbody .badge-Available');
+        if (role === 'Staff') {
+          await page.waitForSelector('.card > .load-error');
+          await check(`slot-doctors-load-error-${width}`);
+          failedReads.clear();
+          await click('.card > .load-error button', 'Retry');
+          await page.waitForSelector('.card > .load-error', { hidden: true });
+        }
+        failedReads.add('/api/slots');
+        await page.click('.card-header button[title="Refresh"]');
+        await page.waitForSelector('.card > .load-error');
+        await check(`slots-load-error-${role.toLowerCase()}-${width}`);
+        failedReads.clear();
+        await click('.card > .load-error button', 'Retry');
+        await page.waitForSelector('.card > .load-error', { hidden: true });
         await check(`${role.toLowerCase()}-slots-${width}`);
         if (role === 'Staff') await page.click('.slot-doctor-toggle');
         assert((await actionDialog('button[title="Block / Cancel Slot"]', 'Block slot')).path.endsWith('/slots/slot-1/status'));
         await click('button', 'Custom Generator');
         if (role === 'Staff') await page.select('form select', 'doctor-1');
         await click('form button', 'Generate Slots');
-        await page.waitForSelector('.care-dialog[open]');
-        assert(await page.$eval('.care-dialog', dialog => dialog.textContent.includes('Slots generated')));
+        await page.waitForSelector('.action-dialog[open]');
+        assert(await page.$eval('.action-dialog', dialog => dialog.textContent.includes('Slots generated')));
         await check(`slots-success-${role.toLowerCase()}-${width}`);
-        await click('.care-dialog button', 'Got it');
-        await page.waitForSelector('.care-dialog', { hidden: true });
+        await click('.action-dialog button', 'Got it');
+        await page.waitForSelector('.action-dialog', { hidden: true });
         await click('button', 'Weekly hours');
         if (role === 'Staff') await page.select('.schedule-editor select', 'doctor-1');
         await page.waitForSelector('.working-day');
@@ -354,7 +494,12 @@ try {
           await click('.card-header button', 'Add Walk-In');
           await page.waitForSelector('.modal-content');
           await check(`walkin-form-${width}`);
-          await page.click('.modal-header button');
+          for (let i = 0; i < 10; i++) await page.keyboard.press('Tab');
+          assert(await page.evaluate(() => document.activeElement === document.body || document.activeElement.closest('.walkin-dialog') !== null), 'Walk-in keyboard focus must stay inside the dialog');
+          const beforeWalkInDismissal = mutations.length;
+          await page.keyboard.press('Escape');
+          await page.waitForSelector('.walkin-dialog', { hidden: true });
+          assert.equal(mutations.length, beforeWalkInDismissal, 'Escape must not add a walk-in');
         }
         const actions = role === 'Staff' ? [['Check In', 'Checked In'], ['Left', 'Left']] : [['Start Session', 'In Progress'], ['Complete', 'Completed']];
         for (const [label, status] of actions) {
@@ -407,6 +552,14 @@ try {
         await check(`audit-${width}`);
         const auditText = await page.$eval('.table-container', element => element.textContent);
         for (const text of ['User account created', 'Created Staff', 'Admin creation', 'Document deleted', 'Test record.pdf', 'Doctor slots generated', '2 requested windows', '2 total slots']) assert(auditText.includes(text), `Audit viewer missing ${text}`);
+        failedReads.add('/api/audit-logs');
+        await click('.card-header button', 'Refresh');
+        await page.waitForSelector('.card > .load-error');
+        assert((await page.$eval('.table-container', element => element.textContent)).includes('User account created'), 'Failed audit refresh must preserve prior rows');
+        await check(`audit-load-error-${width}`);
+        failedReads.clear();
+        await click('.card > .load-error button', 'Retry');
+        await page.waitForSelector('.card > .load-error', { hidden: true });
         empty = true;
         await page.reload();
         await page.waitForFunction(() => document.querySelector('tbody')?.textContent.includes('No appointments'));
@@ -453,19 +606,19 @@ try {
       }
       for (const dismiss of ['Escape', 'Stay signed in']) {
         await page.click('button[title="Sign Out"]');
-        await page.waitForSelector('.care-dialog[open]');
-        assert(await page.$eval('.care-dialog', dialog => dialog.textContent.includes('Are you sure you want to sign out?')));
+        await page.waitForSelector('.action-dialog[open]');
+        assert(await page.$eval('.action-dialog', dialog => dialog.textContent.includes('Are you sure you want to sign out?')));
         assert.equal(await page.evaluate(() => localStorage.getItem('caresync_token')), 'ui-smoke-mock');
         if (dismiss === 'Escape') await page.keyboard.press('Escape');
-        else await click('.care-dialog button', dismiss);
-        await page.waitForSelector('.care-dialog', { hidden: true });
+        else await click('.action-dialog button', dismiss);
+        await page.waitForSelector('.action-dialog', { hidden: true });
         assert.equal(await page.evaluate(() => localStorage.getItem('caresync_token')), 'ui-smoke-mock', `${role}: dismissal signed out`);
         assert(await page.$('.dashboard-page'), `${role}: dismissal left dashboard`);
       }
       await page.click('button[title="Sign Out"]');
-      await page.waitForSelector('.care-dialog[open]');
+      await page.waitForSelector('.action-dialog[open]');
       await check(`sign-out-${role.toLowerCase()}-${width}`);
-      await click('.care-dialog button[type="submit"]', 'Sign out');
+      await click('.action-dialog button[type="submit"]', 'Sign out');
       await page.waitForSelector('.landing-hero');
       assert.equal(await page.evaluate(() => localStorage.getItem('caresync_token')), null, `${role}: confirmation did not sign out`);
     }

@@ -6,7 +6,7 @@ const { sendNotification } = require('../../services/notification.service');
 
 function registerAllHandlers() {
   function listen(event, handler) {
-    emitter.on(event, async data => {
+    emitter.onAsync(event, async data => {
       try { await handler(data); }
       catch (err) {
         // ponytail: process-local events; add a durable outbox if guaranteed delivery is required.

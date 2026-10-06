@@ -48,6 +48,8 @@ export default function Navbar() {
           <p className="brand-caption">Appointments &amp; patient flow</p>
         </div>
 
+        <div id="workspace-navigation" />
+
         <div className="navbar-tools">
           {user && <NotificationInbox key={user._id} />}
           {/* System Time & Clinic Operating Status */}
@@ -80,10 +82,10 @@ export default function Navbar() {
                 width: '7px',
                 height: '7px',
                 borderRadius: '50%',
-                background: systemTimeStatus?.isOpen ? '#10b981' : '#ef4444',
+                background: !systemTimeStatus ? 'var(--text-muted)' : systemTimeStatus.isOpen ? '#10b981' : '#ef4444',
                 marginLeft: '0.15rem',
               }}
-              title={systemTimeStatus?.isOpen ? 'Clinic Open (8:30 AM - 5:00 PM)' : 'Clinic Closed'}
+              title={!systemTimeStatus ? 'Clinic status unavailable' : systemTimeStatus.isOpen ? 'Clinic Open (8:30 AM - 5:00 PM)' : 'Clinic Closed'}
             />
           </button>
 
