@@ -57,6 +57,10 @@ Skip this subsection for a fresh database with no uploaded documents. For existi
 
 MongoDB's driver manages the GridFS chunk/file collections. [GridFS documentation](https://www.mongodb.com/docs/drivers/node/current/crud/gridfs/).
 
+An alternative is available when appointment URLs must stay unchanged: `backend/scripts/import-legacy-uploads.js` copies a private JSON bundle into GridFS, verifies downloaded bytes with SHA-256, and retains each original URL as `metadata.legacyUrl`. Protected downloads resolve that metadata when hosted storage is GridFS. This operation leaves appointment and version records unchanged and can safely reuse a verified copy on retry. Missing files are reported and must be restored from a backup.
+
+The bundle is an array of `{ "url": "/uploads/...", "data": "<base64 bytes>", "sha256": "<hex checksum>" }`. Keep it out of GitHub and public web assets. If local Atlas connectivity fails, transfer it as a temporary Render Secret File and run `node scripts/import-legacy-uploads.js /etc/secrets/legacy-uploads.json` before the API starts. After verification, remove that Secret File and restore `node server.js` as the start command. Render limits total Secret File contents to 1 MB; this route suits small existing uploads. [Render Secret Files](https://render.com/docs/configure-environment-variables).
+
 ## 2. Configure Gmail API email
 
 A Gmail App Password works with local SMTP, but it cannot overcome Render Free's blocked SMTP ports. Hosted email uses a Gmail OAuth refresh token instead.

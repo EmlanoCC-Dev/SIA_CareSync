@@ -290,5 +290,6 @@ CareSync/
 - [Live verification results](docs/project_specifications/261004_live_verification_results.md)
 - [Free hosting, MongoDB file migration and mobile deployment guide](docs/deployment/free-hosting-guide.md)
 - [Deployment preparation code review](docs/deployment/audit-2026-10-06.md)
+- [Live deployment receipt and Android APK handover](docs/deployment/deployment-receipt-2026-10-06.md)
 
 The full live clinic journey, recovery evidence, and final submission documentation remain tracked in the specification checklist. Recorded isolated checks do not establish every live workflow.
