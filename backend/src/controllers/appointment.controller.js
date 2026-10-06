@@ -272,7 +272,7 @@ async function list(req, res, next) {
   try {
     let appointments;
     if (req.user.role === 'Patient') {
-      appointments = await appointmentService.listByPatient(req.user.id);
+      appointments = await appointmentService.listByPatient(req.user);
     } else if (req.user.role === 'Doctor') {
       appointments = await appointmentService.listByDoctor(req.user.id);
     } else {

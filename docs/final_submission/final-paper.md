@@ -60,7 +60,7 @@ The general objective is to implement and evaluate an integrated appointment, qu
 
 ### 1.4 Scope and stakeholders
 
-The scope includes a responsive web interface and a single backend application. Stakeholders are Patients, account-free walk-in patients, Doctors, Staff, Administrators, and the project evaluator. Walk-ins are registered through clinic staff and do not need a login. The public queue viewer sees ticket/status information only.
+The scope includes a responsive web interface and a single backend application. Stakeholders are Patients, walk-in patients with optional accounts, Doctors, Staff, Administrators, and the project evaluator. Staff register walk-ins using name and email; no login is needed to join the queue or receive care. A later OTP-verified signup using the same email links earlier walk-in visits to that account. The public queue viewer sees ticket/status information only.
 
 Gmail email and the private in-app inbox are the agreed notification channels. Paid SMS delivery is excluded under the project owner's resource constraint; instructor acceptance of this specification mapping remains to be confirmed. The system does not implement billing, insurance processing, pharmacy inventory, diagnostic interpretation, or a hospital-wide electronic health record.
 
@@ -95,7 +95,7 @@ These requirements express the implemented project scope. Acceptance evidence is
 | FR05 | Assign flexible requests later. | Staff/Admin attaches an available doctor and slot; an unassigned request cannot be approved. | Staff, Admin | Assignment |
 | FR06 | Review requests through approval, decline, or correction. | Permitted actors perform valid transitions; a correction explanation and prior reason are retained. | Staff, Admin; assigned Doctor for decline | Review |
 | FR07 | Resubmit corrected booking reasons. | Only the owning Patient revises the reason of a Needs correction request and returns it to Pending with history. | Patient | Review |
-| FR08 | Register and assign account-free walk-ins. | Staff/Admin creates a name/contact entry with a unique daily ticket and links an assigned visit. | Walk-in, Staff, Admin | Walk-in queue |
+| FR08 | Register and assign walk-ins with optional accounts. | Staff/Admin collects name/email and allocates a unique daily ticket. Later OTP-verified signup with the same email links earlier visits. | Walk-in, Staff, Admin | Walk-in queue, patient portal |
 | FR09 | Separate arrival from consultation start. | Arrival records Checked In; an authorized separate action changes the visit to In Progress. | Clinic roles | Consultation |
 | FR10 | Display a combined public queue. | Scheduled arrival tickets and walk-in tickets appear with statuses; public data omits patient identity and medical details. | Public viewer, clinic | Queue display |
 | FR11 | Cancel visits and handle no-shows. | Permitted transitions synchronize linked reservations; automatic missed-visit processing does not mark checked-in patients as absent. | Patient, clinic roles | Visit lifecycle |
@@ -215,7 +215,7 @@ Figure 9 is a logical ERD derived from Mongoose models, with ObjectId references
 | User | Identity, role, status, hashed password, tokenVersion, doctor hours/duration. | Unique normalized email; service-level role restrictions. |
 | Appointment | patient or walkIn, doctor, slot, date/reason/status, daily arrival ticket, consultation content and embedded histories. | Service/model require an identity; assignment fields may be null; unique scheduled ticket per queueDay. |
 | Slot | doctor/date/start/end/status, appointment and reservationOperation. | Unique doctor/date/startTime; an owned reservation is claimed conditionally. |
-| WalkIn | name/contact, queueDay/queueNumber/status, assignedSlot and appointment. | Unique daily ticket for records with queueDay; no User account required. |
+| WalkIn | name/email, optional patient reference, queueDay/queueNumber/status, assignedSlot and appointment; legacy contactNumber retained. | Unique daily ticket for records with queueDay; an account is optional. Verified Patient accounts link without replacing existing ownership. |
 | SlotPlan | doctor/date, revision, planned windows. | String key identifies doctor/day plan; revision guards extension. |
 | AssignmentRecovery | kind, appointment, slot, optional walkIn, pending/done. | Identifiers are logical links; pending records require offline reconciliation before startup. |
 | AppointmentComment | appointment, author, authorName/authorRole snapshot, message. | Plain text up to 2,000 characters; appointment-scoped authorization. |
@@ -223,7 +223,7 @@ Figure 9 is a logical ERD derived from Mongoose models, with ObjectId references
 | AuditLog | action, optional performedBy, targetModel/targetId, changes, timestamp. | Admin viewer; no application editing workflow; not a tamper-proof external ledger. |
 | EmailOtp | purpose/address key, hidden codeHash, attempts, expiry/consumption, user/session binding, purgeAt. | Keyed hash, single-use checks, bounded requests/attempts; TTL cleanup is not the authorization expiry check. |
 
-Appointment.slot can remain on a historical visit after a reusable Slot is freed, so Figure 9 permits multiple historical references to a slot. Slot.appointment represents the current reservation link. WalkIn/Appointment links represent a single visit per walk-in record, not a permanent repeat-visit patient profile. Service logic, rather than collection foreign-key constraints, governs these relationships.
+Appointment.slot can remain on a historical visit after a reusable Slot is freed, so Figure 9 permits multiple historical references to a slot. Slot.appointment represents the current reservation link. Each WalkIn/Appointment link represents one visit. Multiple walk-in visits can link to the same verified Patient account through normalized email; WalkIn.patient and Appointment.patient preserve that ownership. Legacy phone-only records do not match automatically. Service logic governs these relationships. See the [optional walk-in accounts guide](../project_specifications/261006_optional_walkin_accounts_walkthrough.md) for the current policy and implementation checks.
 
 ### 6.5 Screen design and navigation
 

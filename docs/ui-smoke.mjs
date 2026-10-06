@@ -21,7 +21,7 @@ const appointments = ['Pending', 'Confirmed', 'In Progress', 'Completed'].map((s
 }));
 appointments.push({ ...appointments[1], _id: 'arrived-appointment', status: 'Checked In', queueNumber: 7, checkedInAt: '2026-10-01T01:00:00Z' });
 appointments.push({ _id: 'flexible-appointment', patient, doctor: null, slot: null, status: 'Pending', date: '2026-10-01', timeSlot: '09:00 - 09:30 AM', reason: 'Flexible consultation', statusHistory: [] });
-appointments.push({ _id: 'walkin-appointment', patient: null, walkIn: { _id: 'walkin-visit', name: 'Sofia Cruz', contactNumber: '09181234567', queueNumber: 41 }, doctor, slot: 'walkin-slot', status: 'No-show', date: '2026-10-01', timeSlot: '09:00–09:15', reason: 'Walk-in consultation', statusHistory: [] });
+appointments.push({ _id: 'walkin-appointment', patient: null, walkIn: { _id: 'walkin-visit', name: 'Sofia Cruz', email: 'sofia@example.test', queueNumber: 41 }, doctor, slot: 'walkin-slot', status: 'No-show', date: '2026-10-01', timeSlot: '09:00–09:15', reason: 'Walk-in consultation', statusHistory: [] });
 appointments.push({ _id: 'missing-patient-details', patient: null, walkIn: 'unavailable-walkin-reference', doctor, status: 'No-show', date: '2026-10-01', timeSlot: '09:15–09:30', reason: 'Walk-in consultation', statusHistory: [] });
 const initialAppointments = structuredClone(appointments);
 let role = null;
@@ -279,7 +279,7 @@ try {
       }
       if (role !== 'Patient') {
         const cells = await page.$$eval('.appointment-patient-details', elements => elements.map(element => element.textContent));
-        assert(cells.some(text => text.includes('Sofia Cruz') && text.includes('09181234567') && text.includes('Walk-in · Queue #41')), `${role}: walk-in identity missing`);
+        assert(cells.some(text => text.includes('Sofia Cruz') && text.includes('sofia@example.test') && text.includes('Walk-in · Queue #41')), `${role}: walk-in identity missing`);
         assert(cells.some(text => text.includes('Alex Santos') && text.includes('alex@example.com') && !text.includes('Walk-in')), `${role}: registered patient display changed`);
         assert(cells.some(text => text.includes('Patient details unavailable') && !text.includes('undefined')), `${role}: missing patient identity must be explicit`);
         await check(`walkin-appointment-identity-${role.toLowerCase()}-${width}`);
@@ -507,6 +507,8 @@ try {
           await page.click('.modal-header button');
           await click('.card-header button', 'Add Walk-In');
           await page.waitForSelector('.modal-content');
+          assert(await page.$('.walkin-dialog input[type="email"][required]'), 'Walk-in email is required');
+          assert((await page.$eval('#walkin-account-help', element => element.textContent)).includes('An account is optional'));
           await check(`walkin-form-${width}`);
           for (let i = 0; i < 10; i++) await page.keyboard.press('Tab');
           assert(await page.evaluate(() => document.activeElement === document.body || document.activeElement.closest('.walkin-dialog') !== null), 'Walk-in keyboard focus must stay inside the dialog');
@@ -514,6 +516,15 @@ try {
           await page.keyboard.press('Escape');
           await page.waitForSelector('.walkin-dialog', { hidden: true });
           assert.equal(mutations.length, beforeWalkInDismissal, 'Escape must not add a walk-in');
+          await click('.card-header button', 'Add Walk-In');
+          await page.waitForSelector('.walkin-dialog[open]');
+          await page.type('#walkin-name', 'Email Walk-In');
+          await page.type('#walkin-email', 'walkin@example.test');
+          const creation = page.waitForRequest(request => request.method() === 'POST' && new URL(request.url()).pathname === '/api/walkins');
+          await click('.walkin-dialog button[type="submit"]', 'Add to Queue');
+          const body = JSON.parse((await creation).postData());
+          assert.deepEqual(body, { name: 'Email Walk-In', email: 'walkin@example.test' });
+          await page.waitForSelector('.walkin-dialog', { hidden: true });
         }
         const actions = role === 'Staff' ? [['Check In', 'Checked In'], ['Left', 'Left']] : [['Start Session', 'In Progress'], ['Complete', 'Completed']];
         for (const [label, status] of actions) {

@@ -266,6 +266,8 @@ This maintenance command changes database records to reconcile interrupted work.
 
 ## Repository layout and documentation
 
+Walk-in accounts are optional. Reception collects name and email; patients can receive care without signing up. A later signup using the same email links earlier walk-in visits after OTP verification. Existing verified patients link immediately, while old phone-only entries remain readable. See the [optional walk-in accounts guide](docs/project_specifications/261006_optional_walkin_accounts_walkthrough.md) for API/data changes, access rules and verification.
+
 ```text
 CareSync/
   package.json                 Shared development commands

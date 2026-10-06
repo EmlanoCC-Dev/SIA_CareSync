@@ -13,15 +13,8 @@ const { recordId } = require('../middleware/auth');
  */
 async function create(req, res, next) {
   try {
-    const { name, contactNumber } = req.body;
-    if (!name || !contactNumber) {
-      return res.status(400).json({
-        success: false,
-        message: 'Name and contact number are required for walk-in entry',
-      });
-    }
-
-    const walkIn = await walkInService.addToHoldingList({ name, contactNumber, actorId: req.user._id });
+    const { name, email } = req.body;
+    const walkIn = await walkInService.addToHoldingList({ name, email, actorId: req.user._id });
     res.status(201).json({ success: true, data: walkIn });
   } catch (err) {
     next(err);

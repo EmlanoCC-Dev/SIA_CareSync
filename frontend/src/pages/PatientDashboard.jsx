@@ -218,7 +218,8 @@ export default function PatientDashboard() {
                         <span className="status-dot"></span>
                         {apt.status}
                       </span>
-                      {apt.queueNumber != null && <div className="appointment-visit-source">Your queue ticket: #A-{apt.queueNumber}</div>}
+                      {apt.walkIn ? <div className="appointment-visit-source">Walk-in{apt.walkIn.queueNumber != null ? ` · Queue #${apt.walkIn.queueNumber}` : ''}</div>
+                        : apt.queueNumber != null && <div className="appointment-visit-source">Your queue ticket: #A-{apt.queueNumber}</div>}
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'inline-flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>

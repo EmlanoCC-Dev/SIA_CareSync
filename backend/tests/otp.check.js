@@ -11,6 +11,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const User = require('../src/models/User');
+const WalkIn = require('../src/models/WalkIn');
 const EmailOtp = require('../src/models/EmailOtp');
 const emitter = require('../src/events/emitter');
 const EVENTS = require('../src/events/events');
@@ -45,6 +46,9 @@ async function makeUser(data) {
 const codeFor = email => mail.filter(item => item.to.address === email).at(-1)?.text.match(/verification code is (\d{6})/)[1];
 const age = (purpose, email) => { challenges.get(`${purpose}:${email}`).lastSentAt = new Date(Date.now() - 61000); };
 async function main() {
+  // This suite verifies OTP/account behavior; walk-in ownership has its own integration check.
+  stub(WalkIn, 'updateMany', async () => ({ modifiedCount: 0 }));
+  stub(WalkIn, 'find', () => query([]));
   stub(crypto, 'randomInt', (min, max) => { assert.equal(min, 0); assert.equal(max, 1000000); return counter++; });
   stub(nodemailer, 'createTransport', () => ({ async sendMail(data) {
     if (smtpFail) throw new Error('PRIVATE_SMTP_SECRET');

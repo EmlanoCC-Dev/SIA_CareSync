@@ -132,7 +132,7 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
                   <td>
                     <strong>{walkIn.name}</strong>
                     <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>
-                      {walkIn.contactNumber}
+                      {walkIn.email || walkIn.contactNumber}
                     </div>
                   </td>
                   <td>

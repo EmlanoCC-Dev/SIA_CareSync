@@ -18,6 +18,7 @@ const mongoose = require('mongoose');
 const Appointment = require('../models/Appointment');
 const bcrypt = require('bcryptjs');
 const otpService = require('./otp.service');
+const { linkVerifiedPatient } = require('./walkInAccount.service');
 
 /**
  * Register a new user.
@@ -52,6 +53,10 @@ async function register(userData, actorId = null) {
     if (err.code === 11000) throw Object.assign(new Error('Email already registered'), { statusCode: 409 });
     throw err;
   }
+
+  // Account creation succeeds even if linking needs to retry on a portal read.
+  try { await linkVerifiedPatient(user); }
+  catch { console.error('[WalkIn] Account linking deferred until the patient opens their appointments'); }
 
   // Strip password from response
   const userObj = user.toObject();
@@ -110,6 +115,7 @@ async function getById(userId) {
     err.statusCode = 404;
     throw err;
   }
+  await linkVerifiedPatient(user);
   return user;
 }
 

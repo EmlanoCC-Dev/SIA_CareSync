@@ -5,6 +5,7 @@ process.env.NODE_ENV = 'production';
 process.env.JWT_SECRET = 'isolated-audit-coverage-check-secret-for-tests';
 const jwt = require('jsonwebtoken');
 const User = require('../src/models/User');
+const WalkIn = require('../src/models/WalkIn');
 const Appointment = require('../src/models/Appointment');
 const Slot = require('../src/models/Slot');
 const SlotPlan = require('../src/models/SlotPlan');
@@ -84,6 +85,8 @@ async function main() {
   assert.equal(rows.length, 0);
   // OTP verification is covered in otp.check.js; isolate the user-creation audit here.
   stub(otpService, 'consumeOtp', async () => ({}));
+  stub(WalkIn, 'updateMany', async () => ({ modifiedCount: 0 }));
+  stub(WalkIn, 'find', () => query([]));
   const self = (await call('/users/register', null, 201, 'POST', accountData)).data;
   assert.equal(rows.at(-1).action, 'USER_CREATED');
   assert.equal(rows.at(-1).performedBy, self.user._id);

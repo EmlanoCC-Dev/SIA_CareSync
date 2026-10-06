@@ -10,6 +10,9 @@
  */
 
 const WalkIn = require('../models/WalkIn');
+const User = require('../models/User');
+const { normalizeEmail } = require('./otp.service');
+const { linkVerifiedPatient } = require('./walkInAccount.service');
 const Appointment = require('../models/Appointment');
 const Slot = require('../models/Slot');
 const emitter = require('../events/emitter');
@@ -40,16 +43,20 @@ async function _getNextQueueNumber(now) {
 
 /**
  * Add a walk-in patient to the holding list.
- * Staff enters name + contact number; system assigns queue number.
+ * Staff enters name + email; accounts remain optional.
  * Enforces clinic operating hours (8:30 AM - 5:00 PM).
  *
  * @param {Object} params
  * @param {string} params.name
- * @param {string} params.contactNumber
+ * @param {string} params.email
  * @param {boolean} [params.overrideHours=false]
  * @returns {Object} WalkIn document
  */
-async function addToHoldingList({ name, contactNumber, overrideHours = false, actorId }) {
+async function addToHoldingList({ name, email: value, overrideHours = false, actorId }) {
+  if (typeof name !== 'string' || !name.trim() || name.length > 200) {
+    throw Object.assign(new Error('Provide a patient name of at most 200 characters'), { statusCode: 400 });
+  }
+  const email = normalizeEmail(value);
   const now = getNow();
   if (!overrideHours && !isClinicOpen(now)) {
     const err = new Error(
@@ -60,13 +67,14 @@ async function addToHoldingList({ name, contactNumber, overrideHours = false, ac
   }
 
   await WalkIn.init(); // Do not accept registrations before the unique index exists.
+  const patient = await User.findOne({ email, role: 'Patient', emailVerifiedAt: { $ne: null }, status: { $ne: 'Deactivated' } });
   const queueDay = formatDateKey(now);
   let queueNumber = await _getNextQueueNumber(now);
   let walkIn;
   // ponytail: unique-index retries suit clinic traffic; use an atomic daily counter if registration contention becomes heavy.
   for (;;) {
     try {
-      walkIn = await WalkIn.create({ name, contactNumber, queueNumber, queueDay, status: 'Waiting', createdAt: now });
+      walkIn = await WalkIn.create({ name: name.trim(), email, patient: patient?._id || null, queueNumber, queueDay, status: 'Waiting', createdAt: now });
       break;
     } catch (err) {
       if (err.code !== 11000 || !err.keyPattern?.queueDay || !err.keyPattern?.queueNumber) throw err;
@@ -269,6 +277,7 @@ async function assignSlotToWalkIn(walkInId, slotId, changedBy, automatic = false
 
     appointment = await Appointment.create({
       _id: appointmentId,
+      patient: walkIn.patient || null,
       walkIn: walkIn._id,
       doctor: claimedSlot.doctor,
       slot: claimedSlot._id,
@@ -287,6 +296,16 @@ async function assignSlotToWalkIn(walkInId, slotId, changedBy, automatic = false
     await recovery.onFailure(operation, err);
   }
   await recovery.finish(operation);
+  // Reconcile signup that raced with assignment. Portal reads retry a failed link.
+  if (walkIn.email || walkIn.patient) {
+    try {
+      const patient = walkIn.patient ? await User.findById(walkIn.patient)
+        : await User.findOne({ email: walkIn.email, role: 'Patient', emailVerifiedAt: { $ne: null }, status: { $ne: 'Deactivated' } });
+      await linkVerifiedPatient(patient);
+    } catch {
+      console.error('[WalkIn] Account linking deferred until the patient opens their appointments');
+    }
+  }
   const assignedWalkIn = await getById(walkIn._id);
   emitter.emit(EVENTS.WALKIN_SLOT_ASSIGNED, {
     walkIn: assignedWalkIn,

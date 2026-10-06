@@ -22,6 +22,7 @@ const { assertAppointmentAccess, recordId } = require('../middleware/auth');
 const { getNow } = require('../config/systemTime');
 const recovery = require('./assignmentRecovery.service');
 const mongoose = require('mongoose');
+const { linkVerifiedPatient } = require('./walkInAccount.service');
 
 /**
  * Automatically update missed / passed appointments to 'No-show'.
@@ -726,13 +727,17 @@ async function getById(appointmentId) {
 /**
  * List appointments for a specific patient.
  */
-async function listByPatient(patientId) {
+async function listByPatient(patient) {
+  // Idempotent retry also covers signup/assignment races and interrupted writes.
+  await linkVerifiedPatient(patient);
+  const patientId = patient._id || patient.id;
   await autoMarkNoShows();
 
   return Appointment.find({ patient: patientId })
     .select('-noteVersions -archivedDocuments -documents.versions')
     .sort({ date: -1, createdAt: -1 })
     .populate('doctor', 'firstName lastName')
+    .populate('walkIn', 'queueNumber status')
     .populate('slot');
 }
 

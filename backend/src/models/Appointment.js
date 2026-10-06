@@ -115,7 +115,7 @@ const appointmentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       default: null,
-      // Not strictly required — walk-ins don't have a User account.
+      // Optional for walk-ins; linked when a patient verifies the matching email.
       // Validated at the service layer instead.
     },
     doctor: {

@@ -53,7 +53,8 @@ export default function RegisterPage({ onSwitchToLogin, onBackToLanding, formOnl
               <div><label className="form-label" htmlFor="register-last-name">Last name</label><input id="register-last-name" name="lastName" autoComplete="family-name" maxLength={100} disabled={loading} className="form-input" value={formData.lastName} onChange={handleChange} placeholder="Last name" required /></div>
             </div>
             <label className="form-label" htmlFor="register-email">Email address</label>
-            <input id="register-email" type="email" name="email" autoComplete="email" maxLength={254} disabled={loading} className="form-input" placeholder="you@example.com" value={formData.email} onChange={handleChange} required />
+            <input id="register-email" type="email" name="email" autoComplete="email" maxLength={254} disabled={loading} className="form-input" placeholder="you@example.com" value={formData.email} onChange={handleChange} required aria-describedby="register-walkin-help" />
+            <p id="register-walkin-help" className="care-dialog-message" style={{ marginTop: '8px' }}>Visited as a walk-in? Use the same email you gave reception to link your earlier visits after verification.</p>
             <label className="form-label" htmlFor="register-password">Password</label>
             <PasswordInput id="register-password" name="password" autoComplete="new-password" minLength={6} maxLength={72} disabled={loading} className="form-input" placeholder="At least 6 characters" value={formData.password} onChange={handleChange} required />
             </> : <EmailVerificationCode id="register-otp" value={otp} onChange={setOtp} resendAt={resendAt} onResend={requestCode} disabled={loading} />}

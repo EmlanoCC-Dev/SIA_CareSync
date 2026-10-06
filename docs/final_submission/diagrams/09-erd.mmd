@@ -5,6 +5,7 @@ erDiagram
         string role
         string status
         number tokenVersion
+        date emailVerifiedAt
         array workingHours
     }
     Appointment {
@@ -34,6 +35,8 @@ erDiagram
     WalkIn {
         ObjectId _id PK
         string name
+        string email
+        ObjectId patient FK
         string contactNumber
         string queueDay
         number queueNumber
@@ -87,6 +90,7 @@ erDiagram
         date purgeAt
     }
     User |o..o{ Appointment : patient
+    User |o..o{ WalkIn : verified_patient
     User |o..o{ Appointment : assigned_doctor
     User ||..o{ Slot : owns
     User ||..o{ SlotPlan : configures

@@ -12,7 +12,7 @@ export default function AddWalkInModal({ isOpen, onClose, onAdded }) {
   }, [isOpen]);
   const [formData, setFormData] = useState({
     name: '',
-    contactNumber: ''
+    email: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -39,7 +39,7 @@ export default function AddWalkInModal({ isOpen, onClose, onAdded }) {
       await api.createWalkIn(formData);
       onAdded();
       onClose();
-      setFormData({ name: '', contactNumber: '' });
+      setFormData({ name: '', email: '' });
     } catch (err) {
       setError(err.message || 'Failed to add walk-in');
     } finally {
@@ -106,11 +106,13 @@ export default function AddWalkInModal({ isOpen, onClose, onAdded }) {
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
             <div className="form-group">
-              <label className="form-label">Patient Name</label>
+              <label className="form-label" htmlFor="walkin-name">Patient Name</label>
               <input
+                id="walkin-name"
                 type="text"
                 className="form-input"
                 required
+                maxLength={200}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Full Name"
@@ -118,15 +120,20 @@ export default function AddWalkInModal({ isOpen, onClose, onAdded }) {
             </div>
             
             <div className="form-group" style={{ marginTop: '1rem' }}>
-              <label className="form-label">Contact Number</label>
+              <label className="form-label" htmlFor="walkin-email">Patient Email</label>
               <input
-                type="text"
+                id="walkin-email"
+                type="email"
+                autoComplete="email"
                 className="form-input"
                 required
-                value={formData.contactNumber}
-                onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-                placeholder="Phone number"
+                maxLength={254}
+                aria-describedby="walkin-account-help"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="patient@example.com"
               />
+              <p id="walkin-account-help" className="care-dialog-message" style={{ marginTop: '8px' }}>An account is optional. Use this patient's own email. If they later create an account and verify the same email, their walk-in visits will appear in their patient portal.</p>
             </div>
           </div>
           

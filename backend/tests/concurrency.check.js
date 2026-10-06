@@ -37,10 +37,11 @@ const doc = value => {
 };
 const matches = (row, filter) => row && Object.entries(filter).every(([key, value]) => {
   if (value?.$in) return value.$in.includes(row[key]);
+  if (value && Object.hasOwn(value, '$ne')) return value.$ne === null ? row[key] != null : row[key] !== value.$ne;
   if (value?.$gte) return row[key] >= value.$gte && (value.$lt ? row[key] < value.$lt : row[key] <= value.$lte);
   return value === null ? row[key] == null : String(row[key]) === String(value);
 });
-const query = value => ({ populate() { return this; }, sort(order) {
+const query = value => ({ select() { return this; }, populate() { return this; }, sort(order) {
   if (Array.isArray(value)) value.sort((a, b) => {
     for (const [key, direction] of Object.entries(order)) { if (a[key] < b[key]) return -direction; if (a[key] > b[key]) return direction; }
     return 0;
@@ -67,6 +68,11 @@ function installDoubles() {
       }); return query(doc(candidates[0])); }, then(resolve, reject) { return query(doc(candidates[0])).then(resolve, reject); } };
     });
     stub(model, 'exists', async filter => [...records.values()].some(row => matches(row, filter)));
+    stub(model, 'updateMany', async (filter, update) => {
+      let modifiedCount = 0;
+      for (const row of records.values()) if (matches(row, filter)) { apply(row, update); modifiedCount++; }
+      return { modifiedCount };
+    });
     stub(model, 'create', async values => {
       if (model === Appointment && appFailure === 'before') throw new Error('Injected appointment write failure');
       if (model === WalkIn && [...records.values()].some(row => row.queueDay === values.queueDay && row.queueNumber === values.queueNumber)) {
@@ -118,7 +124,7 @@ async function main() {
   const doctor = await User.create({ firstName: 'Test', lastName: 'Doctor', email: `${randomUUID()}@example.test`, password: 'test-password',
     role: 'Doctor', consultationDuration: 30, workingHours: [], scheduleConfigured: true });
   const patient = await User.create({ firstName: 'Test', lastName: 'Patient', email: `${randomUUID()}@example.test`, password: 'test-password', role: 'Patient' });
-  const tickets = await Promise.all(Array.from({ length: 20 }, (_, i) => walkIns.addToHoldingList({ name: `Dummy ${i}`, contactNumber:'09170000000', actorId:doctor._id })));
+  const tickets = await Promise.all(Array.from({ length: 20 }, (_, i) => walkIns.addToHoldingList({ name: `Dummy ${i}`, email: `dummy-${i}@example.test`, actorId:doctor._id })));
   assert.equal(new Set(tickets.map(row => row.queueNumber)).size, 20);
   assert(tickets.every(row => row.queueDay === '2026-10-02'));
   // Same patient competing for different slots, then different patients competing for one slot.
@@ -131,7 +137,7 @@ async function main() {
   assert.equal((await Appointment.find({ slot:c._id })).length, 1);
   // Automatic assignment ignores yesterday's patient and preserves manual assignment guards.
   setCustomTime('2026-10-01T09:00:00');
-  const old = await walkIns.addToHoldingList({ name:'Yesterday', contactNumber:'09170000000' });
+  const old = await walkIns.addToHoldingList({ name:'Yesterday', email:'yesterday@example.test' });
   assert.equal(old.queueNumber, 1);
   setCustomTime('2026-10-02T09:00:00');
   const d = await makeSlot(doctor, '13:00'), e = await makeSlot(doctor, '14:00');
@@ -230,6 +236,14 @@ async function main() {
     const repeated = await slots.generateSlotsForDoctor(doctor._id, '2026-10-06', 30, '09:00', '10:00');
     assert.equal(repeated.filter(row => row.status === 'Cancelled').length, 1, 'Recovery must preserve blocked/booked rows');
   }
+  const verifiedPatient = await User.create({ firstName: 'Verified', lastName: 'Patient', email: `${randomUUID()}@example.test`,
+    password: 'test-password', role: 'Patient', status: 'Active', emailVerifiedAt: new Date() });
+  const verifiedWalkIn = await walkIns.addToHoldingList({ name: 'Verified Patient', email: verifiedPatient.email });
+  const verifiedSlot = await makeSlot(doctor, '17:00');
+  const assignedVerified = await walkIns.assignSlotToWalkIn(verifiedWalkIn._id, verifiedSlot._id, doctor._id);
+  const linkedVisit = await Appointment.findById(assignedVerified.appointment._id || assignedVerified.appointment);
+  assert.equal(String(linkedVisit.patient), String(verifiedPatient._id));
+  assert.equal(String(linkedVisit.walkIn), String(verifiedWalkIn._id));
   assert.equal((await AssignmentRecovery.find({ state:'pending' })).length, 0);
   console.log(`Passed ${live ? 'LIVE MongoDB' : 'isolated'} concurrency checks: unique tickets, competing assignments/bookings, scoped automation, non-overlapping generation${live ? '' : ', injected failures and durable recovery'}.`);
 }
