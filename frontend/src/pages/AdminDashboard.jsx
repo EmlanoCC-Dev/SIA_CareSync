@@ -9,6 +9,7 @@ import SlotManagement from '../components/SlotManagement';
 import ReportsPage from './ReportsPage';
 import WorkspaceNavigation from '../components/WorkspaceNavigation';
 import LoadError from '../components/LoadError';
+import DatabaseBackups from '../components/DatabaseBackups';
 import { ShieldCheck, Users, Calendar, ShieldAlert, CheckCircle2, History, RefreshCw, UserPlus, Filter, Search } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -174,6 +175,7 @@ export default function AdminDashboard() {
         </button>
         <button className={`btn btn-sm ${activeTab === 'slots' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('slots')} disabled={resetting}>Slot Management</button>
         <button className={`btn btn-sm ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('reports')} disabled={resetting}>Reports</button>
+        <button className={`btn btn-sm ${activeTab === 'backups' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('backups')} disabled={resetting}>Database backups</button>
         <button className={`btn btn-sm demo-reset-nav ${activeTab === 'demo' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('demo')} disabled={resetting}>Demo reset</button>
       </WorkspaceNavigation>
 
@@ -181,6 +183,7 @@ export default function AdminDashboard() {
       {activeTab === 'audit' && <AuditLogViewer />}
       {activeTab === 'slots' && <SlotManagement />}
       {activeTab === 'reports' && <ReportsPage />}
+      {activeTab === 'backups' && <DatabaseBackups />}
 
       {activeTab === 'demo' && (
         <section className="card" aria-labelledby="demo-reset-title" style={{ padding: '24px' }}>

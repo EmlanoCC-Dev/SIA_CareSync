@@ -25,6 +25,10 @@ build/
 */build/
 uploads/
 backend/uploads/
+backend/bin/
+*.csbackup
+*.archive.gz
+*.archive.gz.*.partial
 
 # Logs
 logs/

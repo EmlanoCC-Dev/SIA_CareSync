@@ -57,6 +57,8 @@ async function request(endpoint, options = {}) {
 }
 
 export const api = {
+  getDatabaseBackups: () => request('/system/backups'),
+  startDatabaseBackup: () => request('/system/backups', { method: 'POST' }),
   // ── Auth ──
   login: (email, password) => request('/users/login', { method: 'POST', body: { email, password } }),
   register: (userData) => request('/users/register', { method: 'POST', body: userData }),

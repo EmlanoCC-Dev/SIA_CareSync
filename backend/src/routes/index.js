@@ -27,6 +27,8 @@ const systemRoutes = require('./system.routes');
 const router = Router();
 const { protect } = require('../middleware/auth');
 router.use(require('../services/demoReset.service').guardDemoReset);
+// This job-only router verifies a separate scheduler secret before accepting requests.
+router.use('/backup-jobs', require('./backupScheduler.routes'));
 
 // Exact public exceptions; every other API request requires a verified login.
 const publicRequests = new Set([

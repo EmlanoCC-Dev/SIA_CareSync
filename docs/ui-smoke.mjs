@@ -34,6 +34,8 @@ let notifications = [];
 let failNextNotificationGet = false;
 let clinicTime = '2026-10-01T01:00:00Z';
 const failedReads = new Set();
+let backupConfigured = false;
+let backupRuns = [];
 let directoryUsers = [patient, doctor].map(user => ({ ...user, status: 'Active', createdAt: '2026-01-01', contactNumber: '09171234567' }));
 const auditLogs = [
   { _id: 'audit-user', action: 'USER_CREATED', targetModel: 'User', targetId: 'created-user', changes: { user: { firstName: 'Created', lastName: 'Staff', role: 'Staff' }, creationMethod: 'Admin creation' } },
@@ -74,6 +76,11 @@ try {
         failNextMutation = false;
         return request.respond({ status: 400, contentType: 'application/json', body: JSON.stringify({ message: 'Mock action failed. Please try again.' }) });
       }
+      if (url.pathname === '/api/system/backups') {
+        const run = { _id: 'backup-1', trigger: 'manual', status: 'queued', createdAt: '2026-10-12T10:00:00Z' };
+        backupRuns = [run];
+        return request.respond({ status: 202, contentType: 'application/json', body: JSON.stringify({ success: true, data: run }) });
+      }
       if (url.pathname.match(/^\/api\/walkins\/[^/]+\/status$/)) {
         const row = walkIns.find(row => url.pathname.includes(`/${row._id}/`));
         row.status = JSON.parse(request.postData()).status;
@@ -110,15 +117,20 @@ try {
     else if (url.pathname === '/api/appointments') data = empty ? [] : appointments.filter(item => role !== 'Patient' || item.patient?._id === patient._id);
     else if (url.pathname.match(/^\/api\/appointments\/[^/]+\/versions$/)) data = { notes: [], documents: [], notesRevision: 0 };
     else if (url.pathname === '/api/system/time') data = { currentTime: clinicTime, isOpen: true, isCustom: false, openTime: '08:30', closeTime: '17:00' };
+    else if (url.pathname === '/api/system/backups') data = { configured: backupConfigured, missing: backupConfigured ? [] : ['Connect the clinic Gmail account to Google Drive.'],
+      account: 'clinic@example.test', schedulerConfigured: false, schedule: { time: '18:00', timezone: 'Asia/Manila' }, runs: backupRuns };
     else if (url.pathname === '/api/slots') data = [{ _id: 'slot-1', doctor, date: '2026-10-01', startTime: '10:00', endTime: '10:30', status: 'Available' }];
     else if (url.pathname === '/api/walkins') data = walkIns.filter(row => !url.searchParams.get('status') || row.status === url.searchParams.get('status'));
     else if (url.pathname === '/api/walkins/now-serving') data = { nowServing: empty ? null : { queueNumber: 'A-7', status: 'In Progress' }, serving: empty ? [] : [{ queueNumber: 'A-7', status: 'In Progress' }, { queueNumber: 11, status: 'In Progress' }], upcoming: empty ? [] : [{ queueNumber: 'A-8', status: 'Checked In' }, { queueNumber: 12, status: 'Waiting' }] };
     return request.respond({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data, date: '2026-10-01' }) });
   });
+  const openMenu = async () => {
+    await page.click('.mobile-menu-trigger');
+    await page.waitForSelector('.navbar-menu:modal', { visible: true });
+  };
   const click = async (selector, text) => {
     if (page.viewport().width <= 768 && /dashboard-tabs|navbar-tools/.test(selector)) {
-      await page.click('.mobile-menu-trigger');
-      await page.waitForSelector('.navbar-menu[open]', { visible: true });
+      await openMenu();
     }
     const found = await page.evaluate(({ selector, text }) => {
       const element = [...document.querySelectorAll(selector)].find(item => item.textContent.includes(text));
@@ -243,7 +255,7 @@ try {
       if (width === 390) {
         assert(await page.$eval('.navbar', node => node.getBoundingClientRect().height <= 90), `${role}: mobile header is too tall`);
         assert.equal(await page.$eval('.navbar-menu', node => node.open), false);
-        await page.click('.mobile-menu-trigger');
+        await openMenu();
         await page.waitForSelector('.navbar-menu:modal');
         assert.equal(await page.$eval('.mobile-menu-trigger', node => node.getAttribute('aria-expanded')), 'true');
         assert.equal(await page.evaluate(() => document.body.style.overflow), 'hidden');
@@ -256,22 +268,22 @@ try {
         await page.waitForSelector('.navbar-menu', { hidden: true });
         assert(await page.$eval('.mobile-menu-trigger', node => node === document.activeElement), 'Menu must restore focus');
         assert.notEqual(await page.evaluate(() => document.body.style.overflow), 'hidden');
-        await page.click('.mobile-menu-trigger');
+        await openMenu();
         await page.click('.dashboard-tabs .btn-primary');
         await page.waitForSelector('.navbar-menu', { hidden: true });
-        await page.click('.mobile-menu-trigger');
+        await openMenu();
         await page.click('[aria-label="Close menu"]');
         await page.waitForSelector('.navbar-menu', { hidden: true });
-        await page.click('.mobile-menu-trigger');
+        await openMenu();
         await page.mouse.click(8, 200);
         await page.waitForSelector('.navbar-menu', { hidden: true });
-        await page.click('.mobile-menu-trigger');
+        await openMenu();
         await page.setViewport({ width: 1440, height: 960 });
         await page.waitForFunction(() => !document.querySelector('.navbar-menu').matches(':modal'));
         assert.notEqual(await page.evaluate(() => document.body.style.overflow), 'hidden');
         await page.setViewport({ width, height: 960 });
         await page.waitForSelector('.navbar-menu', { hidden: true });
-        await page.click('.mobile-menu-trigger');
+        await openMenu();
         await page.click('.navbar-user button');
         await page.waitForSelector('.password-dialog:modal');
         assert.equal(await page.$eval('.navbar-menu', node => node.open), false, 'Password form must replace the menu');
@@ -284,7 +296,7 @@ try {
           await page.setViewport(viewport);
           await check(`${role.toLowerCase()}-navigation-${viewport.width}x${viewport.height}`);
           if (viewport.width <= 768) {
-            await page.click('.mobile-menu-trigger');
+            await openMenu();
             await check(`${role.toLowerCase()}-menu-${viewport.width}x${viewport.height}`);
             await page.keyboard.press('Escape');
             await page.waitForSelector('.navbar-menu', { hidden: true });
@@ -372,7 +384,7 @@ try {
       await page.waitForSelector('.notification-dialog', { hidden: true });
       failedReads.add('/api/system/time');
       clinicTime = '2026-09-30T17:00:00Z'; // October 1, 01:00 in Manila; UTC is still September 30.
-      if (width <= 768) await page.click('.mobile-menu-trigger');
+      if (width <= 768) await openMenu();
       await page.click('button[title="Clinic clock and operating hours"]');
       await page.waitForSelector('.system-time-modal .load-error');
       assert(!(await page.$eval('.system-time-modal', element => element.textContent)).includes('CURRENT SYSTEM TIME'), 'Failed clock load must not show a fabricated current status');
@@ -386,7 +398,7 @@ try {
       await page.keyboard.press('Escape');
       await page.waitForSelector('.system-time-modal', { hidden: true });
       assert.equal(mutations.length, beforeClockDismissal, 'Escape must not change clinic time');
-      if (width <= 768) await page.click('.mobile-menu-trigger');
+      if (width <= 768) await openMenu();
       await page.click('button[title="Clinic clock and operating hours"]');
       await page.waitForSelector('.system-time-modal[open]');
       await page.waitForSelector('.system-time-modal');
@@ -680,8 +692,39 @@ try {
         await check(`reports-empty-${role.toLowerCase()}-${width}`);
         empty = false;
       }
+      if (role === 'Admin') {
+        backupConfigured = false; backupRuns = [];
+        await click('.dashboard-tabs button', 'Database backups');
+        await page.waitForSelector('.database-backups .alert-warning');
+        assert(await page.$eval('.backup-action button', button => button.disabled), 'Incomplete backup setup must block requests');
+        await check(`backups-setup-${width}`);
+        failedReads.add('/api/system/backups');
+        await click('.database-backups .card-header button', 'Refresh');
+        await page.waitForSelector('.database-backups [role="alert"]');
+        backupConfigured = true; failedReads.clear();
+        await click('.database-backups [role="alert"] button', 'Retry');
+        await page.waitForFunction(() => !document.querySelector('.backup-action button').disabled);
+        failNextMutation = true;
+        await page.click('.backup-action button');
+        await page.waitForSelector('.database-backups [role="alert"]');
+        assert.equal(backupRuns.length, 0, 'A failed backup request must not invent a job');
+        await click('.database-backups [role="alert"] button', 'Retry');
+        await page.waitForFunction(() => !document.querySelector('.backup-action button').disabled);
+        await page.click('.backup-action button');
+        await page.waitForSelector('.backup-run-list [role="status"]');
+        assert(await page.$eval('.backup-action button', button => button.disabled), 'Running backups must prevent duplicate requests');
+        assert.equal(await page.$('.backup-run-list a'), null, 'A queued job must not claim a verified Drive file');
+        await check(`backups-running-${width}`);
+        backupRuns[0] = { ...backupRuns[0], status: 'completed', filename: 'CareSync-fixture.archive.gz.csbackup', size: 1048576,
+          sha256: 'f'.repeat(64), driveFileId: 'verified-private-backup', message: 'Encrypted database backup verified in Google Drive.' };
+        await click('.database-backups .card-header button', 'Refresh');
+        await page.waitForSelector('.backup-run-list a');
+        assert.equal(await page.$eval('.backup-run-list a', link => link.href), 'https://drive.google.com/file/d/verified-private-backup/view');
+        await page.click('.backup-run-list summary');
+        await check(`backups-completed-${width}`);
+      }
       for (const dismiss of ['Escape', 'Stay signed in']) {
-        if (width <= 768) await page.click('.mobile-menu-trigger');
+        if (width <= 768) await openMenu();
         await page.click('button[title="Sign Out"]');
         await page.waitForSelector('.action-dialog[open]');
         assert(await page.$eval('.action-dialog', dialog => dialog.textContent.includes('Are you sure you want to sign out?')));
@@ -692,7 +735,7 @@ try {
         assert.equal(await page.evaluate(() => localStorage.getItem('caresync_token')), 'ui-smoke-mock', `${role}: dismissal signed out`);
         assert(await page.$('.dashboard-page'), `${role}: dismissal left dashboard`);
       }
-      if (width <= 768) await page.click('.mobile-menu-trigger');
+      if (width <= 768) await openMenu();
       await page.click('button[title="Sign Out"]');
       await page.waitForSelector('.action-dialog[open]');
       await check(`sign-out-${role.toLowerCase()}-${width}`);

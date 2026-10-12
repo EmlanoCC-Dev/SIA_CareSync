@@ -11,6 +11,16 @@ const { parseDateOnly } = require('../utils/timeHelper');
 const { clearDemoData } = require('../services/demoReset.service');
 
 const router = Router();
+const { getBackupStatus, startBackup } = require('../services/databaseBackup.service');
+
+router.get('/backups', authorize('Admin'), async (_req, res, next) => {
+  try { res.json({ success: true, data: await getBackupStatus() }); }
+  catch (error) { next(error); }
+});
+router.post('/backups', authorize('Admin'), async (req, res, next) => {
+  try { res.status(202).json({ success: true, data: await startBackup('manual', req.user._id) }); }
+  catch (error) { next(error); }
+});
 
 /**
  * GET /api/system/time

@@ -1,0 +1,46 @@
+name: Daily database backup
+
+on:
+  schedule:
+    - cron: '0 10 * * *' # 6 PM Asia/Manila, one hour after clinic closing.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: caresync-database-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    if: ${{ vars.BACKUP_API_URL != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BACKUP_API_URL: ${{ vars.BACKUP_API_URL }}
+      BACKUP_SCHEDULER_TOKEN: ${{ secrets.BACKUP_SCHEDULER_TOKEN }}
+    steps:
+      - name: Request and verify the daily backup
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { setTimeout as sleep } from 'node:timers/promises';
+          const base = new URL(process.env.BACKUP_API_URL);
+          assert.equal(base.protocol, 'https:');
+          assert(process.env.BACKUP_SCHEDULER_TOKEN?.length >= 32, 'Configure BACKUP_SCHEDULER_TOKEN');
+          const headers = { 'X-Backup-Token': process.env.BACKUP_SCHEDULER_TOKEN };
+          const request = async (path, method = 'GET') => {
+            const response = await fetch(new URL(path, base), { method, headers, redirect: 'error', signal: AbortSignal.timeout(120000) });
+            const body = await response.json();
+            assert(response.ok && body.success, body.message || 'Backup request failed');
+            return body.data;
+          };
+          let run = await request('/api/backup-jobs', 'POST');
+          for (let attempt = 0; attempt < 100 && !['completed', 'failed'].includes(run.status); attempt++) {
+            await sleep(10000);
+            run = await request(`/api/backup-jobs/${encodeURIComponent(run._id)}`);
+          }
+          assert.equal(run.status, 'completed', run.message || 'Backup did not finish before the polling deadline');
+          console.log('Daily encrypted backup confirmed in Google Drive.');
+          NODE

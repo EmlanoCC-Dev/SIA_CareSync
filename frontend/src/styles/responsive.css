@@ -20,6 +20,8 @@
   .cd-main { grid-template-columns: 1fr; } .cd-panel { min-height: 360px; } .care-path { grid-template-columns: 1fr; gap: 20px; }
 }
 @media (max-width: 640px) {
+  .backup-content { padding: 0 16px 16px; }
+  .backup-summary { grid-template-columns: 1fr; }
   .navbar { padding: 16px; } .navbar-inner { gap: 12px; } .navbar-tools { width: 100%; gap: 8px; } .navbar-user { margin-left: auto; } .navbar .btn { font-size: 11px; }
   .main-content { padding: 24px 16px; } .page-header { align-items: flex-start; gap: 16px; } .page-header h1 { font-size: 25px; } .page-header > .btn { width: 100%; }
   .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } .stat-card { padding: 16px; gap: 12px; flex-direction: column; align-items: flex-start; min-height: 130px; } .stat-val { font-size: 28px; } .stat-label { font-size: 11px; }

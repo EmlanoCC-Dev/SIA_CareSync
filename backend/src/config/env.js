@@ -28,6 +28,11 @@ const env = {
   UPLOAD_STORAGE: process.env.UPLOAD_STORAGE || (process.env.NODE_ENV === 'production' ? 'gridfs' : 'local'),
   CORS_ORIGINS: (process.env.CORS_ORIGINS || '').split(',').map(origin => origin.trim()).filter(Boolean),
   TRUST_PROXY: Number(process.env.TRUST_PROXY || 0),
+  BACKUP_ENABLED: process.env.BACKUP_ENABLED === 'true',
+  DRIVE_REFRESH_TOKEN: (process.env.DRIVE_REFRESH_TOKEN || '').trim(),
+  BACKUP_ENCRYPTION_KEY: (process.env.BACKUP_ENCRYPTION_KEY || '').trim(),
+  BACKUP_SCHEDULER_TOKEN: (process.env.BACKUP_SCHEDULER_TOKEN || '').trim(),
+  MONGODUMP_PATH: process.env.MONGODUMP_PATH || require('node:path').resolve(__dirname, '../../bin', process.platform === 'win32' ? 'mongodump.exe' : 'mongodump'),
 };
 
 if (process.env.EMAIL_ENABLED && !['true', 'false'].includes(process.env.EMAIL_ENABLED)) {

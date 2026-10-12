@@ -100,6 +100,20 @@
 .notification-pagination { margin-top: 20px; }
 @media (max-width: 640px) { .notification-dialog .modal-header, .notification-dialog .modal-body { padding: 16px; } }
 .workspace-note { color: var(--text-muted); font-size: 13px; margin: 8px 0 16px; }
+.backup-content { padding: 0 24px 24px; }
+.backup-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 24px 0; }
+.backup-summary > div { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border-radius: var(--radius-md); background: var(--bg-muted); font-size: 13px; }
+.backup-summary svg { color: var(--primary); }
+.backup-summary p, .backup-action span, .backup-run-list p { color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
+.backup-action { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; margin: 24px 0; }
+.backup-run-list { list-style: none; display: grid; gap: 12px; margin-top: 16px; }
+.backup-run-list li { padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-md); }
+.backup-run-heading { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-size: 13px; }
+.backup-run-heading time { display: block; color: var(--text-muted); font-size: 12px; margin-top: 4px; }
+.backup-run-list p { margin: 12px 0; }
+.backup-run-list details { margin-top: 12px; font-size: 12px; }
+.backup-run-list summary { cursor: pointer; }
+.database-backups .alert-warning ul { padding-left: 20px; margin-top: 8px; }
 .assignment-dialog { position: fixed; inset: 0; margin: auto; padding: 0; width: min(600px, 92vw); max-height: 90dvh; border: 1px solid var(--border); }
 .assignment-dialog::backdrop { background: rgb(24 58 59 / 40%); }
 .assignment-dialog .form-label { display: block; margin: 16px 0 8px; }

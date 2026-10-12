@@ -5,7 +5,7 @@ services:
     runtime: node
     plan: free
     rootDir: backend
-    buildCommand: npm ci --omit=dev
+    buildCommand: npm ci --omit=dev && node scripts/install-mongodb-tools.js
     startCommand: node server.js
     healthCheckPath: /health
     envVars:
@@ -38,4 +38,12 @@ services:
       - key: GMAIL_CLIENT_SECRET
         sync: false
       - key: GMAIL_REFRESH_TOKEN
+        sync: false
+      - key: BACKUP_ENABLED
+        value: "false"
+      - key: DRIVE_REFRESH_TOKEN
+        sync: false
+      - key: BACKUP_ENCRYPTION_KEY
+        sync: false
+      - key: BACKUP_SCHEDULER_TOKEN
         sync: false
