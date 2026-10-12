@@ -36,6 +36,7 @@ let clinicTime = '2026-10-01T01:00:00Z';
 const failedReads = new Set();
 let backupConfigured = false;
 let backupRuns = [];
+let backupTime = '18:00';
 let directoryUsers = [patient, doctor].map(user => ({ ...user, status: 'Active', createdAt: '2026-01-01', contactNumber: '09171234567' }));
 const auditLogs = [
   { _id: 'audit-user', action: 'USER_CREATED', targetModel: 'User', targetId: 'created-user', changes: { user: { firstName: 'Created', lastName: 'Staff', role: 'Staff' }, creationMethod: 'Admin creation' } },
@@ -75,6 +76,10 @@ try {
       if (failNextMutation) {
         failNextMutation = false;
         return request.respond({ status: 400, contentType: 'application/json', body: JSON.stringify({ message: 'Mock action failed. Please try again.' }) });
+      }
+      if (url.pathname === '/api/system/backups/schedule') {
+        backupTime = JSON.parse(request.postData()).time;
+        return request.respond({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: { time: backupTime, timezone: 'Asia/Manila', checkIntervalMinutes: 15 } }) });
       }
       if (url.pathname === '/api/system/backups') {
         const run = { _id: 'backup-1', trigger: 'manual', status: 'queued', createdAt: '2026-10-12T10:00:00Z' };
@@ -118,7 +123,7 @@ try {
     else if (url.pathname.match(/^\/api\/appointments\/[^/]+\/versions$/)) data = { notes: [], documents: [], notesRevision: 0 };
     else if (url.pathname === '/api/system/time') data = { currentTime: clinicTime, isOpen: true, isCustom: false, openTime: '08:30', closeTime: '17:00' };
     else if (url.pathname === '/api/system/backups') data = { configured: backupConfigured, missing: backupConfigured ? [] : ['Connect the clinic Gmail account to Google Drive.'],
-      account: 'clinic@example.test', schedulerConfigured: false, schedule: { time: '18:00', timezone: 'Asia/Manila' }, runs: backupRuns };
+      account: 'clinic@example.test', schedulerConfigured: false, schedule: { time: backupTime, timezone: 'Asia/Manila', checkIntervalMinutes: 15 }, runs: backupRuns };
     else if (url.pathname === '/api/slots') data = [{ _id: 'slot-1', doctor, date: '2026-10-01', startTime: '10:00', endTime: '10:30', status: 'Available' }];
     else if (url.pathname === '/api/walkins') data = walkIns.filter(row => !url.searchParams.get('status') || row.status === url.searchParams.get('status'));
     else if (url.pathname === '/api/walkins/now-serving') data = { nowServing: empty ? null : { queueNumber: 'A-7', status: 'In Progress' }, serving: empty ? [] : [{ queueNumber: 'A-7', status: 'In Progress' }, { queueNumber: 11, status: 'In Progress' }], upcoming: empty ? [] : [{ queueNumber: 'A-8', status: 'Checked In' }, { queueNumber: 12, status: 'Waiting' }] };
@@ -693,11 +698,26 @@ try {
         empty = false;
       }
       if (role === 'Admin') {
-        backupConfigured = false; backupRuns = [];
+        backupConfigured = false; backupRuns = []; backupTime = '18:00';
         await click('.dashboard-tabs button', 'Database backups');
         await page.waitForSelector('.database-backups .alert-warning');
         assert(await page.$eval('.backup-action button', button => button.disabled), 'Incomplete backup setup must block requests');
         await check(`backups-setup-${width}`);
+        await page.$eval('#backup-schedule-time', input => {
+          Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '19:30');
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        failNextMutation = true;
+        await page.click('.backup-schedule-form button');
+        await page.waitForSelector('.database-backups [role="alert"]');
+        assert.equal(backupTime, '18:00', 'A failed schedule update must retain the saved time');
+        await page.click('.backup-schedule-form button');
+        await page.waitForFunction(() => document.querySelector('.backup-summary').textContent.includes('7:30'));
+        assert.equal(backupTime, '19:30');
+        await check(`backups-schedule-saved-${width}`);
+        await click('.database-backups .card-header button', 'Refresh');
+        await page.waitForFunction(() => document.querySelector('#backup-schedule-time').value === '19:30');
         failedReads.add('/api/system/backups');
         await click('.database-backups .card-header button', 'Refresh');
         await page.waitForSelector('.database-backups [role="alert"]');

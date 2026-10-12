@@ -23,6 +23,7 @@ import {
   PlayCircle,
   FileText,
   Filter,
+  BarChart3,
 } from 'lucide-react';
 
 export default function DoctorDashboard() {
@@ -180,7 +181,7 @@ export default function DoctorDashboard() {
         >
           <Users size={16} /> Walk-in Queue
         </button>
-        <button className={`btn ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('reports')}>Reports</button>
+        <button className={`btn ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('reports')}><BarChart3 size={16} aria-hidden="true" /><span>Reports</span></button>
       </WorkspaceNavigation>
 
       {activeTab === 'appointments' && (

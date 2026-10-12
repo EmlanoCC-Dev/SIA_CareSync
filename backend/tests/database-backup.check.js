@@ -22,6 +22,7 @@ const env = require('../src/config/env');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const Backup = require('../src/models/DatabaseBackup');
+const BackupSchedule = require('../src/models/BackupSchedule');
 const User = require('../src/models/User');
 const emitter = require('../src/events/emitter');
 const { setCustomTime } = require('../src/config/systemTime');
@@ -30,6 +31,7 @@ const originals = [];
 const stub = (object, key, value) => { originals.push([object, key, object[key]]); object[key] = value; };
 const id = number => number.toString(16).padStart(24, '0');
 const rows = [];
+let savedTime;
 const archiveBytes = require('node:zlib').gzipSync(Buffer.from('BSON fixture, indexes, medicalFiles.files, medicalFiles.chunks, retained history'));
 let exportCount = 0, holdExport = false, finishExport, exportStarted, uploaded, badAccount = false, badScope = false, corruptUpload = false, badExport = false;
 let uploadTarget = 'https://www.googleapis.com/upload/drive/v3/files?upload_id=fixture';
@@ -64,6 +66,11 @@ async function main() {
   stub(User, 'findById', async key => ({ _id: String(key), role: String(key) === id(1) ? 'Admin' : 'Patient', status: 'Active' }));
   stub(Backup, 'find', () => query([...rows].reverse()));
   stub(Backup, 'findOne', filter => { const result = query([]); result.lean = async () => structuredClone(rows.find(row => matches(row, filter)) || null); return result; });
+  stub(BackupSchedule, 'findById', key => { assert.equal(key, 'database-backup'); return { lean: async () => savedTime ? { time: savedTime } : null }; });
+  stub(BackupSchedule, 'findByIdAndUpdate', async (key, changes, options) => {
+    assert.equal(key, 'database-backup'); assert(options.upsert && options.runValidators);
+    savedTime = changes.$set.time;
+  });
   stub(Backup, 'create', async fields => {
     if (rows.some(row => row.active || (fields.scheduleDate && row.scheduleDate === fields.scheduleDate))) throw Object.assign(new Error('duplicate'), { code: 11000 });
     const row = { ...fields, _id: id(rows.length + 10), active: true, status: 'queued', createdAt: new Date() };
@@ -150,13 +157,35 @@ async function main() {
   server = app.listen(0, '127.0.0.1');
   await new Promise(resolve => server.once('listening', resolve));
   const base = `http://127.0.0.1:${server.address().port}/api`;
-  const call = async (route, method = 'GET', role = 'Admin', scheduler = false) => originalFetch(`${base}${route}`, {
-    method, headers: scheduler ? { 'X-Backup-Token': env.BACKUP_SCHEDULER_TOKEN } : role ? { Authorization: `Bearer ${jwt.sign({ id: role === 'Admin' ? id(1) : id(2) }, env.JWT_SECRET)}` } : {},
+  const call = async (route, method = 'GET', role = 'Admin', scheduler = false, body) => originalFetch(`${base}${route}`, {
+    method, headers: { ...(scheduler ? { 'X-Backup-Token': env.BACKUP_SCHEDULER_TOKEN } : role ? { Authorization: `Bearer ${jwt.sign({ id: role === 'Admin' ? id(1) : id(2) }, env.JWT_SECRET)}` } : {}), ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}) },
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   });
   assert.equal((await call('/system/backups', 'GET', null)).status, 401);
   assert.equal((await call('/system/backups', 'GET', 'Patient')).status, 403);
   assert.equal((await call('/system/backups', 'POST', 'Patient')).status, 403);
   assert.equal((await call('/backup-jobs', 'POST')).status, 401);
+  assert.equal((await call('/backup-jobs')).status, 401);
+  assert.equal((await call('/system/backups/schedule', 'PATCH', null, false, { time: '19:30' })).status, 401);
+  assert.equal((await call('/system/backups/schedule', 'PATCH', 'Patient', false, { time: '19:30' })).status, 403);
+  assert.equal((await (await call('/system/backups')).json()).data.schedule.time, '18:00', 'Existing installations keep the default schedule');
+  for (const time of ['24:00', '18:60', '6:00', '18:00:00', '', 1800, ['18:00'], { hour: 18 }]) {
+    assert.equal((await call('/system/backups/schedule', 'PATCH', 'Admin', false, { time })).status, 400);
+  }
+  assert.equal(savedTime, undefined, 'Invalid updates must preserve the schedule');
+  const changed = await call('/system/backups/schedule', 'PATCH', 'Admin', false, { time: '19:30' });
+  assert.equal(changed.status, 200);
+  assert.equal((await changed.json()).data.timezone, 'Asia/Manila');
+  assert.equal((await (await call('/system/backups')).json()).data.schedule.time, '19:30');
+  realNow = '2026-10-12T11:29:00Z';
+  assert.equal((await (await call('/backup-jobs', 'GET', null, true)).json()).data.due, false);
+  realNow = '2026-10-12T11:30:00Z';
+  assert.equal((await (await call('/backup-jobs', 'GET', null, true)).json()).data.due, true, 'A saved time applies without restarting the API');
+  await call('/system/backups/schedule', 'PATCH', 'Admin', false, { time: '00:00' });
+  realNow = '2026-10-11T16:00:00Z';
+  assert.equal((await (await call('/backup-jobs', 'GET', null, true)).json()).data.due, true, 'Midnight uses the Manila calendar day');
+  await call('/system/backups/schedule', 'PATCH', 'Admin', false, { time: '18:00' });
+  realNow = '2026-10-12T09:00:00Z';
   setCustomTime('2099-01-01T23:00:00');
   assert.equal((await call('/backup-jobs', 'POST', null, true)).status, 409, 'Simulation must not trigger the real daily job early');
   holdExport = true;
@@ -208,6 +237,9 @@ async function main() {
   const dailyId = (await daily.json()).data._id;
   await waitFor(() => rows.at(-1).status === 'completed');
   const count = rows.length;
+  assert.equal((await (await call('/backup-jobs', 'GET', null, true)).json()).data.due, false, 'A completed daily backup must suppress later scheduler checks');
+  await call('/system/backups/schedule', 'PATCH', 'Admin', false, { time: '17:30' });
+  assert.equal((await (await call('/backup-jobs', 'GET', null, true)).json()).data.due, false, 'Changing the time must not create a second automatic backup today');
   assert.equal((await (await call('/backup-jobs', 'POST', null, true)).json()).data._id, dailyId);
   assert.equal(rows.length, count, 'Repeated cron requests must not duplicate a completed daily backup');
   assert.equal((await call(`/backup-jobs/${dailyId}`, 'GET', null, true)).status, 200);
@@ -222,6 +254,8 @@ async function main() {
   await service.recoverInterruptedBackups();
   assert.equal(rows.at(-1).status, 'failed');
   assert.equal(rows.at(-1).scheduleDate, undefined);
+  realNow = '2026-10-13T09:30:00Z';
+  assert.equal((await (await call('/backup-jobs', 'GET', null, true)).json()).data.due, true, 'The saved time is used for the next Manila day');
   assert.equal(emitter.pending.size, 0);
   console.log('Passed backup authorization, real-time scheduling, maintenance, encrypted dump/restore bytes, tamper rejection, Drive account/scope/upload checks, secret protection, cleanup, and interrupted-job recovery. No live database or Google account used.');
 }

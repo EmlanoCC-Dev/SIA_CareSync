@@ -55,6 +55,7 @@ async function start() {
     require('./src/models/AppointmentComment').init(),
     require('./src/models/EmailOtp').init(),
     require('./src/models/DatabaseBackup').init(),
+    require('./src/models/BackupSchedule').init(),
   ]);
   await require('./src/services/databaseBackup.service').recoverInterruptedBackups();
   if (await require('./src/models/AssignmentRecovery').countDocuments({ state: 'pending' })) {

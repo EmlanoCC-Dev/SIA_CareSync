@@ -5,12 +5,22 @@ const { spawn } = require('node:child_process');
 const mongoose = require('mongoose');
 const env = require('../config/env');
 const Backup = require('../models/DatabaseBackup');
+const BackupSchedule = require('../models/BackupSchedule');
 const { encryptionKey, encryptArchive, fileChecksums } = require('../utils/backupArchive');
 const { withDatabaseSnapshot } = require('./demoReset.service');
 const { prepareDrive, uploadBackup } = require('./driveBackup.service');
 
 const fail = (message, statusCode = 503) => Object.assign(new Error(message), { statusCode });
-const schedule = { time: '18:00', timezone: 'Asia/Manila', cronUtc: '0 10 * * *' };
+async function getSchedule() {
+  const saved = await BackupSchedule.findById('database-backup').lean();
+  return { time: saved?.time || '18:00', timezone: 'Asia/Manila', checkIntervalMinutes: 15 };
+}
+
+async function updateSchedule(time) {
+  if (typeof time !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) throw fail('Provide a valid daily backup time in HH:mm format.', 400);
+  await BackupSchedule.findByIdAndUpdate('database-backup', { $set: { time } }, { upsert: true, new: true, runValidators: true });
+  return getSchedule();
+}
 async function configuration() {
   const missing = [];
   if (!env.BACKUP_ENABLED) missing.push('Database backups are not enabled.');
@@ -19,7 +29,7 @@ async function configuration() {
   if (env.UPLOAD_STORAGE !== 'gridfs') missing.push('Move uploaded documents into database storage before backing up.');
   try { await fs.access(env.MONGODUMP_PATH, require('node:fs').constants.X_OK); } catch { missing.push('Install the database backup tool on the server.'); }
   return { configured: missing.length === 0, missing, account: env.SMTP_USER || null,
-    schedule, schedulerConfigured: env.BACKUP_SCHEDULER_TOKEN.length >= 32 };
+    schedule: await getSchedule(), schedulerConfigured: env.BACKUP_SCHEDULER_TOKEN.length >= 32 };
 }
 
 async function getBackupStatus() {
@@ -27,18 +37,30 @@ async function getBackupStatus() {
     .select('trigger status filename database createdAt finishedAt size sha256 driveFileId message').lean() };
 }
 
-function realManilaDay() {
+function realManilaClock() {
   const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila',
-    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).map(part => [part.type, part.value]));
-  if (Number(parts.hour) < 18) throw fail('The scheduled backup runs after 6 PM Manila time. Use Back up now for an earlier backup.', 409);
-  return `${parts.year}-${parts.month}-${parts.day}`;
+    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).map(part => [part.type, part.value]));
+  return { day: `${parts.year}-${parts.month}-${parts.day}`, time: `${parts.hour}:${parts.minute}` };
+}
+
+async function getScheduledBackupStatus() {
+  const config = await configuration();
+  if (!config.configured) return { due: false, schedule: config.schedule, reason: 'Backup setup is incomplete.' };
+  const now = realManilaClock();
+  if (now.time < config.schedule.time) return { due: false, schedule: config.schedule, reason: 'The saved backup time has not arrived.' };
+  const existing = await Backup.findOne({ scheduleDate: now.day }).lean();
+  if (existing) return { due: false, schedule: config.schedule, reason: 'The automatic backup for today has already been requested.' };
+  if (await Backup.findOne({ active: true }).lean()) return { due: false, schedule: config.schedule, reason: 'Another backup is running.' };
+  return { due: true, schedule: config.schedule };
 }
 
 async function startBackup(trigger, requestedBy) {
   const config = await configuration();
   if (!config.configured) throw fail(config.missing.join(' '));
   if (mongoose.connection.readyState !== 1 || !mongoose.connection.name) throw fail('The database is unavailable. Retry the backup shortly.');
-  const scheduleDate = trigger === 'scheduled' ? realManilaDay() : undefined;
+  const now = realManilaClock();
+  if (trigger === 'scheduled' && now.time < config.schedule.time) throw fail(`The automatic backup is scheduled for ${config.schedule.time} Manila time. Use Back up now for an earlier backup.`, 409);
+  const scheduleDate = trigger === 'scheduled' ? now.day : undefined;
   if (scheduleDate) {
     const existing = await Backup.findOne({ scheduleDate }).lean();
     if (existing) return existing;
@@ -109,4 +131,4 @@ async function recoverInterruptedBackups() {
     message: 'The server restarted before this backup was confirmed. Check Drive before retrying.' }, $unset: { scheduleDate: '' } });
 }
 
-module.exports = { getBackupStatus, startBackup, recoverInterruptedBackups };
+module.exports = { getBackupStatus, startBackup, recoverInterruptedBackups, updateSchedule, getScheduledBackupStatus };

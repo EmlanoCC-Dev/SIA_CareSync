@@ -2,7 +2,7 @@ const { Router } = require('express');
 const { timingSafeEqual } = require('node:crypto');
 const env = require('../config/env');
 const Backup = require('../models/DatabaseBackup');
-const { startBackup } = require('../services/databaseBackup.service');
+const { startBackup, getScheduledBackupStatus } = require('../services/databaseBackup.service');
 const router = Router();
 
 router.use((req, res, next) => {
@@ -12,6 +12,10 @@ router.use((req, res, next) => {
   if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) return res.status(401).json({ success: false, message: 'Backup scheduler authentication failed.' });
   res.set('Cache-Control', 'no-store');
   next();
+});
+router.get('/', async (_req, res, next) => {
+  try { res.json({ success: true, data: await getScheduledBackupStatus() }); }
+  catch (error) { next(error); }
 });
 router.post('/', async (_req, res, next) => {
   try { res.status(202).json({ success: true, data: await startBackup('scheduled') }); }

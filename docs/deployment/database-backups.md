@@ -1,6 +1,6 @@
 # Database backups to the clinic Gmail account's Google Drive
 
-The Admin workspace has **Database backups**, a manual **Back up now** action, and recent backup results. The daily job requests a backup at **6 PM Asia/Manila**, one hour after the current 5 PM closing time. This uses the real clock, not the demonstration clock.
+The Admin workspace has **Database backups**, a manual **Back up now** action, recent backup results, and an **Automatic backup time** setting. The default is **6 PM Asia/Manila**, one hour after the current 5 PM closing time. Admins can save a new daily time without redeploying or restarting. This uses the real clock, not the demonstration clock.
 
 The feature stays unavailable until its server settings and Google consent are configured. An SMTP app password cannot authorize Google Drive. The existing Gmail sender, Google project, and OAuth client can be reused; **Drive uses its own refresh token**, leaving `GMAIL_REFRESH_TOKEN` in place for email.
 
@@ -57,8 +57,10 @@ Render Free sleeps while idle, so an in-process timer would miss backups. The wo
 1. Publish the workflow to the GitHub repository's **default branch** and enable GitHub Actions.
 2. Under **Settings → Secrets and variables → Actions → Variables**, set `BACKUP_API_URL` to `https://caresync-api-uhvz.onrender.com`.
 3. Under **Secrets**, set `BACKUP_SCHEDULER_TOKEN` to the **same value stored in Render**. The workflow does not need the database URI, Drive token, or encryption key.
-4. Confirm that **Daily database backup** appears under Actions. Its cron expression is `0 10 * * *`: 10 AM UTC = 6 PM Manila. Manual workflow dispatch is available after 6 PM; use the Admin button for daytime testing.
-5. The workflow polls the recorded job until it completes or fails. A completed scheduled backup is reused for repeated requests on the same Manila date. Failed/interrupted jobs can be retried. Check Actions failure notices and the Admin backup history.
+4. Confirm that **Daily database backup** appears under Actions. Its cron expression is `*/15 * * * *`: it checks the saved database schedule every 15 minutes. These checks do not start a backup until the selected Manila time arrives. Manual workflow dispatch also checks whether a backup is due; use **Back up now** to bypass the daily schedule for manual backups.
+5. The workflow polls an accepted job until it completes or fails. A completed scheduled backup is reused for repeated requests on the same Manila date. Failed/interrupted jobs can be retried. Check Actions failure notices and the Admin backup history.
+
+Change the time under **Admin → Database backups → Automatic backup time → Save backup time**. The server stores it in the `BackupSchedule` collection and the next scheduler check reads the saved value. No redeployment is needed. A time between check intervals starts on the next check, subject to GitHub delays. If today's automatic backup already completed, a new time applies on the next Manila date; it does not create a second automatic backup today. Moving the time earlier than the current clock makes an uncompleted daily backup due on the next check. Keep the external workflow enabled; an API timer alone is insufficient on sleeping hosting.
 
 GitHub schedules can be delayed or dropped during high load; this is not an exact-time guarantee. Public-repository schedules are disabled after 60 days without repository activity. Keep the workflow enabled and monitor missing daily backups. [GitHub scheduling rules](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule).
 

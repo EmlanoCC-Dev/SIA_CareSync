@@ -17,7 +17,7 @@ let activeRequests = 0;
 function guardDemoReset(req, res, next) {
   if (resetting) return res.status(503).json({ success: false, message: 'Demo data is being cleared. Please try again shortly.' });
   // Backup progress reads remain available while clinic writers are paused.
-  if (req.method === 'GET' && (/^\/system\/backups\/?$/.test(req.path) || /^\/backup-jobs\/[a-f\d]{24}$/i.test(req.path))) return next();
+  if (req.method === 'GET' && (/^\/system\/backups\/?$/.test(req.path) || /^\/backup-jobs(?:\/[a-f\d]{24})?\/?$/i.test(req.path))) return next();
   if (snapshotting) return res.status(503).json({ success: false, message: 'A database backup is capturing clinic data. Please try again shortly.' });
   activeRequests++;
   let finished = false;

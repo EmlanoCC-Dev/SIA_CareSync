@@ -10,7 +10,7 @@ import SlotManagement from '../components/SlotManagement';
 import WalkInQueue from '../components/WalkInQueue';
 import AssignSlotModal from '../components/AssignSlotModal';
 import ReportsPage from './ReportsPage';
-import { Calendar, Check, X, CheckCircle2, Filter, History, RefreshCw, UserCheck, AlertTriangle, Clock, Users } from 'lucide-react';
+import { Calendar, Check, X, CheckCircle2, Filter, History, RefreshCw, UserCheck, AlertTriangle, Clock, Users, BarChart3 } from 'lucide-react';
 
 export default function StaffDashboard() {
   const showDialog = useDialog();
@@ -200,7 +200,7 @@ export default function StaffDashboard() {
         >
           <Users size={16} /> Walk-in Queue
         </button>
-        <button className={`btn ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('reports')}>Reports</button>
+        <button className={`btn ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('reports')}><BarChart3 size={16} aria-hidden="true" /><span>Reports</span></button>
       </WorkspaceNavigation>
 
       {activeTab === 'appointments' && (

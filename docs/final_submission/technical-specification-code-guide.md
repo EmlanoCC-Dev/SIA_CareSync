@@ -619,6 +619,8 @@ Recovery workflow below remains to be demonstrated. The October 12 software/conf
 
 **October 12 update:** The Admin database-backup screen, encrypted whole-database/GridFS export, Google Drive upload verification, and daily 6 PM Manila GitHub workflow are implemented and deployed. Google consent was verified for the existing clinic Gmail account; server encryption/scheduler settings and the active GitHub Actions job are configured. Isolated backup/security/recovery-byte tests, UI checks, and non-mutating live readiness/authentication checks passed. No real backup or full isolated database restore has run yet. Matching source/mobile/docs archives and recovery evidence remain pending. See the [backup setup and recovery guide](../deployment/database-backups.md).
 
+The backup-time setting is now stored in MongoDB and editable by Admins. Its default remains 6 PM Manila; the external workflow checks every 15 minutes and runs at most one automatic backup per Manila date. Changing the saved time needs no deployment. GitHub delay remains a scheduling limitation; current instructions are in the backup guide.
+
 ### Clear Demo Data: actual deletion behavior
 
 Source: [demoReset.service.js:36](https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/backend/src/services/demoReset.service.js#L36). Full path: `backend/src/services/demoReset.service.js`.

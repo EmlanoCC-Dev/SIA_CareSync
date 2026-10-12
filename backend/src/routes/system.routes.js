@@ -11,7 +11,12 @@ const { parseDateOnly } = require('../utils/timeHelper');
 const { clearDemoData } = require('../services/demoReset.service');
 
 const router = Router();
-const { getBackupStatus, startBackup } = require('../services/databaseBackup.service');
+const { getBackupStatus, startBackup, updateSchedule } = require('../services/databaseBackup.service');
+
+router.patch('/backups/schedule', authorize('Admin'), async (req, res, next) => {
+  try { res.json({ success: true, data: await updateSchedule(req.body?.time) }); }
+  catch (error) { next(error); }
+});
 
 router.get('/backups', authorize('Admin'), async (_req, res, next) => {
   try { res.json({ success: true, data: await getBackupStatus() }); }

@@ -10,7 +10,7 @@ import ReportsPage from './ReportsPage';
 import WorkspaceNavigation from '../components/WorkspaceNavigation';
 import LoadError from '../components/LoadError';
 import DatabaseBackups from '../components/DatabaseBackups';
-import { ShieldCheck, Users, Calendar, ShieldAlert, CheckCircle2, History, RefreshCw, UserPlus, Filter, Search } from 'lucide-react';
+import { ShieldCheck, Users, Calendar, ShieldAlert, CheckCircle2, History, RefreshCw, UserPlus, Filter, Search, Clock, BarChart3, Database, RotateCcw } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('appointments'); // 'audit' | 'appointments' | 'users'
@@ -173,10 +173,10 @@ export default function AdminDashboard() {
           <Users size={15} />
           <span>User Directory</span>
         </button>
-        <button className={`btn btn-sm ${activeTab === 'slots' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('slots')} disabled={resetting}>Slot Management</button>
-        <button className={`btn btn-sm ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('reports')} disabled={resetting}>Reports</button>
-        <button className={`btn btn-sm ${activeTab === 'backups' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('backups')} disabled={resetting}>Database backups</button>
-        <button className={`btn btn-sm demo-reset-nav ${activeTab === 'demo' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('demo')} disabled={resetting}>Demo reset</button>
+        <button className={`btn btn-sm ${activeTab === 'slots' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('slots')} disabled={resetting}><Clock size={16} aria-hidden="true" /><span>Slot Management</span></button>
+        <button className={`btn btn-sm ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('reports')} disabled={resetting}><BarChart3 size={16} aria-hidden="true" /><span>Reports</span></button>
+        <button className={`btn btn-sm ${activeTab === 'backups' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('backups')} disabled={resetting}><Database size={16} aria-hidden="true" /><span>Database backups</span></button>
+        <button className={`btn btn-sm demo-reset-nav ${activeTab === 'demo' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('demo')} disabled={resetting}><RotateCcw size={16} aria-hidden="true" /><span>Demo reset</span></button>
       </WorkspaceNavigation>
 
       {/* Tab 1: Audit Logs */}

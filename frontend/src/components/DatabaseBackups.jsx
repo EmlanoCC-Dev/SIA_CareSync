@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Database, RefreshCw, ExternalLink, ShieldCheck } from 'lucide-react';
+import { Database, RefreshCw, ExternalLink, ShieldCheck, Clock, Save } from 'lucide-react';
 import { api } from '../services/api';
 
 const running = new Set(['queued', 'capturing', 'uploading']);
 const labels = { queued: 'Queued', capturing: 'Capturing database', uploading: 'Uploading to Drive', completed: 'Completed', failed: 'Failed' };
 const formatTime = value => new Date(value).toLocaleString([], { timeZone: 'Asia/Manila', month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+const formatDailyTime = value => new Date(`2000-01-01T${value}:00+08:00`).toLocaleTimeString([], { timeZone: 'Asia/Manila', hour: 'numeric', minute: '2-digit' });
 
 export default function DatabaseBackups() {
   const [data, setData] = useState(null);
@@ -12,6 +13,8 @@ export default function DatabaseBackups() {
   const [requesting, setRequesting] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('18:00');
+  const [savingSchedule, setSavingSchedule] = useState(false);
   const mounted = useRef(false);
   const version = useRef(0);
   const load = useCallback(async () => {
@@ -30,6 +33,7 @@ export default function DatabaseBackups() {
     return () => { mounted.current = false; version.current++; };
   }, [load]);
   const inProgress = data?.runs.some(run => running.has(run.status));
+  useEffect(() => { if (data?.schedule?.time) setScheduleTime(data.schedule.time); }, [data?.schedule?.time]);
   useEffect(() => {
     if (!inProgress) return;
     const timer = setInterval(() => { if (!document.hidden) load(); }, 5000);
@@ -46,6 +50,20 @@ export default function DatabaseBackups() {
     } catch (err) { if (mounted.current) setError(err.message || 'The backup could not be requested.'); }
     finally { if (mounted.current) setRequesting(false); }
   }
+  async function saveSchedule(event) {
+    event.preventDefault();
+    setSavingSchedule(true);
+    setError('');
+    setNotice('');
+    try {
+      const result = await api.updateDatabaseBackupSchedule(scheduleTime);
+      if (mounted.current) {
+        setData(previous => ({ ...previous, schedule: result.data }));
+        setNotice(`Daily backup time saved: ${formatDailyTime(result.data.time)} Manila time.`);
+      }
+    } catch (err) { if (mounted.current) setError(err.message || 'The backup time could not be saved.'); }
+    finally { if (mounted.current) setSavingSchedule(false); }
+  }
   const busy = requesting || inProgress;
   return <section className="card database-backups" aria-labelledby="database-backups-title">
     <div className="card-header">
@@ -59,10 +77,20 @@ export default function DatabaseBackups() {
       {!data ? <p role="status">{loading ? 'Loading backup status…' : 'Backup status is unavailable. Retry to load it.'}</p> : <>
         <div className="backup-summary">
           <div><ShieldCheck size={20} /><div><strong>{data.configured ? 'Ready to back up' : 'Setup required'}</strong><p>{data.account || 'Clinic Google account not configured'}</p></div></div>
-          <div><Database size={20} /><div><strong>Daily at 6 PM Manila time</strong><p>One hour after the clinic closes. {data.schedulerConfigured ? 'Enable the daily job to activate this schedule.' : 'Scheduled job setup is pending.'}</p></div></div>
+          <div><Clock size={20} /><div><strong>Daily at {formatDailyTime(data.schedule?.time || '18:00')} Manila time</strong><p>{data.schedulerConfigured ? 'One automatic backup per day.' : 'Scheduled job setup is pending.'}</p></div></div>
         </div>
+        <h4>Automatic backup time</h4>
+        <form className="backup-schedule-form" onSubmit={saveSchedule} aria-busy={savingSchedule}>
+          <div className="form-group"><label className="form-label" htmlFor="backup-schedule-time">Daily time (Asia/Manila)</label>
+            <input id="backup-schedule-time" type="time" className="form-input" value={scheduleTime} required
+              onChange={event => setScheduleTime(event.target.value)} disabled={savingSchedule || busy || loading} /></div>
+          <button type="submit" className="btn btn-secondary" disabled={savingSchedule || busy || loading || scheduleTime === data.schedule?.time}>
+            <Save size={16} />{savingSchedule ? 'Saving…' : 'Save backup time'}
+          </button>
+        </form>
+        <p className="workspace-note">The scheduler checks every 15 minutes and starts the backup after the saved time. If today’s automatic backup already completed, the new time applies tomorrow.</p>
         {!data.configured && <div className="alert alert-warning"><strong>Finish backup setup</strong><ul>{data.missing.map(message => <li key={message}>{message}</li>)}</ul></div>}
-        <div className="backup-action"><button type="button" className="btn btn-primary" onClick={backUpNow} disabled={!data.configured || busy || !!error}>
+        <div className="backup-action"><button type="button" className="btn btn-primary" onClick={backUpNow} disabled={!data.configured || busy || savingSchedule || !!error}>
           <Database size={18} />{busy ? 'Backup in progress…' : 'Back up now'}
         </button><span>Includes records, document history, and file contents. Encrypted before upload.</span></div>
         <h4>Recent backups</h4>
