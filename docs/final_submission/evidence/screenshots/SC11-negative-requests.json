@@ -1,0 +1,91 @@
+[
+  {
+    "actor": "Other Patient (Quinn)",
+    "request": "GET /api/appointments/6acc9d7df4e07f51c58e85d5",
+    "status": 403,
+    "body": {
+      "success": false,
+      "message": "You do not have permission to access this appointment",
+      "stack": "[REDACTED]"
+    }
+  },
+  {
+    "actor": "Other Patient (Quinn)",
+    "request": "GET /api/appointments/6acc9d7df4e07f51c58e85d5/comments",
+    "status": 403,
+    "body": {
+      "success": false,
+      "message": "You do not have permission to access this appointment",
+      "stack": "[REDACTED]"
+    }
+  },
+  {
+    "actor": "Other Patient (Quinn)",
+    "request": "GET /api/appointments/6acc9d7df4e07f51c58e85d5/documents/6acc9eb4f4e07f51c58e8934/versions/1/download",
+    "status": 403,
+    "body": {
+      "success": false,
+      "message": "You do not have permission to access this appointment",
+      "stack": "[REDACTED]"
+    }
+  },
+  {
+    "actor": "Unassigned Doctor (Carla Lim)",
+    "request": "GET /api/appointments/6acc9d7df4e07f51c58e85d5",
+    "status": 403,
+    "body": {
+      "success": false,
+      "message": "You do not have permission to access this appointment",
+      "stack": "[REDACTED]"
+    }
+  },
+  {
+    "actor": "Unassigned Doctor (Carla Lim)",
+    "request": "GET /api/appointments/6acc9d7df4e07f51c58e85d5/documents/6acc9eb4f4e07f51c58e8934/versions/1/download",
+    "status": 403,
+    "body": {
+      "success": false,
+      "message": "You do not have permission to access this appointment",
+      "stack": "[REDACTED]"
+    }
+  },
+  {
+    "actor": "Patient owner (Pia)",
+    "request": "GET /api/audit-logs",
+    "status": 403,
+    "body": {
+      "success": false,
+      "message": "Role \"Patient\" is not authorized to access this resource"
+    }
+  },
+  {
+    "actor": "Patient owner (Pia)",
+    "request": "PATCH /api/appointments/6acc9d7df4e07f51c58e85d5/complete",
+    "status": 403,
+    "body": {
+      "success": false,
+      "message": "Role \"Patient\" is not authorized to access this resource"
+    }
+  },
+  {
+    "actor": "No login",
+    "request": "GET /api/appointments/6acc9d7df4e07f51c58e85d5/documents/6acc9eb4f4e07f51c58e8934/versions/1/download",
+    "status": 401,
+    "body": {
+      "success": false,
+      "message": "Not authenticated — no token provided"
+    }
+  },
+  {
+    "actor": "Patient owner (Pia)",
+    "request": "GET /api/appointments/6acc9d7df4e07f51c58e85d5/documents/6acc9eb4f4e07f51c58e8934/versions/1/download",
+    "status": 200,
+    "body": "50 bytes, application/octet-stream"
+  },
+  {
+    "actor": "Assigned Doctor (Ben Santos)",
+    "request": "GET /api/appointments/6acc9d7df4e07f51c58e85d5/documents/6acc9eb4f4e07f51c58e8934/versions/1/download",
+    "status": 200,
+    "body": "50 bytes, application/octet-stream"
+  }
+]
