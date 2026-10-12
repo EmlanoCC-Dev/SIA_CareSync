@@ -24,7 +24,9 @@ This manifest covers everything added under `docs/final_submission/evidence/` in
 | `deployment-inventory.md` | Services, build/start commands, variable names, recorded URLs, unconfirmed items | SC12 (context only) | Deployment inventory |
 | `synthetic-export/*.json` (13 files incl. `manifest.json`) | Synthetic database export, no password/OTP hashes or tokens | — | Synthetic export |
 | `reproduction.md` | How to recreate the synthetic data from scratch | — | Synthetic export |
-| `backup-status.md` | What exists, an honest "no real backup/restore", and the local isolated mongodump/mongorestore drill | SC12 (not captured) | Backup/restore |
+| `backup-status.md` | What exists, the two real backups and isolated restore of 2026-10-12, the earlier local drill, and what is untested | SC12 (partly) | Backup/restore |
+| `CareSync-restore-evidence.pdf` | Saved-results export of the isolated restore: backup ID, SHA-256 match, decryption, restore log, timing and per-collection counts | SC12 (partly) | Backup/restore |
+| `screenshots/SC12a-backup-history.png`, `SC12b-drive-folder.png` | Admin backup history (two completed backups, verification details) and the private Drive folder with both encrypted files; Admin name blurred | SC12 (partly) | Backup/restore; screenshots |
 | `tools/lib.js`, `tools/browser.js` | Shared harness: local-DB guard, OTP stand-in, sanitizer, Playwright helpers | All SC | Reproduction |
 | `tools/bootstrap.js`, `tools/sc01.js` … `tools/sc11.js` (12 scripts) | Account bootstrap and per-capture UI scripts | SC01–SC11 | Screenshots; reproduction |
 | `tools/run-tests.js` | Test runner that saves raw output | — | Test results |
@@ -47,7 +49,7 @@ This manifest covers everything added under `docs/final_submission/evidence/` in
 | SC09 | **Provided** | Date range plus Admin and Doctor scope; actor and target in the audit trail. Doctor scope is shown by the label and the missing filter; the synthetic set has no second doctor's appointments to exclude. |
 | SC10 | **Provided** | Edit, deactivate, record retained, sign-in blocked. |
 | SC11 | **Provided** | Sanitized negative requests with real status and body. |
-| SC12 | **Not provided (needs a person)** | Needs the deployed environment and a real Drive backup/restore. |
+| SC12 | **Partly provided** | Backup ID and restore record exist (`CareSync-restore-evidence.pdf`; real backups shown in Admin history and Drive). No restored uploaded file, because the database held none. |
 
 ## Appendix E coverage
 
@@ -58,8 +60,8 @@ This manifest covers everything added under `docs/final_submission/evidence/` in
 | Test results | **Provided** | 21/21 runs passed (19 suites, live concurrency mode, frontend build). An environment-dependent `demo-reset` failure under `UPLOAD_STORAGE=gridfs` is recorded verbatim. |
 | Integration evidence | **Provided** | Nine Appendix B records from the real local API. SMTP is recorded as disabled and not sent. |
 | Deployment inventory | **Partly provided** | Everything recorded in the repo is listed. The live state, dashboard values and URL reachability were deliberately not checked. |
-| Backup/restore | **Partly provided** | Procedure, code and passing test documented, plus a local isolated tools drill. No real Drive backup or restore has been performed (needs a person). |
+| Backup/restore | **Partly provided** | Two real Drive backups (1:41 PM and 7:25 PM) and one checksum-verified, decrypted, isolated restore (213 of 213 documents). File-byte recovery, role login and realistic volume are untested. |
 | Synthetic export | **Provided** | Export plus reproduction steps; no hashes or tokens. |
-| Screenshots | **Partly provided** | SC01–SC11 captured live. SC12 not captured. |
+| Screenshots | **Partly provided** | SC01–SC11 captured live. SC12 partly captured (no restored file). |
 | Slides | **Not provided (needs a person)** | Not part of this run. |
 | Contribution sheet | **Not provided (needs a person)** | Only the team can state each member's contribution. |
