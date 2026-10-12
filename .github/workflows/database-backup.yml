@@ -2,7 +2,7 @@ name: Daily database backup
 
 on:
   schedule:
-    - cron: '0 10 * * *' # 6 PM Asia/Manila, one hour after clinic closing.
+    - cron: '*/15 * * * *' # Checks the Admin's saved Manila-time schedule.
   workflow_dispatch:
 
 permissions:
@@ -36,6 +36,11 @@ jobs:
             assert(response.ok && body.success, body.message || 'Backup request failed');
             return body.data;
           };
+          const status = await request('/api/backup-jobs');
+          if (!status.due) {
+            console.log(status.reason || 'No automatic backup is due.');
+            process.exit(0);
+          }
           let run = await request('/api/backup-jobs', 'POST');
           for (let attempt = 0; attempt < 100 && !['completed', 'failed'].includes(run.status); attempt++) {
             await sleep(10000);
