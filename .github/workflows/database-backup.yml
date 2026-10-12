@@ -2,7 +2,7 @@ name: Daily database backup
 
 on:
   schedule:
-    - cron: '*/15 * * * *' # Checks the Admin's saved Manila-time schedule.
+    - cron: '7,22,37,52 * * * *' # Every 15 minutes, away from busy quarter-hour boundaries.
   workflow_dispatch:
 
 permissions:
