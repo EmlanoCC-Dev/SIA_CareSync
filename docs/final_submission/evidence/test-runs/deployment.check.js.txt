@@ -1,0 +1,4 @@
+$ node.exe backend/tests/deployment.check.js
+# exit 0 signal null in 2.2s
+
+Passed 77 deployment HTTP checks plus Philippine clinic-hour boundaries.

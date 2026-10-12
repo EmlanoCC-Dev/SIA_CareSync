@@ -1,0 +1,125 @@
+{
+  "id": "IE05-check-in",
+  "actor": "staff (evidence.staff@example.test)",
+  "request": {
+    "method": "PATCH",
+    "url": "/api/appointments/6acca0a7f4e07f51c58e8ced/check-in",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "_id": "6acca0a7f4e07f51c58e8ced",
+        "patient": "6acc9d0df4e07f51c58e8432",
+        "doctor": "6acc9cd7f4e07f51c58e8417",
+        "slot": "6acc9d2f1c76e16fa9155811",
+        "walkIn": null,
+        "date": "2026-10-13T00:00:00.000Z",
+        "timeSlot": "11:30-12:00",
+        "reason": "Integration run: follow-up for headache that started 12 Oct.",
+        "status": "Checked In",
+        "statusHistory": [
+          {
+            "status": "Pending",
+            "changedBy": "6acc9d0df4e07f51c58e8432",
+            "remarks": "Appointment booked by patient",
+            "changedAt": "2026-10-12T08:56:07.335Z"
+          },
+          {
+            "status": "Needs correction",
+            "changedBy": "6acc9cd7f4e07f51c58e8423",
+            "changedAt": "2026-10-13T00:45:00.000Z",
+            "remarks": "Correction requested"
+          },
+          {
+            "status": "Pending",
+            "changedBy": "6acc9d0df4e07f51c58e8432",
+            "changedAt": "2026-10-13T00:45:00.000Z",
+            "remarks": "Resubmitted"
+          },
+          {
+            "status": "Confirmed",
+            "changedBy": "6acc9cd7f4e07f51c58e8423",
+            "changedAt": "2026-10-13T00:45:00.000Z",
+            "remarks": "Approved by staff"
+          },
+          {
+            "status": "Checked In",
+            "changedBy": "6acc9cd7f4e07f51c58e8423",
+            "changedAt": "2026-10-13T00:45:00.000Z",
+            "remarks": "Patient arrived and is waiting — queue #A-3"
+          }
+        ],
+        "bookingRevision": 2,
+        "notesRevision": 0,
+        "queueNumber": 3,
+        "bookingHistory": [
+          {
+            "revision": 1,
+            "action": "Correction requested",
+            "previousReason": "Integration run: follow-up for headache.",
+            "reason": "Integration run: follow-up for headache.",
+            "explanation": "Please state when the headache started.",
+            "changedBy": "6acc9cd7f4e07f51c58e8423",
+            "actorName": "Sam Reception",
+            "actorRole": "Staff",
+            "changedAt": "2026-10-13T00:45:00.000Z"
+          },
+          {
+            "revision": 2,
+            "action": "Resubmitted",
+            "previousReason": "Integration run: follow-up for headache.",
+            "reason": "Integration run: follow-up for headache that started 12 Oct.",
+            "explanation": "",
+            "changedBy": "6acc9d0df4e07f51c58e8432",
+            "actorName": "Pia Evidence-Patient",
+            "actorRole": "Patient",
+            "changedAt": "2026-10-13T00:45:00.000Z"
+          }
+        ],
+        "documents": [],
+        "noteVersions": [],
+        "archivedDocuments": [],
+        "createdAt": "2026-10-12T08:56:07.335Z",
+        "updatedAt": "2026-10-12T08:56:09.150Z",
+        "__v": 0,
+        "checkedInAt": "2026-10-13T00:45:00.000Z",
+        "queueDay": "2026-10-13"
+      }
+    }
+  },
+  "appointmentAfter": {
+    "_id": "6acca0a7f4e07f51c58e8ced",
+    "status": "Checked In",
+    "bookingRevision": 2,
+    "queueNumber": 3,
+    "documents": []
+  },
+  "auditRecords": [
+    {
+      "action": "APPOINTMENT_CHECKED_IN",
+      "targetModel": "Appointment",
+      "targetId": "6acca0a7f4e07f51c58e8ced",
+      "performedBy": "6acc9cd7f4e07f51c58e8423",
+      "timestamp": "2026-10-12T08:56:09.153Z"
+    }
+  ],
+  "notificationRecords": [
+    {
+      "user": "6acc9cd7f4e07f51c58e8417",
+      "type": "PATIENT_ARRIVED",
+      "title": "Patient arrived",
+      "emailDelivery": {
+        "status": "disabled",
+        "errorCode": null,
+        "attemptedAt": null,
+        "sentAt": null,
+        "messageId": null
+      },
+      "readAt": null,
+      "createdAt": "2026-10-12T08:56:09.154Z"
+    }
+  ]
+}

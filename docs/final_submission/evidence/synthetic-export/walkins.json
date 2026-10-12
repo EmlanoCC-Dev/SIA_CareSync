@@ -1,0 +1,22 @@
+[
+  {
+    "_id": {
+      "$oid": "6acc9e83f4e07f51c58e8868"
+    },
+    "name": "Walt Walk-in",
+    "email": "evidence.walkin@example.test",
+    "patient": null,
+    "queueNumber": 1,
+    "queueDay": "2026-10-13",
+    "status": "Waiting",
+    "assignedSlot": null,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-13T00:45:00Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-13T00:45:00Z"
+    },
+    "__v": 0
+  }
+]

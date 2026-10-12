@@ -1,0 +1,158 @@
+{
+  "id": "IE08-complete",
+  "actor": "doctor (evidence.doctor@example.test)",
+  "request": {
+    "method": "PATCH",
+    "url": "/api/appointments/6acca0a7f4e07f51c58e8ced/complete",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "_id": "6acca0a7f4e07f51c58e8ced",
+        "patient": "6acc9d0df4e07f51c58e8432",
+        "doctor": "6acc9cd7f4e07f51c58e8417",
+        "slot": "6acc9d2f1c76e16fa9155811",
+        "walkIn": null,
+        "date": "2026-10-13T00:00:00.000Z",
+        "timeSlot": "11:30-12:00",
+        "reason": "Integration run: follow-up for headache that started 12 Oct.",
+        "status": "Completed",
+        "statusHistory": [
+          {
+            "status": "Pending",
+            "changedBy": "6acc9d0df4e07f51c58e8432",
+            "remarks": "Appointment booked by patient",
+            "changedAt": "2026-10-12T08:56:07.335Z"
+          },
+          {
+            "status": "Needs correction",
+            "changedBy": "6acc9cd7f4e07f51c58e8423",
+            "changedAt": "2026-10-13T00:45:00.000Z",
+            "remarks": "Correction requested"
+          },
+          {
+            "status": "Pending",
+            "changedBy": "6acc9d0df4e07f51c58e8432",
+            "changedAt": "2026-10-13T00:45:00.000Z",
+            "remarks": "Resubmitted"
+          },
+          {
+            "status": "Confirmed",
+            "changedBy": "6acc9cd7f4e07f51c58e8423",
+            "changedAt": "2026-10-13T00:45:00.000Z",
+            "remarks": "Approved by staff"
+          },
+          {
+            "status": "Checked In",
+            "changedBy": "6acc9cd7f4e07f51c58e8423",
+            "changedAt": "2026-10-13T00:45:00.000Z",
+            "remarks": "Patient arrived and is waiting — queue #A-3"
+          },
+          {
+            "status": "In Progress",
+            "changedBy": "6acc9cd7f4e07f51c58e8417",
+            "changedAt": "2026-10-13T00:45:00.000Z",
+            "remarks": "Doctor started consultation"
+          },
+          {
+            "status": "Completed",
+            "changedBy": "6acc9cd7f4e07f51c58e8417",
+            "changedAt": "2026-10-13T00:45:00.000Z",
+            "remarks": "Consultation completed"
+          }
+        ],
+        "bookingRevision": 2,
+        "notesRevision": 0,
+        "queueNumber": 3,
+        "bookingHistory": [
+          {
+            "revision": 1,
+            "action": "Correction requested",
+            "previousReason": "Integration run: follow-up for headache.",
+            "reason": "Integration run: follow-up for headache.",
+            "explanation": "Please state when the headache started.",
+            "changedBy": "6acc9cd7f4e07f51c58e8423",
+            "actorName": "Sam Reception",
+            "actorRole": "Staff",
+            "changedAt": "2026-10-13T00:45:00.000Z"
+          },
+          {
+            "revision": 2,
+            "action": "Resubmitted",
+            "previousReason": "Integration run: follow-up for headache.",
+            "reason": "Integration run: follow-up for headache that started 12 Oct.",
+            "explanation": "",
+            "changedBy": "6acc9d0df4e07f51c58e8432",
+            "actorName": "Pia Evidence-Patient",
+            "actorRole": "Patient",
+            "changedAt": "2026-10-13T00:45:00.000Z"
+          }
+        ],
+        "documents": [
+          {
+            "filename": "synthetic-referral.txt",
+            "url": "/uploads/gridfs/6acca0aaf4e07f51c58e8d49",
+            "type": "general",
+            "uploadedAt": "2026-10-12T08:56:10.057Z",
+            "version": 1,
+            "uploadedBy": "6acc9cd7f4e07f51c58e8417",
+            "uploaderName": "Ben Santos",
+            "uploaderRole": "Doctor",
+            "versions": [],
+            "archivedAt": null,
+            "archivedBy": null,
+            "archivedByName": null,
+            "_id": "6acca0aaf4e07f51c58e8d4c"
+          }
+        ],
+        "noteVersions": [],
+        "archivedDocuments": [],
+        "createdAt": "2026-10-12T08:56:07.335Z",
+        "updatedAt": "2026-10-12T08:56:10.488Z",
+        "__v": 0,
+        "checkedInAt": "2026-10-13T00:45:00.000Z",
+        "queueDay": "2026-10-13"
+      }
+    }
+  },
+  "appointmentAfter": {
+    "_id": "6acca0a7f4e07f51c58e8ced",
+    "status": "Completed",
+    "bookingRevision": 2,
+    "queueNumber": 3,
+    "documents": [
+      {
+        "filename": "synthetic-referral.txt",
+        "version": 1
+      }
+    ]
+  },
+  "auditRecords": [
+    {
+      "action": "APPOINTMENT_COMPLETED",
+      "targetModel": "Appointment",
+      "targetId": "6acca0a7f4e07f51c58e8ced",
+      "performedBy": "6acc9cd7f4e07f51c58e8417",
+      "timestamp": "2026-10-12T08:56:10.493Z"
+    }
+  ],
+  "notificationRecords": [
+    {
+      "user": "6acc9d0df4e07f51c58e8432",
+      "type": "APPOINTMENT_COMPLETED",
+      "title": "Consultation completed",
+      "emailDelivery": {
+        "status": "disabled",
+        "errorCode": null,
+        "attemptedAt": null,
+        "sentAt": null,
+        "messageId": null
+      },
+      "readAt": null,
+      "createdAt": "2026-10-12T08:56:10.494Z"
+    }
+  ]
+}

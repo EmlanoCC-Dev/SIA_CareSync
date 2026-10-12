@@ -1,0 +1,4 @@
+$ node.exe backend/tests/scheduled-queue.check.js
+# exit 0 signal null in 1.2s
+
+Passed 26 scheduled-queue HTTP checks: arrival/start/completion, tickets/races, privacy, no-show exemption, rollover, ownership and rollback failures.

@@ -1,0 +1,16 @@
+$ node.exe backend/tests/walkin-account.check.js
+# exit 0 signal null in 1.4s
+
+🎫  Walk-in #1 added
+🎫  Walk-in #2 added
+🎫  Walk-in #3 added
+🎫  Walk-in #4 added
+🎫  Walk-in #5 added
+🎫  Walk-in #6 added
+🎫  Walk-in #7 added
+🎫  Walk-in #8 added
+🎫  Walk-in #9 added
+Passed 29 HTTP checks plus optional-account, verified ownership, history, privacy, retry and race checks.
+
+--- stderr ---
+[WalkIn] Account linking deferred until the patient opens their appointments

@@ -1,0 +1,4 @@
+$ node.exe backend/tests/otp.check.js
+# exit 0 signal null in 3.2s
+
+Passed 30 OTP/auth HTTP checks plus expiry, replay, guessing, cooldown/send limits, races, failure/privacy and session invalidation checks. No real email sent.

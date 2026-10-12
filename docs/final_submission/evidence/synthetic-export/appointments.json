@@ -1,0 +1,535 @@
+[
+  {
+    "_id": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "patient": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "slot": {
+      "$oid": "6acc9d2f1c76e16fa915580e"
+    },
+    "walkIn": null,
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "timeSlot": "10:00-10:30",
+    "reason": "Headache for two days; took paracetamol 500 mg once; no fever.",
+    "status": "Completed",
+    "statusHistory": [
+      {
+        "status": "Pending",
+        "changedBy": {
+          "$oid": "6acc9d0df4e07f51c58e8432"
+        },
+        "remarks": "Appointment booked by patient",
+        "changedAt": {
+          "$date": "2026-10-12T08:42:37.398Z"
+        }
+      },
+      {
+        "status": "Needs correction",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8423"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Correction requested"
+      },
+      {
+        "status": "Pending",
+        "changedBy": {
+          "$oid": "6acc9d0df4e07f51c58e8432"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Resubmitted"
+      },
+      {
+        "status": "Confirmed",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8423"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Approved by staff"
+      },
+      {
+        "status": "Checked In",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8423"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Patient arrived and is waiting — queue #A-1"
+      },
+      {
+        "status": "In Progress",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8417"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Doctor started consultation"
+      },
+      {
+        "status": "Completed",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8417"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Consultation completed"
+      }
+    ],
+    "bookingRevision": 2,
+    "notesRevision": 2,
+    "queueNumber": 1,
+    "bookingHistory": [
+      {
+        "revision": 1,
+        "action": "Correction requested",
+        "previousReason": "Headache for two days.",
+        "reason": "Headache for two days.",
+        "explanation": "Please add how long the symptom has lasted and any medicine already taken.",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8423"
+        },
+        "actorName": "Sam Reception",
+        "actorRole": "Staff",
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        }
+      },
+      {
+        "revision": 2,
+        "action": "Resubmitted",
+        "previousReason": "Headache for two days.",
+        "reason": "Headache for two days; took paracetamol 500 mg once; no fever.",
+        "explanation": "",
+        "changedBy": {
+          "$oid": "6acc9d0df4e07f51c58e8432"
+        },
+        "actorName": "Pia Evidence-Patient",
+        "actorRole": "Patient",
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        }
+      }
+    ],
+    "documents": [
+      {
+        "filename": "synthetic-lab-result.txt",
+        "url": "/uploads/gridfs/6acc9eb4f4e07f51c58e8957",
+        "type": "lab_result",
+        "uploadedAt": {
+          "$date": "2026-10-12T08:47:48.292Z"
+        },
+        "version": 2,
+        "uploadedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8417"
+        },
+        "uploaderName": "Ben Santos",
+        "uploaderRole": "Doctor",
+        "versions": [
+          {
+            "version": 1,
+            "filename": "synthetic-lab-result.txt",
+            "url": "/uploads/gridfs/6acc9eb4f4e07f51c58e8931",
+            "type": "lab_result",
+            "uploadedAt": {
+              "$date": "2026-10-12T08:47:48.109Z"
+            },
+            "uploadedBy": {
+              "$oid": "6acc9cd7f4e07f51c58e8417"
+            },
+            "uploaderName": "Ben Santos",
+            "uploaderRole": "Doctor"
+          }
+        ],
+        "archivedAt": null,
+        "archivedBy": null,
+        "archivedByName": null,
+        "_id": {
+          "$oid": "6acc9eb4f4e07f51c58e8934"
+        }
+      }
+    ],
+    "noteVersions": [
+      {
+        "version": 1,
+        "notes": "Tension-type headache suspected. Advised hydration and rest.",
+        "savedAt": {
+          "$date": "2026-10-12T08:47:46.561Z"
+        },
+        "savedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8417"
+        },
+        "authorName": "Ben Santos",
+        "authorRole": "Doctor"
+      },
+      {
+        "version": 2,
+        "notes": "Tension-type headache. Advised hydration, rest and paracetamol as needed; return if fever develops.",
+        "savedAt": {
+          "$date": "2026-10-12T08:47:46.755Z"
+        },
+        "savedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8417"
+        },
+        "authorName": "Ben Santos",
+        "authorRole": "Doctor"
+      }
+    ],
+    "archivedDocuments": [],
+    "createdAt": {
+      "$date": "2026-10-12T08:42:37.400Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:47:52.144Z"
+    },
+    "__v": 0,
+    "checkedInAt": {
+      "$date": "2026-10-13T00:45:00Z"
+    },
+    "queueDay": "2026-10-13",
+    "consultationNotes": "Tension-type headache. Advised hydration, rest and paracetamol as needed; return if fever develops."
+  },
+  {
+    "_id": {
+      "$oid": "6acca08af4e07f51c58e8c63"
+    },
+    "patient": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "slot": {
+      "$oid": "6acc9d2f1c76e16fa9155810"
+    },
+    "walkIn": null,
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "timeSlot": "11:00-11:30",
+    "reason": "Integration run: follow-up for headache that started 12 Oct.",
+    "status": "Completed",
+    "statusHistory": [
+      {
+        "status": "Pending",
+        "changedBy": {
+          "$oid": "6acc9d0df4e07f51c58e8432"
+        },
+        "remarks": "Appointment booked by patient",
+        "changedAt": {
+          "$date": "2026-10-12T08:55:38.989Z"
+        }
+      },
+      {
+        "status": "Needs correction",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8423"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Correction requested"
+      },
+      {
+        "status": "Pending",
+        "changedBy": {
+          "$oid": "6acc9d0df4e07f51c58e8432"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Resubmitted"
+      },
+      {
+        "status": "Confirmed",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8423"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Approved by staff"
+      },
+      {
+        "status": "Checked In",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8423"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Patient arrived and is waiting — queue #A-2"
+      },
+      {
+        "status": "In Progress",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8417"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Doctor started consultation"
+      },
+      {
+        "status": "Completed",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8417"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Consultation completed"
+      }
+    ],
+    "bookingRevision": 2,
+    "notesRevision": 0,
+    "queueNumber": 2,
+    "bookingHistory": [
+      {
+        "revision": 1,
+        "action": "Correction requested",
+        "previousReason": "Integration run: follow-up for headache.",
+        "reason": "Integration run: follow-up for headache.",
+        "explanation": "Please state when the headache started.",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8423"
+        },
+        "actorName": "Sam Reception",
+        "actorRole": "Staff",
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        }
+      },
+      {
+        "revision": 2,
+        "action": "Resubmitted",
+        "previousReason": "Integration run: follow-up for headache.",
+        "reason": "Integration run: follow-up for headache that started 12 Oct.",
+        "explanation": "",
+        "changedBy": {
+          "$oid": "6acc9d0df4e07f51c58e8432"
+        },
+        "actorName": "Pia Evidence-Patient",
+        "actorRole": "Patient",
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        }
+      }
+    ],
+    "documents": [
+      {
+        "filename": "synthetic-referral.txt",
+        "url": "/uploads/gridfs/6acca08df4e07f51c58e8cbf",
+        "type": "general",
+        "uploadedAt": {
+          "$date": "2026-10-12T08:55:41.925Z"
+        },
+        "version": 1,
+        "uploadedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8417"
+        },
+        "uploaderName": "Ben Santos",
+        "uploaderRole": "Doctor",
+        "versions": [],
+        "archivedAt": null,
+        "archivedBy": null,
+        "archivedByName": null,
+        "_id": {
+          "$oid": "6acca08df4e07f51c58e8cc2"
+        }
+      }
+    ],
+    "noteVersions": [],
+    "archivedDocuments": [],
+    "createdAt": {
+      "$date": "2026-10-12T08:55:38.990Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:55:42.390Z"
+    },
+    "__v": 0,
+    "checkedInAt": {
+      "$date": "2026-10-13T00:45:00Z"
+    },
+    "queueDay": "2026-10-13"
+  },
+  {
+    "_id": {
+      "$oid": "6acca0a7f4e07f51c58e8ced"
+    },
+    "patient": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "slot": {
+      "$oid": "6acc9d2f1c76e16fa9155811"
+    },
+    "walkIn": null,
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "timeSlot": "11:30-12:00",
+    "reason": "Integration run: follow-up for headache that started 12 Oct.",
+    "status": "Completed",
+    "statusHistory": [
+      {
+        "status": "Pending",
+        "changedBy": {
+          "$oid": "6acc9d0df4e07f51c58e8432"
+        },
+        "remarks": "Appointment booked by patient",
+        "changedAt": {
+          "$date": "2026-10-12T08:56:07.335Z"
+        }
+      },
+      {
+        "status": "Needs correction",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8423"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Correction requested"
+      },
+      {
+        "status": "Pending",
+        "changedBy": {
+          "$oid": "6acc9d0df4e07f51c58e8432"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Resubmitted"
+      },
+      {
+        "status": "Confirmed",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8423"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Approved by staff"
+      },
+      {
+        "status": "Checked In",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8423"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Patient arrived and is waiting — queue #A-3"
+      },
+      {
+        "status": "In Progress",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8417"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Doctor started consultation"
+      },
+      {
+        "status": "Completed",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8417"
+        },
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        },
+        "remarks": "Consultation completed"
+      }
+    ],
+    "bookingRevision": 2,
+    "notesRevision": 0,
+    "queueNumber": 3,
+    "bookingHistory": [
+      {
+        "revision": 1,
+        "action": "Correction requested",
+        "previousReason": "Integration run: follow-up for headache.",
+        "reason": "Integration run: follow-up for headache.",
+        "explanation": "Please state when the headache started.",
+        "changedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8423"
+        },
+        "actorName": "Sam Reception",
+        "actorRole": "Staff",
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        }
+      },
+      {
+        "revision": 2,
+        "action": "Resubmitted",
+        "previousReason": "Integration run: follow-up for headache.",
+        "reason": "Integration run: follow-up for headache that started 12 Oct.",
+        "explanation": "",
+        "changedBy": {
+          "$oid": "6acc9d0df4e07f51c58e8432"
+        },
+        "actorName": "Pia Evidence-Patient",
+        "actorRole": "Patient",
+        "changedAt": {
+          "$date": "2026-10-13T00:45:00Z"
+        }
+      }
+    ],
+    "documents": [
+      {
+        "filename": "synthetic-referral.txt",
+        "url": "/uploads/gridfs/6acca0aaf4e07f51c58e8d49",
+        "type": "general",
+        "uploadedAt": {
+          "$date": "2026-10-12T08:56:10.057Z"
+        },
+        "version": 1,
+        "uploadedBy": {
+          "$oid": "6acc9cd7f4e07f51c58e8417"
+        },
+        "uploaderName": "Ben Santos",
+        "uploaderRole": "Doctor",
+        "versions": [],
+        "archivedAt": null,
+        "archivedBy": null,
+        "archivedByName": null,
+        "_id": {
+          "$oid": "6acca0aaf4e07f51c58e8d4c"
+        }
+      }
+    ],
+    "noteVersions": [],
+    "archivedDocuments": [],
+    "createdAt": {
+      "$date": "2026-10-12T08:56:07.335Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:56:10.488Z"
+    },
+    "__v": 0,
+    "checkedInAt": {
+      "$date": "2026-10-13T00:45:00Z"
+    },
+    "queueDay": "2026-10-13"
+  }
+]

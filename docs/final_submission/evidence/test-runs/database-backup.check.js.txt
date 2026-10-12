@@ -1,0 +1,26 @@
+$ node.exe backend/tests/database-backup.check.js
+# exit 0 signal null in 1.9s
+
+Passed backup authorization, real-time scheduling, maintenance, encrypted dump/restore bytes, tamper rejection, Drive account/scope/upload checks, secret protection, cleanup, and interrupted-job recovery. No live database or Google account used.
+
+--- stderr ---
+
+❌  [400] Provide a valid daily backup time in HH:mm format.
+
+❌  [400] Provide a valid daily backup time in HH:mm format.
+
+❌  [400] Provide a valid daily backup time in HH:mm format.
+
+❌  [400] Provide a valid daily backup time in HH:mm format.
+
+❌  [400] Provide a valid daily backup time in HH:mm format.
+
+❌  [400] Provide a valid daily backup time in HH:mm format.
+
+❌  [400] Provide a valid daily backup time in HH:mm format.
+
+❌  [400] Provide a valid daily backup time in HH:mm format.
+
+❌  [409] The automatic backup is scheduled for 18:00 Manila time. Use Back up now for an earlier backup.
+
+❌  [503] Database backups are not enabled.

@@ -1,0 +1,58 @@
+[
+  {
+    "_id": {
+      "$oid": "6acc9eb4f4e07f51c58e8931"
+    },
+    "length": 50,
+    "chunkSize": 261120,
+    "uploadDate": {
+      "$date": "2026-10-12T08:47:48.102Z"
+    },
+    "filename": "synthetic-lab-result.txt",
+    "metadata": {
+      "appointment": "6acc9d7df4e07f51c58e85d5"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9eb4f4e07f51c58e8957"
+    },
+    "length": 67,
+    "chunkSize": 261120,
+    "uploadDate": {
+      "$date": "2026-10-12T08:47:48.284Z"
+    },
+    "filename": "synthetic-lab-result-v2.txt",
+    "metadata": {
+      "appointment": "6acc9d7df4e07f51c58e85d5"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acca08df4e07f51c58e8cbf"
+    },
+    "length": 48,
+    "chunkSize": 261120,
+    "uploadDate": {
+      "$date": "2026-10-12T08:55:41.918Z"
+    },
+    "filename": "synthetic-referral.txt",
+    "metadata": {
+      "appointment": "6acca08af4e07f51c58e8c63"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acca0aaf4e07f51c58e8d49"
+    },
+    "length": 48,
+    "chunkSize": 261120,
+    "uploadDate": {
+      "$date": "2026-10-12T08:56:10.053Z"
+    },
+    "filename": "synthetic-referral.txt",
+    "metadata": {
+      "appointment": "6acca0a7f4e07f51c58e8ced"
+    }
+  }
+]

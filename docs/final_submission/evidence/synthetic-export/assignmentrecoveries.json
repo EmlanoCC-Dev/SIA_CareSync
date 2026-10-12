@@ -1,0 +1,62 @@
+[
+  {
+    "_id": {
+      "$oid": "6acc9d7df4e07f51c58e85d6"
+    },
+    "kind": "booking",
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "slot": {
+      "$oid": "6acc9d2f1c76e16fa915580e"
+    },
+    "state": "done",
+    "createdAt": {
+      "$date": "2026-10-12T08:42:37.362Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:42:37.529Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca08af4e07f51c58e8c64"
+    },
+    "kind": "booking",
+    "appointment": {
+      "$oid": "6acca08af4e07f51c58e8c63"
+    },
+    "slot": {
+      "$oid": "6acc9d2f1c76e16fa9155810"
+    },
+    "state": "done",
+    "createdAt": {
+      "$date": "2026-10-12T08:55:38.981Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:55:38.992Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca0a7f4e07f51c58e8cee"
+    },
+    "kind": "booking",
+    "appointment": {
+      "$oid": "6acca0a7f4e07f51c58e8ced"
+    },
+    "slot": {
+      "$oid": "6acc9d2f1c76e16fa9155811"
+    },
+    "state": "done",
+    "createdAt": {
+      "$date": "2026-10-12T08:56:07.321Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:56:07.338Z"
+    },
+    "__v": 0
+  }
+]

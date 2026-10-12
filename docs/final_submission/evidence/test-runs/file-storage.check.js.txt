@@ -1,0 +1,4 @@
+$ node.exe backend/tests/file-storage.check.js
+# exit 0 signal null in 1.2s
+
+Passed GridFS uploads, protected/versioned downloads, archiving, size limits, failure cleanup, migration paths and reset cleanup. No live database used.

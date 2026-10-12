@@ -1,0 +1,133 @@
+{
+  "date": "2026-10-12T08:53:10.549Z",
+  "node": "v26.8.1",
+  "os": "Windows_NT 10.0.26300 x64",
+  "results": [
+    {
+      "suite": "accounts-noshow.check.js",
+      "file": "accounts-noshow.check.js.txt",
+      "exit": 0,
+      "seconds": "1.6"
+    },
+    {
+      "suite": "api-access.check.js",
+      "file": "api-access.check.js.txt",
+      "exit": 0,
+      "seconds": "2.7"
+    },
+    {
+      "suite": "audit-coverage.check.js",
+      "file": "audit-coverage.check.js.txt",
+      "exit": 0,
+      "seconds": "1.3"
+    },
+    {
+      "suite": "clinic-workflows.check.js",
+      "file": "clinic-workflows.check.js.txt",
+      "exit": 0,
+      "seconds": "1.1"
+    },
+    {
+      "suite": "comments.check.js",
+      "file": "comments.check.js.txt",
+      "exit": 0,
+      "seconds": "1.8"
+    },
+    {
+      "suite": "concurrency.check.js",
+      "file": "concurrency.check.js.txt",
+      "exit": 0,
+      "seconds": "0.8"
+    },
+    {
+      "suite": "corrections.check.js",
+      "file": "corrections.check.js.txt",
+      "exit": 0,
+      "seconds": "1.9"
+    },
+    {
+      "suite": "database-backup.check.js",
+      "file": "database-backup.check.js.txt",
+      "exit": 0,
+      "seconds": "1.9"
+    },
+    {
+      "suite": "demo-reset.check.js",
+      "file": "demo-reset.check.js.txt",
+      "exit": 1,
+      "seconds": "1.0"
+    },
+    {
+      "suite": "deployment.check.js",
+      "file": "deployment.check.js.txt",
+      "exit": 0,
+      "seconds": "2.0"
+    },
+    {
+      "suite": "email-notifications.check.js",
+      "file": "email-notifications.check.js.txt",
+      "exit": 0,
+      "seconds": "0.6"
+    },
+    {
+      "suite": "file-storage.check.js",
+      "file": "file-storage.check.js.txt",
+      "exit": 0,
+      "seconds": "1.2"
+    },
+    {
+      "suite": "gmail-api.check.js",
+      "file": "gmail-api.check.js.txt",
+      "exit": 0,
+      "seconds": "0.2"
+    },
+    {
+      "suite": "notifications.check.js",
+      "file": "notifications.check.js.txt",
+      "exit": 0,
+      "seconds": "1.3"
+    },
+    {
+      "suite": "otp.check.js",
+      "file": "otp.check.js.txt",
+      "exit": 0,
+      "seconds": "2.9"
+    },
+    {
+      "suite": "scheduled-queue.check.js",
+      "file": "scheduled-queue.check.js.txt",
+      "exit": 0,
+      "seconds": "1.1"
+    },
+    {
+      "suite": "versions.check.js",
+      "file": "versions.check.js.txt",
+      "exit": 0,
+      "seconds": "1.5"
+    },
+    {
+      "suite": "walkin-account.check.js",
+      "file": "walkin-account.check.js.txt",
+      "exit": 0,
+      "seconds": "1.3"
+    },
+    {
+      "suite": "walkin-status.check.js",
+      "file": "walkin-status.check.js.txt",
+      "exit": 0,
+      "seconds": "1.4"
+    },
+    {
+      "suite": "concurrency.check.js --live",
+      "file": "concurrency.check.js_--live.txt",
+      "exit": 0,
+      "seconds": "2.1"
+    },
+    {
+      "suite": "frontend build",
+      "file": "frontend_build.txt",
+      "exit": 0,
+      "seconds": "5.3"
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "date": "2026-10-12T08:56:11.374Z",
+  "appointmentId": "6acca0a7f4e07f51c58e8ced",
+  "steps": [
+    {
+      "id": "IE01-book",
+      "status": 201,
+      "audit": [
+        "APPOINTMENT_BOOKED"
+      ],
+      "notifications": [
+        "Appointment request received",
+        "Appointment request assigned",
+        "New appointment request",
+        "New appointment request"
+      ],
+      "appointmentStatus": "Pending"
+    },
+    {
+      "id": "IE02-request-correction",
+      "status": 200,
+      "audit": [
+        "REVISION_REQUESTED"
+      ],
+      "notifications": [
+        "Appointment needs correction"
+      ],
+      "appointmentStatus": "Needs correction"
+    },
+    {
+      "id": "IE03-resubmit",
+      "status": 200,
+      "audit": [
+        "APPOINTMENT_RESUBMITTED"
+      ],
+      "notifications": [
+        "Appointment resubmitted",
+        "Appointment resubmitted",
+        "Appointment resubmitted"
+      ],
+      "appointmentStatus": "Pending"
+    },
+    {
+      "id": "IE04-approve",
+      "status": 200,
+      "audit": [
+        "APPOINTMENT_APPROVED"
+      ],
+      "notifications": [
+        "Appointment confirmed",
+        "Confirmed appointment"
+      ],
+      "appointmentStatus": "Confirmed"
+    },
+    {
+      "id": "IE05-check-in",
+      "status": 200,
+      "audit": [
+        "APPOINTMENT_CHECKED_IN"
+      ],
+      "notifications": [
+        "Patient arrived"
+      ],
+      "appointmentStatus": "Checked In"
+    },
+    {
+      "id": "IE06-start",
+      "status": 200,
+      "audit": [
+        "APPOINTMENT_STARTED"
+      ],
+      "notifications": [
+        "Consultation started"
+      ],
+      "appointmentStatus": "In Progress"
+    },
+    {
+      "id": "IE07-document-upload",
+      "status": 201,
+      "audit": [
+        "DOCUMENT_UPLOADED"
+      ],
+      "notifications": [],
+      "appointmentStatus": "In Progress"
+    },
+    {
+      "id": "IE08-complete",
+      "status": 200,
+      "audit": [
+        "APPOINTMENT_COMPLETED"
+      ],
+      "notifications": [
+        "Consultation completed"
+      ],
+      "appointmentStatus": "Completed"
+    },
+    {
+      "id": "IE09-reports",
+      "status": 200,
+      "audit": [],
+      "notifications": [],
+      "appointmentStatus": "Completed"
+    }
+  ]
+}

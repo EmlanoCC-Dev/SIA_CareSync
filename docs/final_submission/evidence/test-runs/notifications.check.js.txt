@@ -1,0 +1,4 @@
+$ node.exe backend/tests/notifications.check.js
+# exit 0 signal null in 1.5s
+
+Passed notification event routing, privacy/failure checks and 32 owner-scoped HTTP checks.

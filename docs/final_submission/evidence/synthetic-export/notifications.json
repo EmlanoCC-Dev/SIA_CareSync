@@ -1,0 +1,1309 @@
+[
+  {
+    "_id": {
+      "$oid": "6acc9d7df4e07f51c58e85e4"
+    },
+    "user": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "BOOKING_SUBMITTED",
+    "title": "Appointment request received",
+    "message": "Your request for Oct 13, 2026, 10:00-10:30 is pending clinic review.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:42:37.553Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:42:37.553Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d7df4e07f51c58e85e5"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "DOCTOR_REQUEST_ASSIGNED",
+    "title": "Appointment request assigned",
+    "message": "A request for Oct 13, 2026, 10:00-10:30 is assigned to you, pending clinic approval.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:42:37.553Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:42:37.553Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d7df4e07f51c58e85ec"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e840c"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "BOOKING_REVIEW",
+    "title": "New appointment request",
+    "message": "A patient requested Oct 13, 2026, 10:00-10:30. Review it in Appointments.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:42:37.587Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:42:37.587Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d7df4e07f51c58e85ed"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8423"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "BOOKING_REVIEW",
+    "title": "New appointment request",
+    "message": "A patient requested Oct 13, 2026, 10:00-10:30. Review it in Appointments.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:42:37.587Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:42:37.587Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d7ef4e07f51c58e8624"
+    },
+    "user": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "CORRECTION_REQUESTED",
+    "title": "Appointment needs correction",
+    "message": "The clinic requested changes to your booking for Oct 13, 2026, 10:00-10:30. Open History & comments to read the explanation and resubmit.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:42:38.749Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:42:38.749Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d7ff4e07f51c58e8662"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "APPOINTMENT_RESUBMITTED",
+    "title": "Appointment resubmitted",
+    "message": "A corrected request for Oct 13, 2026, 10:00-10:30 is ready for review.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:42:39.641Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:42:39.641Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d7ff4e07f51c58e8667"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e840c"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "APPOINTMENT_RESUBMITTED",
+    "title": "Appointment resubmitted",
+    "message": "A patient corrected their request for Oct 13, 2026, 10:00-10:30. Review it in Appointments.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:42:39.655Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:42:39.655Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d7ff4e07f51c58e8668"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8423"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "APPOINTMENT_RESUBMITTED",
+    "title": "Appointment resubmitted",
+    "message": "A patient corrected their request for Oct 13, 2026, 10:00-10:30. Review it in Appointments.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:42:39.655Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:42:39.655Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9e07f4e07f51c58e878b"
+    },
+    "user": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "BOOKING_CONFIRMED",
+    "title": "Appointment confirmed",
+    "message": "Your appointment for Oct 13, 2026, 10:00-10:30 has been confirmed.",
+    "readAt": {
+      "$date": "2026-10-12T08:45:42.955Z"
+    },
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:44:55.162Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:45:42.956Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9e07f4e07f51c58e878c"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "DOCTOR_APPOINTMENT_ASSIGNED",
+    "title": "Confirmed appointment",
+    "message": "An appointment for Oct 13, 2026, 10:00-10:30 has been confirmed on your schedule.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:44:55.162Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:44:55.162Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9e81f4e07f51c58e8857"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "PATIENT_ARRIVED",
+    "title": "Patient arrived",
+    "message": "The patient for Oct 13, 2026, 10:00-10:30 has checked in and is waiting for consultation.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:46:57.893Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:46:57.893Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9eb1f4e07f51c58e88c2"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "PATIENT_READY",
+    "title": "Consultation started",
+    "message": "The appointment for Oct 13, 2026, 10:00-10:30 is now in progress.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:47:45.712Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:47:45.712Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9eb8f4e07f51c58e89b5"
+    },
+    "user": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "APPOINTMENT_COMPLETED",
+    "title": "Consultation completed",
+    "message": "Your consultation for Oct 13, 2026, 10:00-10:30 is complete. View your appointment for the consultation record.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:47:52.160Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:47:52.160Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9edbf4e07f51c58e8a72"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "COMMENT_ADDED",
+    "title": "New appointment comment",
+    "message": "There is a new comment on appointment #8e85d5. Open History & comments in Appointments to read and reply.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:48:27.449Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:48:27.449Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9edbf4e07f51c58e8a77"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e840c"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "COMMENT_ADDED",
+    "title": "New appointment comment",
+    "message": "There is a new comment on appointment #8e85d5. Open History & comments in Appointments to read and reply.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:48:27.508Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:48:27.508Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9edbf4e07f51c58e8a78"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8423"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "COMMENT_ADDED",
+    "title": "New appointment comment",
+    "message": "There is a new comment on appointment #8e85d5. Open History & comments in Appointments to read and reply.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:48:27.508Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:48:27.508Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9edef4e07f51c58e8afa"
+    },
+    "user": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "COMMENT_ADDED",
+    "title": "New appointment comment",
+    "message": "There is a new comment on appointment #8e85d5. Open History & comments in Appointments to read and reply.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:48:30.087Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:48:30.087Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9edef4e07f51c58e8aff"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e840c"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "COMMENT_ADDED",
+    "title": "New appointment comment",
+    "message": "There is a new comment on appointment #8e85d5. Open History & comments in Appointments to read and reply.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:48:30.122Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:48:30.122Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9edef4e07f51c58e8b00"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8423"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "type": "COMMENT_ADDED",
+    "title": "New appointment comment",
+    "message": "There is a new comment on appointment #8e85d5. Open History & comments in Appointments to read and reply.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:48:30.123Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:48:30.123Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca08af4e07f51c58e8c71"
+    },
+    "user": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "appointment": {
+      "$oid": "6acca08af4e07f51c58e8c63"
+    },
+    "type": "BOOKING_SUBMITTED",
+    "title": "Appointment request received",
+    "message": "Your request for Oct 13, 2026, 11:00-11:30 is pending clinic review.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:55:38.996Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:55:38.996Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca08af4e07f51c58e8c72"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "appointment": {
+      "$oid": "6acca08af4e07f51c58e8c63"
+    },
+    "type": "DOCTOR_REQUEST_ASSIGNED",
+    "title": "Appointment request assigned",
+    "message": "A request for Oct 13, 2026, 11:00-11:30 is assigned to you, pending clinic approval.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:55:38.996Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:55:38.996Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca08bf4e07f51c58e8c78"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e840c"
+    },
+    "appointment": {
+      "$oid": "6acca08af4e07f51c58e8c63"
+    },
+    "type": "BOOKING_REVIEW",
+    "title": "New appointment request",
+    "message": "A patient requested Oct 13, 2026, 11:00-11:30. Review it in Appointments.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:55:39.001Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:55:39.001Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca08bf4e07f51c58e8c79"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8423"
+    },
+    "appointment": {
+      "$oid": "6acca08af4e07f51c58e8c63"
+    },
+    "type": "BOOKING_REVIEW",
+    "title": "New appointment request",
+    "message": "A patient requested Oct 13, 2026, 11:00-11:30. Review it in Appointments.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:55:39.001Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:55:39.001Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca08bf4e07f51c58e8c81"
+    },
+    "user": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "appointment": {
+      "$oid": "6acca08af4e07f51c58e8c63"
+    },
+    "type": "CORRECTION_REQUESTED",
+    "title": "Appointment needs correction",
+    "message": "The clinic requested changes to your booking for Oct 13, 2026, 11:00-11:30. Open History & comments to read the explanation and resubmit.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:55:39.485Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:55:39.485Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca08bf4e07f51c58e8c8a"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "appointment": {
+      "$oid": "6acca08af4e07f51c58e8c63"
+    },
+    "type": "APPOINTMENT_RESUBMITTED",
+    "title": "Appointment resubmitted",
+    "message": "A corrected request for Oct 13, 2026, 11:00-11:30 is ready for review.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:55:39.954Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:55:39.954Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca08bf4e07f51c58e8c8f"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e840c"
+    },
+    "appointment": {
+      "$oid": "6acca08af4e07f51c58e8c63"
+    },
+    "type": "APPOINTMENT_RESUBMITTED",
+    "title": "Appointment resubmitted",
+    "message": "A patient corrected their request for Oct 13, 2026, 11:00-11:30. Review it in Appointments.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:55:39.959Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:55:39.959Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca08bf4e07f51c58e8c90"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8423"
+    },
+    "appointment": {
+      "$oid": "6acca08af4e07f51c58e8c63"
+    },
+    "type": "APPOINTMENT_RESUBMITTED",
+    "title": "Appointment resubmitted",
+    "message": "A patient corrected their request for Oct 13, 2026, 11:00-11:30. Review it in Appointments.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:55:39.959Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:55:39.959Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca08cf4e07f51c58e8c99"
+    },
+    "user": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "appointment": {
+      "$oid": "6acca08af4e07f51c58e8c63"
+    },
+    "type": "BOOKING_CONFIRMED",
+    "title": "Appointment confirmed",
+    "message": "Your appointment for Oct 13, 2026, 11:00-11:30 has been confirmed.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:55:40.460Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:55:40.460Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca08cf4e07f51c58e8c9a"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "appointment": {
+      "$oid": "6acca08af4e07f51c58e8c63"
+    },
+    "type": "DOCTOR_APPOINTMENT_ASSIGNED",
+    "title": "Confirmed appointment",
+    "message": "An appointment for Oct 13, 2026, 11:00-11:30 has been confirmed on your schedule.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:55:40.460Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:55:40.460Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca08cf4e07f51c58e8ca6"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "appointment": {
+      "$oid": "6acca08af4e07f51c58e8c63"
+    },
+    "type": "PATIENT_ARRIVED",
+    "title": "Patient arrived",
+    "message": "The patient for Oct 13, 2026, 11:00-11:30 has checked in and is waiting for consultation.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:55:40.987Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:55:40.987Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca08df4e07f51c58e8cb4"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "appointment": {
+      "$oid": "6acca08af4e07f51c58e8c63"
+    },
+    "type": "PATIENT_READY",
+    "title": "Consultation started",
+    "message": "The appointment for Oct 13, 2026, 11:00-11:30 is now in progress.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:55:41.454Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:55:41.454Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca08ef4e07f51c58e8cd5"
+    },
+    "user": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "appointment": {
+      "$oid": "6acca08af4e07f51c58e8c63"
+    },
+    "type": "APPOINTMENT_COMPLETED",
+    "title": "Consultation completed",
+    "message": "Your consultation for Oct 13, 2026, 11:00-11:30 is complete. View your appointment for the consultation record.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:55:42.398Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:55:42.398Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca0a7f4e07f51c58e8cfb"
+    },
+    "user": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "appointment": {
+      "$oid": "6acca0a7f4e07f51c58e8ced"
+    },
+    "type": "BOOKING_SUBMITTED",
+    "title": "Appointment request received",
+    "message": "Your request for Oct 13, 2026, 11:30-12:00 is pending clinic review.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:56:07.344Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:56:07.344Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca0a7f4e07f51c58e8cfc"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "appointment": {
+      "$oid": "6acca0a7f4e07f51c58e8ced"
+    },
+    "type": "DOCTOR_REQUEST_ASSIGNED",
+    "title": "Appointment request assigned",
+    "message": "A request for Oct 13, 2026, 11:30-12:00 is assigned to you, pending clinic approval.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:56:07.344Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:56:07.344Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca0a7f4e07f51c58e8d02"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e840c"
+    },
+    "appointment": {
+      "$oid": "6acca0a7f4e07f51c58e8ced"
+    },
+    "type": "BOOKING_REVIEW",
+    "title": "New appointment request",
+    "message": "A patient requested Oct 13, 2026, 11:30-12:00. Review it in Appointments.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:56:07.350Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:56:07.350Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca0a7f4e07f51c58e8d03"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8423"
+    },
+    "appointment": {
+      "$oid": "6acca0a7f4e07f51c58e8ced"
+    },
+    "type": "BOOKING_REVIEW",
+    "title": "New appointment request",
+    "message": "A patient requested Oct 13, 2026, 11:30-12:00. Review it in Appointments.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:56:07.350Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:56:07.350Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca0a7f4e07f51c58e8d0b"
+    },
+    "user": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "appointment": {
+      "$oid": "6acca0a7f4e07f51c58e8ced"
+    },
+    "type": "CORRECTION_REQUESTED",
+    "title": "Appointment needs correction",
+    "message": "The clinic requested changes to your booking for Oct 13, 2026, 11:30-12:00. Open History & comments to read the explanation and resubmit.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:56:07.814Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:56:07.814Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca0a8f4e07f51c58e8d14"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "appointment": {
+      "$oid": "6acca0a7f4e07f51c58e8ced"
+    },
+    "type": "APPOINTMENT_RESUBMITTED",
+    "title": "Appointment resubmitted",
+    "message": "A corrected request for Oct 13, 2026, 11:30-12:00 is ready for review.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:56:08.250Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:56:08.250Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca0a8f4e07f51c58e8d19"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e840c"
+    },
+    "appointment": {
+      "$oid": "6acca0a7f4e07f51c58e8ced"
+    },
+    "type": "APPOINTMENT_RESUBMITTED",
+    "title": "Appointment resubmitted",
+    "message": "A patient corrected their request for Oct 13, 2026, 11:30-12:00. Review it in Appointments.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:56:08.255Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:56:08.255Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca0a8f4e07f51c58e8d1a"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8423"
+    },
+    "appointment": {
+      "$oid": "6acca0a7f4e07f51c58e8ced"
+    },
+    "type": "APPOINTMENT_RESUBMITTED",
+    "title": "Appointment resubmitted",
+    "message": "A patient corrected their request for Oct 13, 2026, 11:30-12:00. Review it in Appointments.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:56:08.255Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:56:08.255Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca0a8f4e07f51c58e8d23"
+    },
+    "user": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "appointment": {
+      "$oid": "6acca0a7f4e07f51c58e8ced"
+    },
+    "type": "BOOKING_CONFIRMED",
+    "title": "Appointment confirmed",
+    "message": "Your appointment for Oct 13, 2026, 11:30-12:00 has been confirmed.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:56:08.710Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:56:08.710Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca0a8f4e07f51c58e8d24"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "appointment": {
+      "$oid": "6acca0a7f4e07f51c58e8ced"
+    },
+    "type": "DOCTOR_APPOINTMENT_ASSIGNED",
+    "title": "Confirmed appointment",
+    "message": "An appointment for Oct 13, 2026, 11:30-12:00 has been confirmed on your schedule.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:56:08.710Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:56:08.710Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca0a9f4e07f51c58e8d30"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "appointment": {
+      "$oid": "6acca0a7f4e07f51c58e8ced"
+    },
+    "type": "PATIENT_ARRIVED",
+    "title": "Patient arrived",
+    "message": "The patient for Oct 13, 2026, 11:30-12:00 has checked in and is waiting for consultation.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:56:09.154Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:56:09.154Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca0a9f4e07f51c58e8d3e"
+    },
+    "user": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "appointment": {
+      "$oid": "6acca0a7f4e07f51c58e8ced"
+    },
+    "type": "PATIENT_READY",
+    "title": "Consultation started",
+    "message": "The appointment for Oct 13, 2026, 11:30-12:00 is now in progress.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:56:09.611Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:56:09.611Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acca0aaf4e07f51c58e8d5f"
+    },
+    "user": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "appointment": {
+      "$oid": "6acca0a7f4e07f51c58e8ced"
+    },
+    "type": "APPOINTMENT_COMPLETED",
+    "title": "Consultation completed",
+    "message": "Your consultation for Oct 13, 2026, 11:30-12:00 is complete. View your appointment for the consultation record.",
+    "readAt": null,
+    "emailDelivery": {
+      "status": "disabled",
+      "errorCode": null,
+      "attemptedAt": null,
+      "sentAt": null,
+      "messageId": null
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:56:10.494Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:56:10.494Z"
+    },
+    "__v": 0
+  }
+]

@@ -1,0 +1,131 @@
+{
+  "id": "IE04-approve",
+  "actor": "staff (evidence.staff@example.test)",
+  "request": {
+    "method": "PATCH",
+    "url": "/api/appointments/6acca0a7f4e07f51c58e8ced/approve",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "_id": "6acca0a7f4e07f51c58e8ced",
+        "patient": "6acc9d0df4e07f51c58e8432",
+        "doctor": "6acc9cd7f4e07f51c58e8417",
+        "slot": "6acc9d2f1c76e16fa9155811",
+        "walkIn": null,
+        "date": "2026-10-13T00:00:00.000Z",
+        "timeSlot": "11:30-12:00",
+        "reason": "Integration run: follow-up for headache that started 12 Oct.",
+        "status": "Confirmed",
+        "statusHistory": [
+          {
+            "status": "Pending",
+            "changedBy": "6acc9d0df4e07f51c58e8432",
+            "remarks": "Appointment booked by patient",
+            "changedAt": "2026-10-12T08:56:07.335Z"
+          },
+          {
+            "status": "Needs correction",
+            "changedBy": "6acc9cd7f4e07f51c58e8423",
+            "changedAt": "2026-10-13T00:45:00.000Z",
+            "remarks": "Correction requested"
+          },
+          {
+            "status": "Pending",
+            "changedBy": "6acc9d0df4e07f51c58e8432",
+            "changedAt": "2026-10-13T00:45:00.000Z",
+            "remarks": "Resubmitted"
+          },
+          {
+            "status": "Confirmed",
+            "changedBy": "6acc9cd7f4e07f51c58e8423",
+            "changedAt": "2026-10-13T00:45:00.000Z",
+            "remarks": "Approved by staff"
+          }
+        ],
+        "bookingRevision": 2,
+        "notesRevision": 0,
+        "queueNumber": null,
+        "bookingHistory": [
+          {
+            "revision": 1,
+            "action": "Correction requested",
+            "previousReason": "Integration run: follow-up for headache.",
+            "reason": "Integration run: follow-up for headache.",
+            "explanation": "Please state when the headache started.",
+            "changedBy": "6acc9cd7f4e07f51c58e8423",
+            "actorName": "Sam Reception",
+            "actorRole": "Staff",
+            "changedAt": "2026-10-13T00:45:00.000Z"
+          },
+          {
+            "revision": 2,
+            "action": "Resubmitted",
+            "previousReason": "Integration run: follow-up for headache.",
+            "reason": "Integration run: follow-up for headache that started 12 Oct.",
+            "explanation": "",
+            "changedBy": "6acc9d0df4e07f51c58e8432",
+            "actorName": "Pia Evidence-Patient",
+            "actorRole": "Patient",
+            "changedAt": "2026-10-13T00:45:00.000Z"
+          }
+        ],
+        "documents": [],
+        "noteVersions": [],
+        "archivedDocuments": [],
+        "createdAt": "2026-10-12T08:56:07.335Z",
+        "updatedAt": "2026-10-12T08:56:08.698Z",
+        "__v": 0
+      }
+    }
+  },
+  "appointmentAfter": {
+    "_id": "6acca0a7f4e07f51c58e8ced",
+    "status": "Confirmed",
+    "bookingRevision": 2,
+    "queueNumber": null,
+    "documents": []
+  },
+  "auditRecords": [
+    {
+      "action": "APPOINTMENT_APPROVED",
+      "targetModel": "Appointment",
+      "targetId": "6acca0a7f4e07f51c58e8ced",
+      "performedBy": "6acc9cd7f4e07f51c58e8423",
+      "timestamp": "2026-10-12T08:56:08.709Z"
+    }
+  ],
+  "notificationRecords": [
+    {
+      "user": "6acc9d0df4e07f51c58e8432",
+      "type": "BOOKING_CONFIRMED",
+      "title": "Appointment confirmed",
+      "emailDelivery": {
+        "status": "disabled",
+        "errorCode": null,
+        "attemptedAt": null,
+        "sentAt": null,
+        "messageId": null
+      },
+      "readAt": null,
+      "createdAt": "2026-10-12T08:56:08.710Z"
+    },
+    {
+      "user": "6acc9cd7f4e07f51c58e8417",
+      "type": "DOCTOR_APPOINTMENT_ASSIGNED",
+      "title": "Confirmed appointment",
+      "emailDelivery": {
+        "status": "disabled",
+        "errorCode": null,
+        "attemptedAt": null,
+        "sentAt": null,
+        "messageId": null
+      },
+      "readAt": null,
+      "createdAt": "2026-10-12T08:56:08.710Z"
+    }
+  ]
+}

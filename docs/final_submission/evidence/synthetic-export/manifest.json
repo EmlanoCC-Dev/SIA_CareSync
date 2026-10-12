@@ -1,0 +1,22 @@
+{
+  "source": "mongodb://127.0.0.1:27017/caresync_evidence",
+  "exportedAt": "2026-10-12T08:57:53.165Z",
+  "collections": {
+    "appointmentcomments": 2,
+    "appointments": 3,
+    "assignmentrecoveries": 3,
+    "auditlogs": 43,
+    "backupschedules": 0,
+    "databasebackups": 0,
+    "medicalFiles.files": 4,
+    "notifications": 45,
+    "slotplans": 2,
+    "slots": 22,
+    "users": 6,
+    "walkins": 1
+  },
+  "skipped": [
+    "emailotps",
+    "medicalFiles.chunks"
+  ]
+}

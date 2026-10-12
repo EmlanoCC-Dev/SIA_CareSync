@@ -1,0 +1,97 @@
+{
+  "id": "IE02-request-correction",
+  "actor": "staff (evidence.staff@example.test)",
+  "request": {
+    "method": "PATCH",
+    "url": "/api/appointments/6acca0a7f4e07f51c58e8ced/request-correction",
+    "body": {
+      "explanation": "Please state when the headache started.",
+      "bookingRevision": 0
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "_id": "6acca0a7f4e07f51c58e8ced",
+        "patient": "6acc9d0df4e07f51c58e8432",
+        "doctor": "6acc9cd7f4e07f51c58e8417",
+        "slot": "6acc9d2f1c76e16fa9155811",
+        "walkIn": null,
+        "date": "2026-10-13T00:00:00.000Z",
+        "timeSlot": "11:30-12:00",
+        "reason": "Integration run: follow-up for headache.",
+        "status": "Needs correction",
+        "statusHistory": [
+          {
+            "status": "Pending",
+            "changedBy": "6acc9d0df4e07f51c58e8432",
+            "remarks": "Appointment booked by patient",
+            "changedAt": "2026-10-12T08:56:07.335Z"
+          },
+          {
+            "status": "Needs correction",
+            "changedBy": "6acc9cd7f4e07f51c58e8423",
+            "changedAt": "2026-10-13T00:45:00.000Z",
+            "remarks": "Correction requested"
+          }
+        ],
+        "bookingRevision": 1,
+        "notesRevision": 0,
+        "queueNumber": null,
+        "bookingHistory": [
+          {
+            "revision": 1,
+            "action": "Correction requested",
+            "previousReason": "Integration run: follow-up for headache.",
+            "reason": "Integration run: follow-up for headache.",
+            "explanation": "Please state when the headache started.",
+            "changedBy": "6acc9cd7f4e07f51c58e8423",
+            "actorName": "Sam Reception",
+            "actorRole": "Staff",
+            "changedAt": "2026-10-13T00:45:00.000Z"
+          }
+        ],
+        "documents": [],
+        "noteVersions": [],
+        "archivedDocuments": [],
+        "createdAt": "2026-10-12T08:56:07.335Z",
+        "updatedAt": "2026-10-12T08:56:07.808Z",
+        "__v": 0
+      }
+    }
+  },
+  "appointmentAfter": {
+    "_id": "6acca0a7f4e07f51c58e8ced",
+    "status": "Needs correction",
+    "bookingRevision": 1,
+    "queueNumber": null,
+    "documents": []
+  },
+  "auditRecords": [
+    {
+      "action": "REVISION_REQUESTED",
+      "targetModel": "Appointment",
+      "targetId": "6acca0a7f4e07f51c58e8ced",
+      "performedBy": "6acc9cd7f4e07f51c58e8423",
+      "timestamp": "2026-10-12T08:56:07.813Z"
+    }
+  ],
+  "notificationRecords": [
+    {
+      "user": "6acc9d0df4e07f51c58e8432",
+      "type": "CORRECTION_REQUESTED",
+      "title": "Appointment needs correction",
+      "emailDelivery": {
+        "status": "disabled",
+        "errorCode": null,
+        "attemptedAt": null,
+        "sentAt": null,
+        "messageId": null
+      },
+      "readAt": null,
+      "createdAt": "2026-10-12T08:56:07.814Z"
+    }
+  ]
+}

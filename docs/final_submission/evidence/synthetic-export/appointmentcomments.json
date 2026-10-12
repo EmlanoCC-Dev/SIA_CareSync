@@ -1,0 +1,44 @@
+[
+  {
+    "_id": {
+      "$oid": "6acc9edbf4e07f51c58e8a70"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "author": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "authorName": "Pia Evidence-Patient",
+    "authorRole": "Patient",
+    "message": "Should I continue the paracetamol tomorrow if the headache returns?",
+    "createdAt": {
+      "$date": "2026-10-12T08:48:27.385Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:48:27.385Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9edef4e07f51c58e8af8"
+    },
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "author": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "authorName": "Ben Santos",
+    "authorRole": "Doctor",
+    "message": "Yes, as needed up to the label limit. Please return if you develop a fever.",
+    "createdAt": {
+      "$date": "2026-10-12T08:48:30.056Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:48:30.056Z"
+    },
+    "__v": 0
+  }
+]

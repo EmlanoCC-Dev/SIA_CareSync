@@ -1,0 +1,177 @@
+[
+  {
+    "_id": {
+      "$oid": "6acc9cd7f4e07f51c58e840c"
+    },
+    "firstName": "Ada",
+    "lastName": "Evidence-Admin",
+    "email": "evidence.admin@example.test",
+    "role": "Admin",
+    "status": "Active",
+    "emailVerifiedAt": {
+      "$date": "2026-10-12T08:39:51.456Z"
+    },
+    "consultationDuration": 15,
+    "scheduleConfigured": false,
+    "workingHours": [],
+    "createdAt": {
+      "$date": "2026-10-12T08:39:51.462Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:39:51.462Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "firstName": "Ben",
+    "lastName": "Santos",
+    "email": "evidence.doctor@example.test",
+    "role": "Doctor",
+    "status": "Active",
+    "emailVerifiedAt": null,
+    "consultationDuration": 30,
+    "scheduleConfigured": true,
+    "workingHours": [
+      {
+        "day": 1,
+        "start": "09:00",
+        "end": "12:00",
+        "_id": {
+          "$oid": "6acc9d3af4e07f51c58e84fc"
+        }
+      },
+      {
+        "day": 2,
+        "start": "09:00",
+        "end": "12:00",
+        "_id": {
+          "$oid": "6acc9d3af4e07f51c58e84fd"
+        }
+      },
+      {
+        "day": 3,
+        "start": "09:00",
+        "end": "12:00",
+        "_id": {
+          "$oid": "6acc9d3af4e07f51c58e84fe"
+        }
+      },
+      {
+        "day": 4,
+        "start": "09:00",
+        "end": "12:00",
+        "_id": {
+          "$oid": "6acc9d3af4e07f51c58e84ff"
+        }
+      },
+      {
+        "day": 5,
+        "start": "09:00",
+        "end": "12:00",
+        "_id": {
+          "$oid": "6acc9d3af4e07f51c58e8500"
+        }
+      }
+    ],
+    "createdAt": {
+      "$date": "2026-10-12T08:39:51.690Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:30.161Z"
+    },
+    "__v": 2
+  },
+  {
+    "_id": {
+      "$oid": "6acc9cd7f4e07f51c58e841d"
+    },
+    "firstName": "Carla",
+    "lastName": "Lim",
+    "email": "evidence.doctor2@example.test",
+    "role": "Doctor",
+    "status": "Active",
+    "emailVerifiedAt": null,
+    "consultationDuration": 30,
+    "scheduleConfigured": false,
+    "workingHours": [],
+    "createdAt": {
+      "$date": "2026-10-12T08:39:51.780Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:39:51.780Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9cd7f4e07f51c58e8423"
+    },
+    "firstName": "Sam",
+    "lastName": "Reception",
+    "email": "evidence.staff@example.test",
+    "role": "Staff",
+    "status": "Active",
+    "emailVerifiedAt": null,
+    "consultationDuration": 15,
+    "scheduleConfigured": false,
+    "workingHours": [],
+    "createdAt": {
+      "$date": "2026-10-12T08:39:51.855Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:39:51.855Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6acc9cd7f4e07f51c58e8429"
+    },
+    "firstName": "Quinn",
+    "lastName": "Other-Patient",
+    "email": "evidence.patient2@example.test",
+    "role": "Patient",
+    "status": "Deactivated",
+    "emailVerifiedAt": {
+      "$date": "2026-10-12T08:39:51.935Z"
+    },
+    "consultationDuration": 15,
+    "scheduleConfigured": false,
+    "workingHours": [],
+    "createdAt": {
+      "$date": "2026-10-12T08:39:51.935Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:50:15.099Z"
+    },
+    "__v": 0,
+    "contactNumber": "09170000000"
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d0df4e07f51c58e8432"
+    },
+    "firstName": "Pia",
+    "lastName": "Evidence-Patient",
+    "email": "evidence.patient@example.test",
+    "role": "Patient",
+    "contactNumber": "",
+    "status": "Active",
+    "emailVerifiedAt": {
+      "$date": "2026-10-12T08:40:45.040Z"
+    },
+    "consultationDuration": 15,
+    "scheduleConfigured": false,
+    "workingHours": [],
+    "createdAt": {
+      "$date": "2026-10-12T08:40:45.041Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-12T08:40:45.041Z"
+    },
+    "__v": 0
+  }
+]

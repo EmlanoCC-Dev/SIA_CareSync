@@ -1,0 +1,21 @@
+$ node.exe backend/tests/comments.check.js
+# exit 0 signal null in 2.0s
+
+📝  Audit log event handlers registered
+📝  [AuditLog] COMMENT_ADDED recorded
+📝  [AuditLog] COMMENT_ADDED recorded
+📝  [AuditLog] COMMENT_ADDED recorded
+📝  [AuditLog] COMMENT_ADDED recorded
+📝  [AuditLog] COMMENT_ADDED recorded
+📝  [AuditLog] COMMENT_ADDED recorded
+📝  [AuditLog] COMMENT_ADDED recorded
+📝  [AuditLog] COMMENT_ADDED recorded
+📝  [AuditLog] COMMENT_ADDED recorded
+📝  [AuditLog] COMMENT_ADDED recorded
+📝  [AuditLog] COMMENT_ADDED recorded
+📝  [AuditLog] COMMENT_ADDED recorded
+📝  [AuditLog] COMMENT_ADDED recorded
+📝  [AuditLog] COMMENT_ADDED recorded
+📝  [AuditLog] COMMENT_ADDED recorded
+📝  [AuditLog] COMMENT_ADDED recorded
+Passed 52 comment HTTP checks, author attribution, private notifications, audit events, and failure checks.

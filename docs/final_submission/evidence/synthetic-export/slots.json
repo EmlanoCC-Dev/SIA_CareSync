@@ -1,0 +1,520 @@
+[
+  {
+    "_id": {
+      "$oid": "6acc9d2f1c76e16fa915580c"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "09:00",
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:19.670Z"
+    },
+    "endTime": "09:30",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:30.514Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d2f1c76e16fa915580d"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "09:30",
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:19.670Z"
+    },
+    "endTime": "10:00",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:30.514Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d2f1c76e16fa915580e"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "10:00",
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": {
+      "$oid": "6acc9d7df4e07f51c58e85d5"
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:41:19.670Z"
+    },
+    "endTime": "10:30",
+    "reservationOperation": {
+      "$oid": "6acc9d7df4e07f51c58e85d6"
+    },
+    "status": "Completed",
+    "updatedAt": {
+      "$date": "2026-10-12T08:47:52.151Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d2f1c76e16fa915580f"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "10:30",
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:19.670Z"
+    },
+    "endTime": "11:00",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:30.514Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d2f1c76e16fa9155810"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "11:00",
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": {
+      "$oid": "6acca08af4e07f51c58e8c63"
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:41:19.670Z"
+    },
+    "endTime": "11:30",
+    "reservationOperation": {
+      "$oid": "6acca08af4e07f51c58e8c64"
+    },
+    "status": "Completed",
+    "updatedAt": {
+      "$date": "2026-10-12T08:55:42.394Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d2f1c76e16fa9155811"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "11:30",
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": {
+      "$oid": "6acca0a7f4e07f51c58e8ced"
+    },
+    "createdAt": {
+      "$date": "2026-10-12T08:41:19.670Z"
+    },
+    "endTime": "12:00",
+    "reservationOperation": {
+      "$oid": "6acca0a7f4e07f51c58e8cee"
+    },
+    "status": "Completed",
+    "updatedAt": {
+      "$date": "2026-10-12T08:56:10.491Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d2f1c76e16fa9155812"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "12:00",
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:19.670Z"
+    },
+    "endTime": "12:30",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:30.514Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d2f1c76e16fa9155813"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "12:30",
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:19.670Z"
+    },
+    "endTime": "13:00",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:30.514Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d2f1c76e16fa9155814"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "13:00",
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:19.670Z"
+    },
+    "endTime": "13:30",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:30.514Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d2f1c76e16fa9155815"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "13:30",
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:19.670Z"
+    },
+    "endTime": "14:00",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:30.514Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d2f1c76e16fa9155816"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "14:00",
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:19.670Z"
+    },
+    "endTime": "14:30",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:30.514Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d2f1c76e16fa9155817"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "14:30",
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:19.670Z"
+    },
+    "endTime": "15:00",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:30.514Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d2f1c76e16fa9155818"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "15:00",
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:19.670Z"
+    },
+    "endTime": "15:30",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:30.514Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d2f1c76e16fa9155819"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "15:30",
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:19.670Z"
+    },
+    "endTime": "16:00",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:30.514Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d2f1c76e16fa915581a"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "16:00",
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:19.670Z"
+    },
+    "endTime": "16:30",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:30.514Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d2f1c76e16fa915581b"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "16:30",
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:19.670Z"
+    },
+    "endTime": "17:00",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:30.514Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d501c76e16fa915581c"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "09:00",
+    "date": {
+      "$date": "2026-10-14T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:52.016Z"
+    },
+    "endTime": "09:30",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:52.077Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d501c76e16fa915581d"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "09:30",
+    "date": {
+      "$date": "2026-10-14T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:52.016Z"
+    },
+    "endTime": "10:00",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:52.077Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d501c76e16fa915581e"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "10:00",
+    "date": {
+      "$date": "2026-10-14T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:52.016Z"
+    },
+    "endTime": "10:30",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:52.077Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d501c76e16fa915581f"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "10:30",
+    "date": {
+      "$date": "2026-10-14T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:52.016Z"
+    },
+    "endTime": "11:00",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:52.077Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d501c76e16fa9155820"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "11:00",
+    "date": {
+      "$date": "2026-10-14T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:52.016Z"
+    },
+    "endTime": "11:30",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:52.077Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6acc9d501c76e16fa9155821"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "startTime": "11:30",
+    "date": {
+      "$date": "2026-10-14T00:00:00Z"
+    },
+    "__v": 0,
+    "appointment": null,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:52.016Z"
+    },
+    "endTime": "12:00",
+    "reservationOperation": null,
+    "status": "Available",
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:52.077Z"
+    }
+  }
+]

@@ -1,0 +1,4 @@
+$ node.exe backend/tests/api-access.check.js
+# exit 0 signal null in 3.9s
+
+Passed 128 HTTP checks, including authentication on all 47 registered private routes, ownership/assignment, uploads/downloads, clock permissions, and response privacy.

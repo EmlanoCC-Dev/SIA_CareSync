@@ -1,0 +1,4 @@
+$ node.exe backend/tests/email-notifications.check.js
+# exit 0 signal null in 0.8s
+
+Passed Gmail transport, notification routing, status logging, privacy, and failure checks. No real email sent.

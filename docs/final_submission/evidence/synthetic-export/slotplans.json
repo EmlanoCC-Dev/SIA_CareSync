@@ -1,0 +1,128 @@
+[
+  {
+    "_id": "6acc9cd7f4e07f51c58e8417:2026-10-13",
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:19.633Z"
+    },
+    "date": {
+      "$date": "2026-10-13T00:00:00Z"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "revision": 1,
+    "slots": [
+      {
+        "startTime": "09:00",
+        "endTime": "09:30"
+      },
+      {
+        "startTime": "09:30",
+        "endTime": "10:00"
+      },
+      {
+        "startTime": "10:00",
+        "endTime": "10:30"
+      },
+      {
+        "startTime": "10:30",
+        "endTime": "11:00"
+      },
+      {
+        "startTime": "11:00",
+        "endTime": "11:30"
+      },
+      {
+        "startTime": "11:30",
+        "endTime": "12:00"
+      },
+      {
+        "startTime": "12:00",
+        "endTime": "12:30"
+      },
+      {
+        "startTime": "12:30",
+        "endTime": "13:00"
+      },
+      {
+        "startTime": "13:00",
+        "endTime": "13:30"
+      },
+      {
+        "startTime": "13:30",
+        "endTime": "14:00"
+      },
+      {
+        "startTime": "14:00",
+        "endTime": "14:30"
+      },
+      {
+        "startTime": "14:30",
+        "endTime": "15:00"
+      },
+      {
+        "startTime": "15:00",
+        "endTime": "15:30"
+      },
+      {
+        "startTime": "15:30",
+        "endTime": "16:00"
+      },
+      {
+        "startTime": "16:00",
+        "endTime": "16:30"
+      },
+      {
+        "startTime": "16:30",
+        "endTime": "17:00"
+      }
+    ],
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:30.505Z"
+    }
+  },
+  {
+    "_id": "6acc9cd7f4e07f51c58e8417:2026-10-14",
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-12T08:41:51.985Z"
+    },
+    "date": {
+      "$date": "2026-10-14T00:00:00Z"
+    },
+    "doctor": {
+      "$oid": "6acc9cd7f4e07f51c58e8417"
+    },
+    "revision": 1,
+    "slots": [
+      {
+        "startTime": "09:00",
+        "endTime": "09:30"
+      },
+      {
+        "startTime": "09:30",
+        "endTime": "10:00"
+      },
+      {
+        "startTime": "10:00",
+        "endTime": "10:30"
+      },
+      {
+        "startTime": "10:30",
+        "endTime": "11:00"
+      },
+      {
+        "startTime": "11:00",
+        "endTime": "11:30"
+      },
+      {
+        "startTime": "11:30",
+        "endTime": "12:00"
+      }
+    ],
+    "updatedAt": {
+      "$date": "2026-10-12T08:41:52.064Z"
+    }
+  }
+]

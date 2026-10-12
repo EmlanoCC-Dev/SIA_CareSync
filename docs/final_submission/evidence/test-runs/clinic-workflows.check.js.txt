@@ -1,0 +1,4 @@
+$ node.exe backend/tests/clinic-workflows.check.js
+# exit 0 signal null in 1.7s
+
+Passed: schedule validation/generation, block/reopen guards, assignment/conflict rollback, report boundaries/scope, and authenticated HTTP routes.

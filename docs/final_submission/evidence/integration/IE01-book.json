@@ -1,0 +1,123 @@
+{
+  "id": "IE01-book",
+  "actor": "patient (evidence.patient@example.test)",
+  "request": {
+    "method": "POST",
+    "url": "/api/appointments",
+    "body": {
+      "doctorId": "6acc9cd7f4e07f51c58e8417",
+      "date": "2026-10-13",
+      "slotId": "6acc9d2f1c76e16fa9155811",
+      "reason": "Integration run: follow-up for headache."
+    }
+  },
+  "response": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "data": {
+        "patient": "6acc9d0df4e07f51c58e8432",
+        "doctor": "6acc9cd7f4e07f51c58e8417",
+        "slot": "6acc9d2f1c76e16fa9155811",
+        "walkIn": null,
+        "date": "2026-10-13T00:00:00.000Z",
+        "timeSlot": "11:30-12:00",
+        "reason": "Integration run: follow-up for headache.",
+        "status": "Pending",
+        "statusHistory": [
+          {
+            "status": "Pending",
+            "changedBy": "6acc9d0df4e07f51c58e8432",
+            "remarks": "Appointment booked by patient",
+            "changedAt": "2026-10-12T08:56:07.335Z"
+          }
+        ],
+        "bookingRevision": 0,
+        "notesRevision": 0,
+        "queueNumber": null,
+        "_id": "6acca0a7f4e07f51c58e8ced",
+        "bookingHistory": [],
+        "documents": [],
+        "noteVersions": [],
+        "archivedDocuments": [],
+        "createdAt": "2026-10-12T08:56:07.335Z",
+        "updatedAt": "2026-10-12T08:56:07.335Z",
+        "__v": 0
+      }
+    }
+  },
+  "appointmentAfter": {
+    "_id": "6acca0a7f4e07f51c58e8ced",
+    "status": "Pending",
+    "bookingRevision": 0,
+    "queueNumber": null,
+    "documents": []
+  },
+  "auditRecords": [
+    {
+      "action": "APPOINTMENT_BOOKED",
+      "targetModel": "Appointment",
+      "targetId": "6acca0a7f4e07f51c58e8ced",
+      "performedBy": "6acc9d0df4e07f51c58e8432",
+      "timestamp": "2026-10-12T08:56:07.343Z"
+    }
+  ],
+  "notificationRecords": [
+    {
+      "user": "6acc9d0df4e07f51c58e8432",
+      "type": "BOOKING_SUBMITTED",
+      "title": "Appointment request received",
+      "emailDelivery": {
+        "status": "disabled",
+        "errorCode": null,
+        "attemptedAt": null,
+        "sentAt": null,
+        "messageId": null
+      },
+      "readAt": null,
+      "createdAt": "2026-10-12T08:56:07.344Z"
+    },
+    {
+      "user": "6acc9cd7f4e07f51c58e8417",
+      "type": "DOCTOR_REQUEST_ASSIGNED",
+      "title": "Appointment request assigned",
+      "emailDelivery": {
+        "status": "disabled",
+        "errorCode": null,
+        "attemptedAt": null,
+        "sentAt": null,
+        "messageId": null
+      },
+      "readAt": null,
+      "createdAt": "2026-10-12T08:56:07.344Z"
+    },
+    {
+      "user": "6acc9cd7f4e07f51c58e840c",
+      "type": "BOOKING_REVIEW",
+      "title": "New appointment request",
+      "emailDelivery": {
+        "status": "disabled",
+        "errorCode": null,
+        "attemptedAt": null,
+        "sentAt": null,
+        "messageId": null
+      },
+      "readAt": null,
+      "createdAt": "2026-10-12T08:56:07.350Z"
+    },
+    {
+      "user": "6acc9cd7f4e07f51c58e8423",
+      "type": "BOOKING_REVIEW",
+      "title": "New appointment request",
+      "emailDelivery": {
+        "status": "disabled",
+        "errorCode": null,
+        "attemptedAt": null,
+        "sentAt": null,
+        "messageId": null
+      },
+      "readAt": null,
+      "createdAt": "2026-10-12T08:56:07.350Z"
+    }
+  ]
+}

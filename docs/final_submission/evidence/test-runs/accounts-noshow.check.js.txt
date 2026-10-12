@@ -1,0 +1,4 @@
+$ node.exe backend/tests/accounts-noshow.check.js
+# exit 0 signal null in 1.4s
+
+Passed account-edit/role/status HTTP checks, deactivated login/session/booking checks, and no-show expiry/conflict/retry checks.

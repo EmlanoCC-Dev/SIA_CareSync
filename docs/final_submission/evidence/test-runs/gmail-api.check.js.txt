@@ -1,0 +1,4 @@
+$ node.exe backend/tests/gmail-api.check.js
+# exit 0 signal null in 0.2s
+
+Passed Gmail HTTPS authentication, caching, MIME safety, rejection, expiry and failure checks. No live email sent.

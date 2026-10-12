@@ -1,0 +1,62 @@
+{
+  "id": "IE09-reports",
+  "actor": "admin (evidence.admin@example.test)",
+  "request": {
+    "method": "GET",
+    "url": "/api/reports?from=2026-10-13&to=2026-10-13",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "from": "2026-10-13",
+        "to": "2026-10-13",
+        "statuses": {
+          "Pending": 0,
+          "Needs correction": 0,
+          "Confirmed": 0,
+          "Checked In": 0,
+          "Declined": 0,
+          "In Progress": 0,
+          "Completed": 3,
+          "Cancelled": 0,
+          "No-show": 0
+        },
+        "total": 3,
+        "daily": [
+          {
+            "_id": "2026-10-13",
+            "total": 3,
+            "completed": 3
+          }
+        ],
+        "doctors": [
+          {
+            "_id": "6acc9cd7f4e07f51c58e8417",
+            "total": 3,
+            "completed": 3,
+            "firstName": "Ben",
+            "lastName": "Santos"
+          }
+        ],
+        "scope": "Clinic appointments"
+      }
+    }
+  },
+  "appointmentAfter": {
+    "_id": "6acca0a7f4e07f51c58e8ced",
+    "status": "Completed",
+    "bookingRevision": 2,
+    "queueNumber": 3,
+    "documents": [
+      {
+        "filename": "synthetic-referral.txt",
+        "version": 1
+      }
+    ]
+  },
+  "auditRecords": [],
+  "notificationRecords": []
+}

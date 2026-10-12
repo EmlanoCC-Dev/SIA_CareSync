@@ -1,0 +1,47 @@
+$ node.exe backend/tests/demo-reset.check.js
+# exit 1 signal null in 1.0s
+
+
+--- stderr ---
+
+❌  [400] Type CLEAR DEMO DATA to confirm the reset
+
+❌  [400] Type CLEAR DEMO DATA to confirm the reset
+
+❌  [400] Type CLEAR DEMO DATA to confirm the reset
+
+❌  [400] Type CLEAR DEMO DATA to confirm the reset
+
+❌  [400] Type CLEAR DEMO DATA to confirm the reset
+
+❌  [409] Clinic activity is still running. Pause other tabs and retry the reset in a moment.
+
+❌  [409] Clinic activity is still running. Pause other tabs and retry the reset in a moment.
+[Demo reset] Reset interrupted: Simulated storage failure
+
+❌  [500] Demo reset was interrupted; some data may have been cleared. Retry to finish clearing the remaining data.
+Error: Demo reset was interrupted; some data may have been cleared. Retry to finish clearing the remaining data.
+    at clearDemoData (<repo>\backend\src\services\demoReset.service.js:52:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async <repo>\backend\src\routes\system.routes.js:70:18
+[Demo reset] Reset interrupted: Document storage is unavailable
+
+❌  [500] Demo reset was interrupted; some data may have been cleared. Retry to finish clearing the remaining data.
+Error: Demo reset was interrupted; some data may have been cleared. Retry to finish clearing the remaining data.
+    at clearDemoData (<repo>\backend\src\services\demoReset.service.js:52:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async <repo>\backend\src\routes\system.routes.js:70:18
+AssertionError [ERR_ASSERTION]: Admin reset
+
+500 !== 200
+
+    at call (<repo>\backend\tests\demo-reset.check.js:71:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (<repo>\backend\tests\demo-reset.check.js:121:18) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 500,
+  expected: 200,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
