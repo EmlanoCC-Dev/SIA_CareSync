@@ -116,6 +116,10 @@ try {
     return request.respond({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data, date: '2026-10-01' }) });
   });
   const click = async (selector, text) => {
+    if (page.viewport().width <= 768 && /dashboard-tabs|navbar-tools/.test(selector)) {
+      await page.click('.mobile-menu-trigger');
+      await page.waitForSelector('.navbar-menu[open]', { visible: true });
+    }
     const found = await page.evaluate(({ selector, text }) => {
       const element = [...document.querySelectorAll(selector)].find(item => item.textContent.includes(text));
       element?.click();
@@ -145,7 +149,7 @@ try {
           if (Math.min(a.right, b.right) > Math.max(a.left, b.left) + 1 && Math.min(a.bottom, b.bottom) > Math.max(a.top, b.top) + 1) issues.push('Workspace controls overlap');
         }
       }
-      for (const modal of document.querySelectorAll('dialog[open], .modal-overlay .modal-content')) {
+      for (const modal of document.querySelectorAll('dialog[open]:not(.navbar-menu), .navbar-menu:modal, .modal-overlay .modal-content')) {
         const box = modal.getBoundingClientRect();
         if (box.width && (box.left < -1 || box.right > innerWidth + 1 || box.top < -1 || box.bottom > innerHeight + 1)) issues.push('Dialog extends outside the viewport');
         if (modal.scrollWidth > modal.clientWidth + 1) issues.push('Dialog content overflows horizontally');
@@ -154,7 +158,7 @@ try {
     });
     assert.deepEqual(layoutErrors, [], `${name}: layout errors`);
     await page.screenshot({ path: join(screenshots, `${name}.png`), fullPage: true });
-    if (!narrow && page.viewport().width === 1440 && await page.$('dialog[open], .modal-overlay .modal-content')) {
+    if (!narrow && page.viewport().width === 1440 && await page.$('dialog[open]:not(.navbar-menu), .modal-overlay .modal-content')) {
       const previous = page.viewport();
       await page.setViewport({ width: 320, height: 640 });
       await check(`${name}-320x640`, true);
@@ -236,10 +240,55 @@ try {
       await page.waitForSelector('.dashboard-page');
       await page.waitForFunction(() => document.querySelector('tbody tr'));
       await check(`${role.toLowerCase()}-${width}`);
+      if (width === 390) {
+        assert(await page.$eval('.navbar', node => node.getBoundingClientRect().height <= 90), `${role}: mobile header is too tall`);
+        assert.equal(await page.$eval('.navbar-menu', node => node.open), false);
+        await page.click('.mobile-menu-trigger');
+        await page.waitForSelector('.navbar-menu:modal');
+        assert.equal(await page.$eval('.mobile-menu-trigger', node => node.getAttribute('aria-expanded')), 'true');
+        assert.equal(await page.evaluate(() => document.body.style.overflow), 'hidden');
+        await check(`${role.toLowerCase()}-mobile-menu`);
+        for (let i = 0; i < 12; i++) {
+          await page.keyboard.press('Tab');
+          assert(await page.evaluate(() => document.activeElement === document.body || document.activeElement.closest('.navbar-menu') !== null), 'Menu focus reached a background control');
+        }
+        await page.keyboard.press('Escape');
+        await page.waitForSelector('.navbar-menu', { hidden: true });
+        assert(await page.$eval('.mobile-menu-trigger', node => node === document.activeElement), 'Menu must restore focus');
+        assert.notEqual(await page.evaluate(() => document.body.style.overflow), 'hidden');
+        await page.click('.mobile-menu-trigger');
+        await page.click('.dashboard-tabs .btn-primary');
+        await page.waitForSelector('.navbar-menu', { hidden: true });
+        await page.click('.mobile-menu-trigger');
+        await page.click('[aria-label="Close menu"]');
+        await page.waitForSelector('.navbar-menu', { hidden: true });
+        await page.click('.mobile-menu-trigger');
+        await page.mouse.click(8, 200);
+        await page.waitForSelector('.navbar-menu', { hidden: true });
+        await page.click('.mobile-menu-trigger');
+        await page.setViewport({ width: 1440, height: 960 });
+        await page.waitForFunction(() => !document.querySelector('.navbar-menu').matches(':modal'));
+        assert.notEqual(await page.evaluate(() => document.body.style.overflow), 'hidden');
+        await page.setViewport({ width, height: 960 });
+        await page.waitForSelector('.navbar-menu', { hidden: true });
+        await page.click('.mobile-menu-trigger');
+        await page.click('.navbar-user button');
+        await page.waitForSelector('.password-dialog:modal');
+        assert.equal(await page.$eval('.navbar-menu', node => node.open), false, 'Password form must replace the menu');
+        await page.keyboard.press('Escape');
+        await page.waitForSelector('.password-dialog', { hidden: true });
+        assert(await page.$eval('.mobile-menu-trigger', node => node === document.activeElement), 'Password dismissal must restore menu trigger focus');
+      }
       if (width === 1440) {
         for (const viewport of [{ width: 1920, height: 870 }, { width: 1280, height: 720 }, { width: 1120, height: 701 }, { width: 1100, height: 900 }, { width: 1440, height: 650 }, { width: 768, height: 1024 }, { width: 320, height: 640 }]) {
           await page.setViewport(viewport);
           await check(`${role.toLowerCase()}-navigation-${viewport.width}x${viewport.height}`);
+          if (viewport.width <= 768) {
+            await page.click('.mobile-menu-trigger');
+            await check(`${role.toLowerCase()}-menu-${viewport.width}x${viewport.height}`);
+            await page.keyboard.press('Escape');
+            await page.waitForSelector('.navbar-menu', { hidden: true });
+          }
         }
         await page.setViewport({ width: 1440, height: 960 });
       }
@@ -323,6 +372,7 @@ try {
       await page.waitForSelector('.notification-dialog', { hidden: true });
       failedReads.add('/api/system/time');
       clinicTime = '2026-09-30T17:00:00Z'; // October 1, 01:00 in Manila; UTC is still September 30.
+      if (width <= 768) await page.click('.mobile-menu-trigger');
       await page.click('button[title="Clinic clock and operating hours"]');
       await page.waitForSelector('.system-time-modal .load-error');
       assert(!(await page.$eval('.system-time-modal', element => element.textContent)).includes('CURRENT SYSTEM TIME'), 'Failed clock load must not show a fabricated current status');
@@ -336,6 +386,7 @@ try {
       await page.keyboard.press('Escape');
       await page.waitForSelector('.system-time-modal', { hidden: true });
       assert.equal(mutations.length, beforeClockDismissal, 'Escape must not change clinic time');
+      if (width <= 768) await page.click('.mobile-menu-trigger');
       await page.click('button[title="Clinic clock and operating hours"]');
       await page.waitForSelector('.system-time-modal[open]');
       await page.waitForSelector('.system-time-modal');
@@ -630,6 +681,7 @@ try {
         empty = false;
       }
       for (const dismiss of ['Escape', 'Stay signed in']) {
+        if (width <= 768) await page.click('.mobile-menu-trigger');
         await page.click('button[title="Sign Out"]');
         await page.waitForSelector('.action-dialog[open]');
         assert(await page.$eval('.action-dialog', dialog => dialog.textContent.includes('Are you sure you want to sign out?')));
@@ -640,6 +692,7 @@ try {
         assert.equal(await page.evaluate(() => localStorage.getItem('caresync_token')), 'ui-smoke-mock', `${role}: dismissal signed out`);
         assert(await page.$('.dashboard-page'), `${role}: dismissal left dashboard`);
       }
+      if (width <= 768) await page.click('.mobile-menu-trigger');
       await page.click('button[title="Sign Out"]');
       await page.waitForSelector('.action-dialog[open]');
       await check(`sign-out-${role.toLowerCase()}-${width}`);

@@ -174,7 +174,7 @@ export default function AdminDashboard() {
         </button>
         <button className={`btn btn-sm ${activeTab === 'slots' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('slots')} disabled={resetting}>Slot Management</button>
         <button className={`btn btn-sm ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('reports')} disabled={resetting}>Reports</button>
-        <button className={`btn btn-sm ${activeTab === 'demo' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('demo')} disabled={resetting}>Demo reset</button>
+        <button className={`btn btn-sm demo-reset-nav ${activeTab === 'demo' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('demo')} disabled={resetting}>Demo reset</button>
       </WorkspaceNavigation>
 
       {/* Tab 1: Audit Logs */}

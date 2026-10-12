@@ -65,6 +65,7 @@ Use white cards over the pale canvas, lightly tinted inset inputs, and solid col
 ## Responsive behavior and accessibility
 
 - At widths up to 1100px or heights up to 700px, use a horizontal header and in-flow wrapping workspace navigation.
+- At widths up to 768px, use a single header row with the CareSync logo, an accessible notification bell with unread count, and a Menu button. Put role navigation, clinic tools, and account actions in a native modal drawer. Use 44px touch targets, mint selected navigation, and a separated demo-reset item. Close on navigation, Escape, close-button or backdrop activation; restore trigger focus, lock background scrolling, and close on crossing the desktop breakpoint. Preserve the notification and account dialogs when resizing.
 - At 900px, stack the public hero and queue-board panels; simplify footer columns.
 - At 640px, use 16px workspace gutters, two-column metrics, stacked form rows, 16px form text, and stacked authentication panels. Table scrolling stays inside its container; retain readable column widths.
 - Keep native buttons, links, date/time inputs, and the existing controls. Give icon-only actions accessible names and preserve keyboard focus indicators.

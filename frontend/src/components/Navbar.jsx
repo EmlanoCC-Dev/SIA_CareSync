@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import SystemTimeModal from './SystemTimeModal';
 import NotificationInbox from './NotificationInbox';
 import PasswordChangeForm from './PasswordChangeForm';
-import { LogOut, Tv, Clock, KeyRound, X } from 'lucide-react';
+import { LogOut, Tv, Clock, KeyRound, Menu, X } from 'lucide-react';
 import logoSource from '../assets/caresync-logo.svg';
 
 export default function Navbar() {
@@ -15,6 +15,49 @@ export default function Navbar() {
   const [systemTimeStatus, setSystemTimeStatus] = useState(null);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const passwordDialog = useRef(null);
+  const menuDialog = useRef(null);
+  const menuButton = useRef(null);
+  const [mobile, setMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  function closeMenu() {
+    menuDialog.current?.close();
+    setMenuOpen(false);
+    menuButton.current?.focus();
+  }
+
+  useEffect(() => {
+    const node = menuDialog.current;
+    // Workspace navigation is portaled, so listen along the DOM tree.
+    const onClick = event => {
+      if (!node.matches(':modal')) return;
+      if (event.target === node) {
+        const bounds = node.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) closeMenu();
+      } else if (event.target.closest('#workspace-navigation button, #workspace-navigation a, .navbar-tools button, .navbar-tools a')) closeMenu();
+    };
+    node.addEventListener('click', onClick);
+    return () => node.removeEventListener('click', onClick);
+  }, []);
+
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 768px)');
+    const onResize = () => {
+      if (menuDialog.current?.matches(':modal')) menuDialog.current.close();
+      setMenuOpen(false);
+      setMobile(query.matches);
+    };
+    query.addEventListener('change', onResize);
+    return () => query.removeEventListener('change', onResize);
+  }, []);
+
+  useEffect(() => {
+    if (!mobile || !menuOpen) return;
+    menuDialog.current.showModal();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [mobile, menuOpen]);
   useEffect(() => {
     if (!passwordOpen || !passwordDialog.current) return;
     const previousFocus = document.activeElement;
@@ -48,10 +91,24 @@ export default function Navbar() {
           <p className="brand-caption">Appointments &amp; patient flow</p>
         </div>
 
+        <div className="navbar-header-actions">
+          {user && <NotificationInbox key={user._id} />}
+          <button ref={menuButton} type="button" className="btn btn-secondary mobile-menu-trigger"
+            aria-haspopup="dialog" aria-controls="workspace-menu" aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(true)}><Menu size={20} /><span>Menu</span></button>
+        </div>
+
+        <dialog ref={menuDialog} id="workspace-menu" className="navbar-menu" role={mobile ? undefined : 'presentation'}
+          aria-label="Workspace menu"
+          onCancel={event => { event.preventDefault(); closeMenu(); }}>
+        <div className="mobile-menu-heading">
+          <h2>Workspace menu</h2>
+          <button type="button" className="btn btn-secondary" aria-label="Close menu" onClick={closeMenu}><X size={20} /></button>
+        </div>
         <div id="workspace-navigation" />
 
         <div className="navbar-tools">
-          {user && <NotificationInbox key={user._id} />}
+          <p className="mobile-menu-section">Clinic tools</p>
           {/* System Time & Clinic Operating Status */}
           {systemTimeStatus && <time dateTime={systemTimeStatus.currentTime} style={{ fontSize: '0.85rem' }}>
             {new Date(systemTimeStatus.currentTime).toLocaleDateString([], { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
@@ -103,6 +160,7 @@ export default function Navbar() {
 
           {user && (
             <div className="navbar-user">
+              <p className="mobile-menu-section">Account</p>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>
                   {user.firstName} {user.lastName}
@@ -125,6 +183,7 @@ export default function Navbar() {
             </div>
           )}
         </div>
+        </dialog>
       </div>
       <SystemTimeModal
         isOpen={isTimeModalOpen}

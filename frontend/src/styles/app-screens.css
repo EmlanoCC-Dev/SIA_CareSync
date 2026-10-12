@@ -6,12 +6,17 @@
 .navbar { position: sticky; top: 0; flex: 0 0 var(--sidebar-width); width: var(--sidebar-width); height: 100dvh; padding: 28px 20px 20px; overflow-y: auto; background: var(--bg-main); border-right: 1px solid var(--border); z-index: 100; }
 .navbar-inner { display: flex; flex-direction: column; min-height: 100%; gap: 24px; }
 .navbar-inner > div { flex-shrink: 0; }
+.navbar-header-actions { order: 2; margin-top: auto; }
+.navbar-header-actions .notification-trigger { width: 100%; }
+.navbar-menu { display: contents; color: inherit; }
+.mobile-menu-trigger, .mobile-menu-heading, .mobile-menu-section { display: none; }
+#workspace-navigation { order: 1; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--text-main); text-decoration: none; font-size: 19px; font-weight: 800; letter-spacing: -.05em; }
 .brand em { color: var(--primary); font-style: normal; }
 .nav-brand-mark, .auth-mini-brand span { position: relative; display: block; width: 40px; height: 40px; overflow: hidden; border-radius: 10px; flex-shrink: 0; }
 .nav-brand-mark img, .auth-mini-brand img { position: absolute; top: -36.26%; left: -70.32%; width: 239.18%; height: 176.52%; max-width: none; }
 .brand-caption { padding-left: 50px; margin-top: -6px; color: var(--text-muted); font-size: 10px; letter-spacing: .035em; }
-.navbar-tools { margin-top: auto; display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+.navbar-tools { order: 3; display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
 .navbar-tools time { color: var(--text-muted); padding: 8px 0; font-size: 11px !important; }
 .navbar .btn-secondary { justify-content: flex-start; background: transparent; } .navbar .btn-secondary:hover { background: white; }
 .navbar-user { display: flex; flex-direction: column; align-items: stretch; gap: 16px; margin-top: 12px; padding-top: 20px; border-top: 1px solid var(--border); }
