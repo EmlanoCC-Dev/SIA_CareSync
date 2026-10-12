@@ -4,6 +4,8 @@ The Admin workspace has **Database backups**, a manual **Back up now** action, a
 
 The feature stays unavailable until its server settings and Google consent are configured. An SMTP app password cannot authorize Google Drive. The existing Gmail sender, Google project, and OAuth client can be reused; **Drive uses its own refresh token**, leaving `GMAIL_REFRESH_TOKEN` in place for email.
 
+**Configured on October 12, 2026:** The feature is live at https://caresync-inky.vercel.app, with API/source revision `2ed3b27`. Google Drive authorization was verified against the clinic sender account. Render has the backup settings and verified-tool build command; the GitHub daily workflow is active with an encrypted job secret. Recovery credentials are saved privately in the Git-ignored `.env.backup`; preserve an offline copy of its encryption key. Backend tests, desktop/mobile UI checks, and live readiness/authentication checks passed. No real database backup or isolated restore was performed during setup; use the first-backup/recovery steps below to complete that evidence. Resolve OAuth publishing/token lifetime and rotate the OAuth client secret shown during setup, updating the server and private local configuration.
+
 ## Google configuration
 
 1. Sign into [Google Cloud Console](https://console.cloud.google.com/) using the clinic email account. Select the same project used for Gmail API email.
@@ -81,7 +83,7 @@ This feature backs up the database. Preserve matching web/backend source, the se
    ```
 
    The command authenticates the archive before publishing the plaintext output. A wrong key, modified archive, or existing output file causes failure. Protect/remove the plaintext restore archive when testing finishes.
-4. Create an **isolated** restoration target and a private MongoDB tools YAML config containing its URI. Match the MongoDB version/compatibility and encryption key. Confirm the source database name from the Admin result, then restore with namespace mapping, for example:
+4. Create an **isolated** restoration target and a private MongoDB tools YAML config containing its URI, stored outside the source repository. Match the MongoDB version/compatibility and encryption key. Confirm the source database name from the Admin result, then restore with namespace mapping, for example:
 
    ```text
    mongorestore --config private-restore.yaml --archive=private-restore.archive.gz --gzip --nsFrom="caresync_app.*" --nsTo="caresync_restore_test.*"

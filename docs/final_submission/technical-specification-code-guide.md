@@ -608,7 +608,7 @@ Operational follow-up: link Vercel's GitHub project connection for automatic dep
 
 The specification's documentation chapter 10.3 requires backup of **source code, database, uploaded files and documentation**; chapter 10.4 requires recovery steps. Its final submission also requires backup/recovery evidence. No completed full database backup/restore is recorded. Assignment compensation and Clear Demo Data do not satisfy this requirement.
 
-Planned workflow only; no setup or execution was performed for this guide:
+Recovery workflow below remains to be demonstrated. The October 12 software/configuration update is recorded after these steps:
 
 1. Select a quiet demo window and record the exact code revision, documentation version, database and timestamp. Stop clinic writers while making a consistent application snapshot; a basic standalone dump is not being claimed as an online point-in-time snapshot.
 2. Dump the **whole** application database with MongoDB Database Tools. Include all collections, especially `medicalFiles.files` and `medicalFiles.chunks`; document metadata alone does not contain file bytes. Retain indexes/collection metadata from the dump.
@@ -617,7 +617,7 @@ Planned workflow only; no setup or execution was performed for this guide:
 5. Restore into a new isolated test database, leaving production untouched. Verify accounts/login with matching configuration, counts, relationships, versions, comments, audit/inbox records and current/history file hashes/downloads. Prevent restored notification/queue handlers from sending messages or mutating production during verification.
 6. Save sanitized dump/restore logs, screenshots, file verification results and recovery timings. State actual results and observed recovery time; do not invent an RPO/RTO achievement.
 
-Exact commands and network settings should be finalized when the user resumes backup work. The existing maintenance scripts concern migration/reconciliation, not a configured recurring Drive backup job. No backup scheduler or Drive upload integration is implemented.
+**October 12 update:** The Admin database-backup screen, encrypted whole-database/GridFS export, Google Drive upload verification, and daily 6 PM Manila GitHub workflow are implemented and deployed. Google consent was verified for the existing clinic Gmail account; server encryption/scheduler settings and the active GitHub Actions job are configured. Isolated backup/security/recovery-byte tests, UI checks, and non-mutating live readiness/authentication checks passed. No real backup or full isolated database restore has run yet. Matching source/mobile/docs archives and recovery evidence remain pending. See the [backup setup and recovery guide](../deployment/database-backups.md).
 
 ### Clear Demo Data: actual deletion behavior
 
@@ -708,7 +708,7 @@ These IDs are this guide's cross-reference, not a silent renumbering of the exis
 | G-NFR07 Compatibility | React browser client and Flutter Android client use one API. APK builds; actual phone/version/network test pending. |
 | G-NFR08 Maintainability | Layered modules, shared helpers, check scripts and configuration manifests. Code links/hashes make documentation reviewable. |
 | G-NFR09 Performance/availability | Indexed lookups, aggregate reports, bounded upload/OTP state and health route. No measured load SLA; free hosting sleeps. |
-| G-NFR10 Backup/recoverability | Whole DB+GridFS, source/mobile/docs archive and isolated restore plan. Implementation/execution/evidence still pending; not marked met. |
+| G-NFR10 Backup/recoverability | Encrypted DB+GridFS backup feature and daily Drive job implemented/configured. Source/mobile/docs archive, a real backup, isolated restore and recovery evidence remain pending; not marked met. |
 
 UI sources: [LoadError.jsx:1](https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/components/LoadError.jsx#L1); [DialogContext.jsx:1](https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/context/DialogContext.jsx#L1); [responsive.css:1](https://github.com/EmlanoCC-Dev/SIA_CareSync/blob/b48083ee385ecb173bf2bbb853c7469b858324a6/frontend/src/styles/responsive.css#L1). These support implementation descriptions, not automatic WCAG certification.
 
