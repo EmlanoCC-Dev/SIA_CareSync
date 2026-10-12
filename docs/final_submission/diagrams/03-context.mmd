@@ -13,3 +13,6 @@ flowchart LR
     system -->|"SMTP messages"| gmail["Gmail SMTP"]
     gmail -->|"Transport acceptance or failure"| system
     gmail -->|"OTP and eligible appointment email"| patient
+    admin -->|"Manual backup and daily backup time"| system
+    scheduler["GitHub Actions scheduler"] -->|"Token-protected backup request"| system
+    system -->|"Encrypted database archive"| drive["Google Drive (clinic account)"]

@@ -23,3 +23,8 @@ flowchart LR
     events -->|"Private updates"| users
     visits -->|"Filtered visits"| reports(("6.0 Reports"))
     reports -->|"Scoped aggregates"| clinic["Clinic roles"]
+    users -->|"Back up now, backup time"| backup(("7.0 Backup"))
+    scheduler["GitHub Actions scheduler"] -->|"Token-protected request"| backup
+    backup <-->|"Schedule and job history"| backups[("D8 Backup schedule and jobs")]
+    alldb[("MongoDB collections and GridFS")] -->|"Full database dump"| backup
+    backup -->|"Encrypted archive"| drive["Google Drive"]

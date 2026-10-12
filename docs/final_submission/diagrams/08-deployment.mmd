@@ -5,6 +5,14 @@ flowchart LR
         api <-->|"File I/O"| disk[("Local backend/uploads")]
         settings["Private backend/.env"] -.-> api
     end
-    api <-->|"Configured MONGO_URI"| mongo[("MongoDB local service or Atlas")]
+    subgraph cloud["Deployed configuration recorded October 12, 2026"]
+        web["Vercel: React production build"] -->|"HTTPS API calls"| render["Render Free: Node.js Express API with mongodump"]
+        render <-->|"Files in GridFS"| mongo
+    end
+    api <-->|"Configured MONGO_URI"| mongo[("MongoDB local service or configured cluster")]
+    render <-->|"Configured MONGO_URI"| mongo
     api -->|"SMTP TLS port 465"| gmail["Gmail SMTP"]
+    render -->|"SMTP"| gmail
     gmail -->|"Email"| recipient["Patient inbox"]
+    github["GitHub Actions: Daily database backup, checks every 15 minutes"] -->|"HTTPS and X-Backup-Token"| render
+    render -->|"Encrypted archive, drive.file scope"| drive["Google Drive: CareSync Database Backups"]

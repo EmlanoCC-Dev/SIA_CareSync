@@ -1,5 +1,6 @@
 flowchart TB
     browser["Browser: React pages, forms and API client"] -->|"HTTP JSON and multipart"| api
+    github["GitHub Actions workflow, checks every 15 minutes"] -->|"HTTPS with X-Backup-Token"| jobs
     subgraph backend["One Node.js and Express backend process"]
         api["Routes and authentication middleware"] --> controllers["Controllers and response handling"]
         controllers --> services["Appointment, slot, queue, account and report services"]
@@ -9,7 +10,12 @@ flowchart TB
         handlers --> models
         handlers --> email["Nodemailer email service"]
         services --> upload["Protected upload and download handling"]
+        api -->|"Admin only: /api/system/backups"| backup["Database backup service: mongodump, AES-256-GCM, Drive upload"]
+        jobs["Scheduler router: /api/backup-jobs"] --> backup
+        backup --> models
     end
     models <-->|"Queries and conditional writes"| db[("MongoDB")]
-    upload <-->|"File bytes"| files[("backend/uploads")]
+    upload <-->|"File bytes"| files[("File storage: GridFS in production, backend/uploads locally")]
+    backup -->|"Database dump"| db
     email -->|"SMTP over TLS"| smtp["Gmail SMTP"]
+    backup -->|"HTTPS upload, drive.file scope"| drive["Google Drive: CareSync Database Backups"]

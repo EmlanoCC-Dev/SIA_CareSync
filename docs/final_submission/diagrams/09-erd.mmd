@@ -89,6 +89,22 @@ erDiagram
         date consumedAt
         date purgeAt
     }
+    DatabaseBackup {
+        ObjectId _id PK
+        ObjectId requestedBy FK
+        string trigger
+        string status
+        string scheduleDate
+        string filename
+        number size
+        string sha256
+        string driveFileId
+        date finishedAt
+    }
+    BackupSchedule {
+        string _id PK
+        string time
+    }
     User |o..o{ Appointment : patient
     User |o..o{ WalkIn : verified_patient
     User |o..o{ Appointment : assigned_doctor
@@ -104,3 +120,4 @@ erDiagram
     Appointment |o..o{ Notification : related_visit
     User |o..o{ AuditLog : actor
     User |o..o{ EmailOtp : bound_account
+    User |o..o{ DatabaseBackup : requested_by
