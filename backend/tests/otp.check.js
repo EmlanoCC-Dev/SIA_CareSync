@@ -12,6 +12,7 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const User = require('../src/models/User');
 const WalkIn = require('../src/models/WalkIn');
+const Appointment = require('../src/models/Appointment');
 const EmailOtp = require('../src/models/EmailOtp');
 const emitter = require('../src/events/emitter');
 const EVENTS = require('../src/events/events');
@@ -49,6 +50,7 @@ async function main() {
   // This suite verifies OTP/account behavior; walk-in ownership has its own integration check.
   stub(WalkIn, 'updateMany', async () => ({ modifiedCount: 0 }));
   stub(WalkIn, 'find', () => query([]));
+  stub(Appointment, 'updateMany', async () => ({ modifiedCount: 0 }));
   stub(crypto, 'randomInt', (min, max) => { assert.equal(min, 0); assert.equal(max, 1000000); return counter++; });
   stub(nodemailer, 'createTransport', () => ({ async sendMail(data) {
     if (smtpFail) throw new Error('PRIVATE_SMTP_SECRET');
@@ -93,7 +95,7 @@ async function main() {
     return response.json();
   }
   const email = 'patient@example.test';
-  const account = { firstName: 'Test', lastName: 'Patient', email, password: 'test-password', role: 'Admin' };
+  const account = { firstName: 'Test', lastName: 'Patient', email, password: 'Test-pass1!', role: 'Admin' };
   for (const value of [null, {}, 'invalid', 'one@example.test,two@example.test', 'one@example.test\r\nBcc: other@example.test']) {
     await call('/register/otp', { email: value }, 400);
   }
@@ -111,13 +113,18 @@ async function main() {
   await call('/register/otp', { email }, 429);
   await call('/register', { ...account, otp: '999999' }, 400);
   assert.equal(row.attempts, 1);
-  await call('/password/reset', { email, otp: codeFor(email), password: 'new-password' }, 400);
+  await call('/password/reset', { email, otp: codeFor(email), password: 'New-pass1!' }, 400);
   assert.equal(users.length, 1, 'A registration code cannot reset a password');
   const oldCode = codeFor(email);
   age('register', email);
   await call('/register/otp', { email });
   await call('/register', { ...account, otp: oldCode }, 400);
   const currentCode = codeFor(email);
+  for (const password of ['short1!', 'lowercase1!', 'Uppercase!', 'Uppercase1']) {
+    await call('/register', { ...account, password, otp: currentCode }, 400);
+    assert.equal(row.consumedAt, null, 'Invalid passwords must not consume the registration code');
+  }
+  await call('/register', { ...account, contactNumber: 'invalid-number', otp: currentCode }, 400);
   await call('/register', { ...account, firstName: '', otp: currentCode }, 400);
   assert.equal(row.consumedAt, null, 'Invalid account fields do not consume a good code');
   const registered = (await call('/register', { ...account, otp: currentCode }, 201)).data;
@@ -133,24 +140,28 @@ async function main() {
   await new Promise(resolve => setImmediate(resolve));
   row = challenges.get(`password:${email}`);
   const passwordCode = codeFor(email);
+  for (const password of ['short1!', 'lowercase1!', 'Uppercase!', 'Uppercase1']) {
+    await call('/password/reset', { email, password, otp: passwordCode }, 400);
+    assert.equal(row.consumedAt, null, 'Invalid passwords must not consume the reset code');
+  }
   assert.equal(row.ready, true);
   const missingResponse = await call('/password/otp', { email: 'missing@example.test' }, 202);
   assert.deepEqual(missingResponse, passwordResponse, 'Password requests must not disclose account existence');
   assert(!mail.some(item => item.to.address === 'missing@example.test'));
-  await call('/password/reset', { email: 'missing@example.test', otp: passwordCode, password: 'new-password' }, 400);
+  await call('/password/reset', { email: 'missing@example.test', otp: passwordCode, password: 'New-pass1!' }, 400);
   await call('/password/reset', { email, otp: passwordCode, password: 'x' }, 400);
   await call('/password/reset', { email, otp: passwordCode, password: 'é'.repeat(40) }, 400);
   assert.equal(row.consumedAt, null);
-  await call('/password/reset', { email, otp: '999999', password: 'new-password' }, 400);
-  await call('/password/reset', { email, otp: passwordCode, password: 'new-password' });
+  await call('/password/reset', { email, otp: '999999', password: 'New-pass1!' }, 400);
+  await call('/password/reset', { email, otp: passwordCode, password: 'New-pass1!' });
   const patient = users.find(user => user.email === email);
   assert.equal(patient.tokenVersion, 1);
-  assert(await bcrypt.compare('new-password', patient.password));
-  assert(!await bcrypt.compare('test-password', patient.password));
+  assert(await bcrypt.compare('New-pass1!', patient.password));
+  assert(!await bcrypt.compare('Test-pass1!', patient.password));
   await call('/me', null, 401, registered.token, 'GET');
-  await call('/password/reset', { email, otp: passwordCode, password: 'replay-password' }, 400);
-  await call('/login', { email, password: 'test-password' }, 401);
-  const loggedIn = (await call('/login', { email: ' PATIENT@EXAMPLE.TEST ', password: 'new-password' })).data;
+  await call('/password/reset', { email, otp: passwordCode, password: 'Replay-pass1!' }, 400);
+  await call('/login', { email, password: 'Test-pass1!' }, 401);
+  const loggedIn = (await call('/login', { email: ' PATIENT@EXAMPLE.TEST ', password: 'New-pass1!' })).data;
   assert.equal(jwt.verify(loggedIn.token, env.JWT_SECRET).version, 1);
   await call('/me', null, 200, loggedIn.token, 'GET');
   assert.deepEqual(events.at(-1).changes, { passwordChanged: true });
@@ -201,7 +212,7 @@ async function main() {
   assert.equal(staff.emailVerifiedAt, null);
   for (const target of [admin, users.find(user => user.email === staff.email)]) {
     await otp.requestPasswordOtp(target.email); await new Promise(resolve => setImmediate(resolve));
-    await service.resetPassword({ email: target.email, otp: codeFor(target.email), password: 'changed-clinic-password' });
+    await service.resetPassword({ email: target.email, otp: codeFor(target.email), password: 'Changed-clinic1!' });
     assert.equal(target.tokenVersion, 1);
   }
   await call('/me', null, 401, adminToken, 'GET');
@@ -210,16 +221,16 @@ async function main() {
   assert(!mail.some(item => item.to.address === inactive.email));
   age('password', email); await otp.requestPasswordOtp(email); await new Promise(resolve => setImmediate(resolve));
   patient.status = 'Deactivated';
-  await assert.rejects(service.resetPassword({ email, otp: codeFor(email), password: 'blocked-password' }), err => err.statusCode === 409);
-  assert(await bcrypt.compare('new-password', patient.password));
+  await assert.rejects(service.resetPassword({ email, otp: codeFor(email), password: 'Blocked-pass1!' }), err => err.statusCode === 409);
+  assert(await bcrypt.compare('New-pass1!', patient.password));
   patient.status = 'Active';
   age('password', email); await otp.requestPasswordOtp(email); await new Promise(resolve => setImmediate(resolve));
   patient.email = 'changed@example.test';
-  await assert.rejects(service.resetPassword({ email, otp: codeFor(email), password: 'wrong-address-password' }), err => err.statusCode === 409);
+  await assert.rejects(service.resetPassword({ email, otp: codeFor(email), password: 'Wrong-address1!' }), err => err.statusCode === 409);
   patient.email = email;
   age('password', email); await otp.requestPasswordOtp(email); await new Promise(resolve => setImmediate(resolve));
   patient.tokenVersion++;
-  await assert.rejects(service.resetPassword({ email, otp: codeFor(email), password: 'stale-password' }), err => err.statusCode === 409);
+  await assert.rejects(service.resetPassword({ email, otp: codeFor(email), password: 'Stale-pass1!' }), err => err.statusCode === 409);
   for (let n = 0; n < 61; n++) {
     const response = await fetch(base + '/register/otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'invalid' }) });
     if (response.status === 429) { assert(Number(response.headers.get('retry-after')) > 0); break; }

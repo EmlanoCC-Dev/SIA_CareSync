@@ -224,12 +224,12 @@ async function main() {
   await expect('/api/slots?date=2099-01-01&date=2099-01-02', patient, 400);
   await expect('/api/users/login', null, 400, 'POST', { email: { $ne: null }, password: 'anything' });
   await expect('/api/users/register', null, 400, 'POST', { firstName: 'Dummy', lastName: 'Patient',
-    email: 'dummy@example.test', password: 'dummy-password', role: 'Admin' });
+    email: 'dummy@example.test', password: 'Dummy-pass1!', role: 'Admin' });
   assert.equal(registeredRole, undefined, 'Public registration without an OTP must not create an account');
   // OTP validity/races are exercised by otp.check.js; this check verifies public role restrictions after verification.
   stub(otpService, 'consumeOtp', async () => ({}));
   await expect('/api/users/register', null, 201, 'POST', { firstName: 'Dummy', lastName: 'Patient',
-    email: 'dummy@example.test', password: 'dummy-password', role: 'Admin' });
+    email: 'dummy@example.test', password: 'Dummy-pass1!', role: 'Admin' });
   assert.equal(registeredRole, 'Patient', 'Public registration must ignore caller-supplied privileged roles');
   console.log(`Passed ${checks} HTTP checks, including authentication on all ${privateRoutes} registered private routes, ownership/assignment, uploads/downloads, clock permissions, and response privacy.`);
 }

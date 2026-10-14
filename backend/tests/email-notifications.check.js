@@ -171,6 +171,12 @@ async function main() {
     }
   }
   assert.equal(mail.length, offset);
+  const guest = { ...appointment, patient: null, followUpOf: id(49), followUpContact: { email: 'guest@example.test', name: 'PRIVATE_GUEST_NAME' } };
+  await emit(EVENTS.APPOINTMENT_APPROVED, { appointment: guest });
+  assert.equal(mail.length, offset + 1);
+  assert.equal(mail.at(-1).to.address, 'guest@example.test');
+  await sendNotification({ type: 'BOOKING_CONFIRMED', title: 'Outcome', message: 'Outcome', email: 'invalid\r\nBcc:bad@example.test' });
+  assert.equal(mail.length, offset + 1, 'Invalid guest recipient must never be sent');
   assert(!JSON.stringify(mail).includes('PRIVATE_'), 'No clinical notes, reasons, comments, or walk-in identities in email');
   console.log('Passed Gmail transport, notification routing, status logging, privacy, and failure checks. No real email sent.');
 }

@@ -78,6 +78,8 @@ export default function PatientDashboard() {
   const pendingCount = appointments.filter((a) => a.status === 'Pending').length;
   const confirmedCount = appointments.filter((a) => ['Confirmed', 'Checked In', 'In Progress'].includes(a.status)).length;
   const completedCount = appointments.filter((a) => a.status === 'Completed').length;
+  const hasActiveAppointment = appointments.some(a => ['Pending', 'Needs correction', 'Confirmed', 'Checked In', 'In Progress'].includes(a.status));
+  const bookingDisabled = loading || !!loadError || hasActiveAppointment;
 
   return (
     <main className="main-content dashboard-page patient-dashboard">
@@ -92,17 +94,18 @@ export default function PatientDashboard() {
             Your appointments and consultation records, in one place.
           </p>
         </div>
-        <button onClick={() => setIsBookingOpen(true)} className="btn btn-primary">
+        <button onClick={() => setIsBookingOpen(true)} disabled={bookingDisabled} className="btn btn-primary" aria-describedby={hasActiveAppointment ? 'active-booking-help' : undefined}>
           <PlusCircle size={18} />
           <span>Book New Appointment</span>
         </button>
       </div>
 
       <LoadError message={loadError} onRetry={fetchAppointments} loading={loading} />
+      {hasActiveAppointment && <p id="active-booking-help" className="text-muted">You already have an active appointment. Complete or cancel it before booking another visit.</p>}
 
       <WorkspaceNavigation label="Patient workspace">
         <a className="btn btn-primary" href="#appointments" aria-current="page"><Calendar size={18} /> My appointments</a>
-        <button className="btn btn-secondary" onClick={() => setIsBookingOpen(true)}><PlusCircle size={18} /> Book a visit</button>
+        <button className="btn btn-secondary" disabled={bookingDisabled} onClick={() => setIsBookingOpen(true)}><PlusCircle size={18} /> Book a visit</button>
       </WorkspaceNavigation>
 
       {/* Stats Cards */}

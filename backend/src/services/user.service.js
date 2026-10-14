@@ -19,6 +19,8 @@ const Appointment = require('../models/Appointment');
 const bcrypt = require('bcryptjs');
 const otpService = require('./otp.service');
 const { linkVerifiedPatient } = require('./walkInAccount.service');
+const { isValidPassword, PASSWORD_REQUIREMENTS } = require('../utils/password');
+const { validateContactNumber } = require('../utils/contactNumber');
 
 /**
  * Register a new user.
@@ -27,8 +29,8 @@ const { linkVerifiedPatient } = require('./walkInAccount.service');
  */
 async function register(userData, actorId = null) {
   if (!userData || typeof userData.email !== 'string' || !userData.email.trim() ||
-      typeof userData.password !== 'string' || userData.password.length < 6 || Buffer.byteLength(userData.password) > 72) {
-    throw Object.assign(new Error('Provide an email and a password of at least six characters and at most 72 bytes'), { statusCode: 400 });
+      !isValidPassword(userData.password)) {
+    throw Object.assign(new Error(`Provide an email. ${PASSWORD_REQUIREMENTS}`), { statusCode: 400 });
   }
   for (const field of ['firstName', 'lastName']) {
     if (typeof userData[field] !== 'string' || !userData[field].trim() || userData[field].length > 100) {
@@ -36,6 +38,7 @@ async function register(userData, actorId = null) {
     }
   }
   const email = otpService.normalizeEmail(userData.email);
+  const contactNumber = validateContactNumber(userData.contactNumber);
   // Check for duplicate email
   const existing = await User.findOne({ email });
   if (existing) {
@@ -48,7 +51,7 @@ async function register(userData, actorId = null) {
   const { otp, ...account } = userData;
   let user;
   try {
-    user = await User.create({ ...account, email, emailVerifiedAt: actorId ? null : new Date() });
+    user = await User.create({ ...account, email, contactNumber, emailVerifiedAt: actorId ? null : new Date() });
   } catch (err) {
     if (err.code === 11000) throw Object.assign(new Error('Email already registered'), { statusCode: 409 });
     throw err;
@@ -151,6 +154,7 @@ async function updateUser(userId, actor, data) {
   if (changes.email !== undefined) {
     changes.email = otpService.normalizeEmail(changes.email);
   }
+  if (changes.contactNumber !== undefined) changes.contactNumber = validateContactNumber(changes.contactNumber);
   if (changes.role && !['Patient', 'Doctor', 'Staff', 'Admin'].includes(changes.role)) throw Object.assign(new Error('Invalid role'), { statusCode: 400 });
   if (changes.status && !['Active', 'Deactivated'].includes(changes.status)) throw Object.assign(new Error('Invalid account status'), { statusCode: 400 });
   if (!Object.keys(changes).length) throw Object.assign(new Error('No account changes provided'), { statusCode: 400 });
@@ -185,8 +189,8 @@ function _signToken(userId, version = 0) {
 
 async function resetPassword({ email: value, otp, password }) {
   const email = otpService.normalizeEmail(value);
-  if (typeof password !== 'string' || password.length < 6 || Buffer.byteLength(password) > 72) {
-    throw Object.assign(new Error('Password must have at least six characters and at most 72 bytes'), { statusCode: 400 });
+  if (!isValidPassword(password)) {
+    throw Object.assign(new Error(PASSWORD_REQUIREMENTS), { statusCode: 400 });
   }
   const challenge = await otpService.consumeOtp('password', email, otp);
   if (!challenge.user) throw Object.assign(new Error('Invalid or expired password change request'), { statusCode: 400 });

@@ -12,6 +12,7 @@ async function linkVerifiedPatient(user) {
     await Appointment.updateMany({ walkIn: { $in: entries.map(entry => entry._id) }, patient: null },
       { $set: { patient: user._id } });
   }
+  await Appointment.updateMany({ 'followUpContact.email': email, patient: null }, { $set: { patient: user._id } });
 }
 
 module.exports = { linkVerifiedPatient };

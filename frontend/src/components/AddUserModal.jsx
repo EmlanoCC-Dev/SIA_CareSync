@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import { X, UserPlus, AlertCircle } from 'lucide-react';
 import PasswordInput from './PasswordInput';
+import { isValidPassword, PASSWORD_REQUIREMENTS } from '../utils/password';
 
 export default function AddUserModal({ isOpen, onClose, onUserAdded, user = null }) {
   const dialog = useRef(null);
@@ -35,8 +36,8 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, user = null
     e.preventDefault();
     setError('');
 
-    if (!user && formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (!user && !isValidPassword(formData.password)) {
+      setError(PASSWORD_REQUIREMENTS);
       return;
     }
 
@@ -142,11 +143,15 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, user = null
                 id="account-password"
                 name="password"
                 className="form-input"
-                placeholder="Minimum 6 characters"
+                placeholder="At least 8 characters"
+                minLength={8}
+                maxLength={72}
+                aria-describedby="account-password-help"
                 value={formData.password}
                 onChange={handleChange}
                 required
               />
+              <p id="account-password-help" className="text-muted">{PASSWORD_REQUIREMENTS}</p>
             </div>}
 
             <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>

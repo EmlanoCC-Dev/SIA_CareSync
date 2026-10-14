@@ -5,8 +5,14 @@ const env = require('../config/env');
 const { sendEmail } = require('./email.service');
 const PATIENT_EMAIL_TYPES = new Set(['BOOKING_CONFIRMED', 'APPOINTMENT_DECLINED', 'CANCELLATION', 'APPOINTMENT_NO_SHOW']);
 
-async function sendNotification({ userId, appointment, type, title, message }) {
-  if (!userId) return;
+async function sendNotification({ userId, appointment, type, title, message, email }) {
+  if (!userId) {
+    if (env.EMAIL_ENABLED && PATIENT_EMAIL_TYPES.has(type) && /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/.test(email || '')) {
+      try { await sendEmail({ to: email, title, message }); }
+      catch { console.error('[Notification] Follow-up email delivery failed'); }
+    }
+    return;
+  }
   const eligible = env.EMAIL_ENABLED && PATIENT_EMAIL_TYPES.has(type);
   // Save the inbox entry first. SMTP failures must not remove it or fail the clinical action.
   const notification = await Notification.create({

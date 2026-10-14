@@ -23,6 +23,7 @@ const { getNow } = require('../config/systemTime');
 const recovery = require('./assignmentRecovery.service');
 const mongoose = require('mongoose');
 const { linkVerifiedPatient } = require('./walkInAccount.service');
+const { ACTIVE_APPOINTMENT_STATUSES, oneMonthAhead } = require('../utils/booking');
 
 /**
  * Automatically update missed / passed appointments to 'No-show'.
@@ -87,7 +88,10 @@ async function autoMarkNoShows() {
 /**
  * Book a new appointment (patient action).
  */
-async function create({ patientId, doctorId, date, timeSlot, slotId, reason }) {
+async function create({ patientId, doctorId, date, timeSlot, slotId, reason, followUpOf, followUpContact, bookedBy }) {
+  if (typeof reason !== 'string' || !reason.trim() || reason.trim().length > 2000) {
+    throw Object.assign(new Error('Provide a reason for the visit of 1 to 2000 characters'), { statusCode: 400 });
+  }
   if (doctorId && !slotId) {
     throw Object.assign(new Error('Choose an available slot for the selected doctor, or request any available doctor'), { statusCode: 400 });
   }
@@ -109,6 +113,9 @@ async function create({ patientId, doctorId, date, timeSlot, slotId, reason }) {
   }
 
   // Validate that the requested date and time has not already passed
+  if (!followUpOf && formatDateKey(resolvedDate) > oneMonthAhead(formatDateKey(getNow()))) {
+    throw Object.assign(new Error('Patients can book up to one calendar month ahead'), { statusCode: 400 });
+  }
   if (isDateTimePassed(resolvedDate, resolvedTimeSlot, 'start')) {
     const err = new Error('Cannot book an appointment for a time slot that has already passed');
     err.statusCode = 400;
@@ -116,6 +123,9 @@ async function create({ patientId, doctorId, date, timeSlot, slotId, reason }) {
   }
 
   const appointmentId = new mongoose.Types.ObjectId();
+  if (patientId && await Appointment.exists({ patient: patientId, status: { $in: ACTIVE_APPOINTMENT_STATUSES } })) {
+    throw Object.assign(new Error('You already have an active appointment. Complete or cancel it before booking another.'), { statusCode: 409 });
+  }
   const operation = slotId ? await recovery.begin({ kind: 'booking', appointment: appointmentId, slot: slotId }) : null;
   let appointment;
   try {
@@ -123,22 +133,26 @@ async function create({ patientId, doctorId, date, timeSlot, slotId, reason }) {
     appointment = await Appointment.create({
     _id: appointmentId,
     patient: patientId,
+    ...(followUpOf ? { followUpOf, followUpContact } : {}),
     doctor: resolvedDoctorId,
     slot: slotId || null,
     date: resolvedDate,
     timeSlot: resolvedTimeSlot,
-    reason,
+    reason: reason.trim(),
     status: 'Pending',
     statusHistory: [
       {
         status: 'Pending',
-        changedBy: patientId,
-        remarks: 'Appointment booked by patient',
+        changedBy: bookedBy || patientId,
+        remarks: followUpOf ? 'Follow-up booked by clinic' : 'Appointment booked by patient',
       },
     ],
   });
 
   } catch (err) {
+    if (err.code === 11000 && (err.keyPattern?.patient || err.keyPattern?.followUpOf || err.keyPattern?.['followUpContact.email'])) {
+      err = Object.assign(new Error('An active appointment or follow-up already exists. Refresh before booking again.'), { statusCode: 409 });
+    }
     if (operation) await recovery.onFailure(operation, err);
     throw err;
   }
@@ -147,11 +161,44 @@ async function create({ patientId, doctorId, date, timeSlot, slotId, reason }) {
   // ★ Event-Driven: emit booking event
   emitter.emit(EVENTS.APPOINTMENT_BOOKED, {
     appointment,
-    performedBy: patientId,
+    performedBy: bookedBy || patientId,
     targetModel: 'Appointment',
   });
 
   return appointment;
+}
+
+async function bookFollowUp(appointmentId, actor, { slotId, reason } = {}) {
+  const source = await Appointment.findById(appointmentId).populate('walkIn');
+  if (!source) throw Object.assign(new Error('Appointment not found'), { statusCode: 404 });
+  assertClinicalAccess(source, actor);
+  if (source.status !== 'Completed') throw Object.assign(new Error('Complete the current consultation before booking a follow-up'), { statusCode: 409 });
+  if (!mongoose.isObjectIdOrHexString(slotId)) throw Object.assign(new Error('Choose an available consultation slot'), { statusCode: 400 });
+  const slot = await slotService.getById(slotId);
+  if (!slot) throw Object.assign(new Error('Selected slot not found'), { statusCode: 404 });
+  if (isDateTimePassed(slot.date, slot.startTime, 'start')) {
+    throw Object.assign(new Error('Choose a follow-up slot that has not already started'), { statusCode: 400 });
+  }
+  if (formatDateKey(slot.date) <= formatDateKey(source.date)) {
+    throw Object.assign(new Error('Choose a follow-up date after the current visit'), { statusCode: 400 });
+  }
+  if (actor.role === 'Doctor' && recordId(slot.doctor) !== recordId(actor._id || actor.id)) {
+    throw Object.assign(new Error('Doctors can book follow-ups only on their own schedule'), { statusCode: 403 });
+  }
+  const existing = await Appointment.findOne({ followUpOf: source._id });
+  if (existing && (recordId(existing.slot) !== recordId(slotId) || !['Pending', 'Confirmed'].includes(existing.status))) {
+    throw Object.assign(new Error('A follow-up already exists for this visit. Manage that appointment instead.'), { statusCode: 409 });
+  }
+  const contact = source.followUpContact || source.walkIn;
+  if (!source.patient && !contact?.email) {
+    throw Object.assign(new Error('The patient needs an email address before a follow-up can be booked'), { statusCode: 400 });
+  }
+  const booked = existing || await create({ patientId: source.patient || null, slotId, reason,
+    followUpOf: source._id, bookedBy: actor._id || actor.id,
+    followUpContact: !source.patient ? { name: contact.name, email: contact.email, contactNumber: contact.contactNumber } : undefined });
+  if (booked.status === 'Confirmed') return booked;
+  // A failed approval keeps the request visible; retrying the same slot resumes it.
+  return approve(booked._id, actor._id || actor.id);
 }
 
 /**
@@ -843,6 +890,7 @@ module.exports = {
   addComment,
   assignSlot,
   create,
+  bookFollowUp,
   approve,
   decline,
   cancel,

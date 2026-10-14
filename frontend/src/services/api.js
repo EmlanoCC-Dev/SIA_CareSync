@@ -117,6 +117,7 @@ export const api = {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   },
   completeAppointment: (id) => request(`/appointments/${id}/complete`, { method: 'PATCH' }),
+  bookFollowUp: (id, data) => request(`/appointments/${id}/follow-up`, { method: 'POST', body: data }),
 
   // ── Audit Logs ──
   getAuditLogs: () => request('/audit-logs'),

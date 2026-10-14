@@ -18,6 +18,7 @@ const users = [staff, owner, unverified], entries = [], visits = [], originals =
 let server, checks = 0, failLink = false;
 const stub = (object, key, fn) => { originals.push([object, key, object[key]]); object[key] = fn; };
 const matches = (row, filter) => row && Object.entries(filter).every(([key, value]) => {
+  if (key.includes('.')) return String(key.split('.').reduce((current, field) => current?.[field], row)) === String(value);
   if (value?.$in) return value.$in.some(wanted => String(wanted) === String(row[key]));
   if (value && Object.hasOwn(value, '$ne')) return value.$ne === null ? row[key] != null : row[key] !== value.$ne;
   if (value?.$gte) return row[key] >= value.$gte && row[key] < (value.$lt || value.$lte);
@@ -90,7 +91,7 @@ async function main() {
   const legacy = { _id: id(90), name: 'Legacy', contactNumber: '09170000000', status: 'Completed', patient: null };
   entries.push(legacy); const legacyVisit = addVisit(legacy);
   assert.equal(WalkIn.hydrate({ ...legacy, queueNumber: 90 }).validateSync(), undefined, 'Legacy phone-only documents remain valid');
-  const account = { firstName: 'New', lastName: 'Patient', email: 'NEW.PATIENT@example.test', password: 'test-password' };
+  const account = { firstName: 'New', lastName: 'Patient', email: 'NEW.PATIENT@example.test', password: 'Test-pass1!' };
   await call('/users/register', null, 'POST', { ...account, otp: '000000' }, 400);
   assert.equal(firstVisit.patient, null, 'Failed email verification must not grant record access');
   const registered = await call('/users/register', null, 'POST', { ...account, otp: '123456' }, 201);
@@ -105,6 +106,11 @@ async function main() {
   assert.equal(differentVisit.patient, null);
   assert.equal(legacyVisit.patient, null);
   assert.equal((await call('/appointments', patient)).length, 2);
+  const guestFollowUp = { _id: id(190), patient: null, followUpOf: firstVisit._id, status: 'Confirmed',
+    followUpContact: { email: patient.email, name: 'Guest patient' } };
+  visits.push(guestFollowUp);
+  await linkVerifiedPatient(patient);
+  assert.equal(guestFollowUp.patient, patient._id, 'Email verification must also link future guest follow-ups');
   await call(`/appointments/${firstVisit._id}`, patient);
   await call(`/appointments/${firstVisit._id}/versions`, patient);
   await call(`/appointments/${firstVisit._id}`, owner, 'GET', undefined, 403);

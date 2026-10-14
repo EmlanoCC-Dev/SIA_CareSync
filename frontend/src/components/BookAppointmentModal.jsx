@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { api } from '../services/api';
 import LoadError from './LoadError';
-import { dateKey } from '../utils/dates';
+import AppointmentPatientDetails from './AppointmentPatientDetails';
+import { dateKey, oneMonthAhead } from '../utils/dates';
 import { X, Calendar, Clock, User, AlertCircle, CheckCircle2, Sparkles, Ban } from 'lucide-react';
 
 const TIME_SLOTS = [
@@ -51,7 +52,7 @@ function isSlotPassed(dateStr, timeStr, systemTimeData) {
   return nowMinutes >= slotMinutes;
 }
 
-export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
+export default function BookAppointmentModal({ isOpen, onClose, onSuccess, followUp = null, onlyDoctorId = null }) {
   const dialog = useRef(null);
   useEffect(() => {
     if (!isOpen) return;
@@ -75,6 +76,12 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
   const [allSlots, setAllSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    setDate('');
+    setReason(followUp ? 'Follow-up consultation' : '');
+    setDoctorId(onlyDoctorId || followUp?.doctor?._id || followUp?.doctor || '');
+  }, [isOpen, followUp?._id, onlyDoctorId]);
 
   useEffect(() => {
     let active = true;
@@ -186,6 +193,14 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
       setError('Please select an appointment date');
       return;
     }
+    if (!followUp && date > oneMonthAhead(today)) {
+      setError('Appointments can be booked up to one calendar month ahead.');
+      return;
+    }
+    if (followUp && !selectedSlotId) {
+      setError('Choose an available doctor and consultation slot for the follow-up.');
+      return;
+    }
     if (doctorId && !selectedSlotId) {
       setError('No available slot selected. Choose another date or request any available doctor.');
       return;
@@ -203,13 +218,14 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
     setError('');
 
     try {
-      const res = await api.createAppointment({
+      const booking = {
         doctorId: doctorId || null,
         date,
         timeSlot,
         slotId: selectedSlotId || null,
         reason,
-      });
+      };
+      const res = followUp ? await api.bookFollowUp(followUp._id, booking) : await api.createAppointment(booking);
 
       if (res.success) {
         onSuccess && onSuccess(res.data);
@@ -226,6 +242,8 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
   const today = systemTimeStatus?.currentTime
     ? dateKey(new Date(systemTimeStatus.currentTime))
     : dateKey(new Date());
+  const nextVisitDay = followUp ? new Date(new Date(followUp.date).getTime() + 86400000).toISOString().slice(0, 10) : today;
+  const earliestDay = nextVisitDay > today ? nextVisitDay : today;
 
   return (
       <dialog ref={dialog} className="modal-content care-dialog booking-dialog" style={{ maxWidth: '560px' }} aria-labelledby="booking-title"
@@ -233,7 +251,7 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Calendar size={20} color="var(--primary)" />
-            <h3 id="booking-title">Book New Appointment</h3>
+            <h3 id="booking-title">{followUp ? 'Schedule follow-up visit' : 'Book New Appointment'}</h3>
           </div>
           <button onClick={onClose} disabled={loading} aria-label="Close booking form" className="btn btn-secondary btn-sm" style={{ padding: '0.25rem' }}>
             <X size={18} />
@@ -242,6 +260,8 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
 
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
+            {followUp && <AppointmentPatientDetails appointment={followUp} />}
+            <p className="text-muted">{followUp ? 'The current consultation is complete. Choose an available date for the return visit. Clinic follow-ups may be more than one month ahead.' : 'Choose an available visit within the next calendar month.'}</p>
             <LoadError message={doctorsError || slotsError} onRetry={() => setReloadKey(key => key + 1)} loading={loading || loadingSlots} />
             {error && (
               <div className="alert alert-error">
@@ -257,8 +277,8 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
                 value={doctorId}
                 onChange={(e) => setDoctorId(e.target.value)}
               >
-                <option value="">-- Any Available Doctor (Assigned by Staff) --</option>
-                {doctors.map((doc) => (
+                {!followUp && <option value="">-- Any Available Doctor (Assigned by Staff) --</option>}
+                {doctors.filter(doc => !onlyDoctorId || doc._id === onlyDoctorId).map((doc) => (
                   <option key={doc._id} value={doc._id}>
                     Dr. {doc.firstName} {doc.lastName}
                   </option>
@@ -270,7 +290,8 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
               <label className="form-label">Preferred Date</label>
               <input
                 type="date"
-                min={today}
+                min={earliestDay}
+                max={followUp ? undefined : oneMonthAhead(today)}
                 className="form-input"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
@@ -416,7 +437,7 @@ export default function BookAppointmentModal({ isOpen, onClose, onSuccess }) {
               className="btn btn-primary"
             >
               <CheckCircle2 size={16} />
-              <span>{loading ? 'Submitting...' : 'Confirm Appointment'}</span>
+              <span>{loading ? 'Submitting...' : followUp ? 'Book follow-up' : 'Confirm Appointment'}</span>
             </button>
           </div>
         </form>

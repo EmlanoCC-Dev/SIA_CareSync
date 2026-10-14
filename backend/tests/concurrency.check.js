@@ -18,6 +18,7 @@ const appointments = require('../src/services/appointment.service');
 const recovery = require('../src/services/assignmentRecovery.service');
 const { setCustomTime } = require('../src/config/systemTime');
 const { parseDateOnly } = require('../src/utils/timeHelper');
+const { ACTIVE_APPOINTMENT_STATUSES } = require('../src/utils/booking');
 const emitter = require('../src/events/emitter');
 const EVENTS = require('../src/events/events');
 const live = process.argv.includes('--live');
@@ -36,7 +37,7 @@ const doc = value => {
   return copy;
 };
 const matches = (row, filter) => row && Object.entries(filter).every(([key, value]) => {
-  if (value?.$in) return value.$in.includes(row[key]);
+  if (value?.$in) return value.$in.some(wanted => wanted == null ? row[key] == null : String(wanted) === String(row[key]));
   if (value && Object.hasOwn(value, '$ne')) return value.$ne === null ? row[key] != null : row[key] !== value.$ne;
   if (value?.$gte) return row[key] >= value.$gte && (value.$lt ? row[key] < value.$lt : row[key] <= value.$lte);
   return value === null ? row[key] == null : String(row[key]) === String(value);
@@ -75,6 +76,13 @@ function installDoubles() {
     });
     stub(model, 'create', async values => {
       if (model === Appointment && appFailure === 'before') throw new Error('Injected appointment write failure');
+      if (model === Appointment && values.patient && ACTIVE_APPOINTMENT_STATUSES.includes(values.status) &&
+          [...records.values()].some(row => String(row.patient) === String(values.patient) && ACTIVE_APPOINTMENT_STATUSES.includes(row.status))) {
+        throw Object.assign(new Error('Duplicate active patient'), { code: 11000, keyPattern: { patient: 1 } });
+      }
+      if (model === Appointment && values.followUpOf && [...records.values()].some(row => String(row.followUpOf) === String(values.followUpOf))) {
+        throw Object.assign(new Error('Duplicate follow-up'), { code: 11000, keyPattern: { followUpOf: 1 } });
+      }
       if (model === WalkIn && [...records.values()].some(row => row.queueDay === values.queueDay && row.queueNumber === values.queueNumber)) {
         throw Object.assign(new Error('Duplicate ticket'), { code: 11000, keyPattern: { queueDay: 1, queueNumber: 1 } });
       }
@@ -113,6 +121,7 @@ function installDoubles() {
 const makeSlot = (doctor, startTime, date = '2026-10-02') => Slot.create({ doctor: doctor._id, date: parseDateOnly(date),
   startTime, endTime: `${startTime.slice(0, 2)}:45`, status: 'Available', appointment: null });
 const reject = code => err => err.statusCode === code;
+const makePatient = () => User.create({ firstName: 'Test', lastName: 'Patient', email: `${randomUUID()}@example.test`, password: 'Test-pass1!', role: 'Patient' });
 async function main() {
   if (live) {
     await mongoose.connect(process.env.TEST_MONGO_URI || env.MONGO_URI, { dbName: database, serverSelectionTimeoutMS:5000, connectTimeoutMS:5000 });
@@ -155,8 +164,17 @@ async function main() {
   assert.equal((await Appointment.find({ slot:f._id })).length, 1);
   await assert.rejects(slots.freeSlot(f._id, 'Stale cancellation', new mongoose.Types.ObjectId()), reject(409));
   assert.equal((await Slot.findById(f._id)).status, 'Reserved-Tentative');
+  const duplicateSlot = await makeSlot(doctor, '18:00');
+  await assert.rejects(appointments.create({ ...booking, slotId: duplicateSlot._id }), reject(409));
+  assert.equal((await Slot.findById(duplicateSlot._id)).status, 'Available', 'Duplicate patients cannot consume another slot');
+  const racePatient = await makePatient();
+  const raceOne = await makeSlot(doctor, '18:15'), raceTwo = await makeSlot(doctor, '18:30');
+  const patientRace = await Promise.allSettled([raceOne, raceTwo].map(slot => appointments.create({ patientId: racePatient._id, slotId: slot._id, reason: 'Two-tab booking' })));
+  assert.equal(patientRace.filter(result => result.status === 'fulfilled').length, 1);
+  assert.equal((await Appointment.find({ patient: racePatient._id })).length, 1);
+  assert.equal((await Slot.find({ doctor: doctor._id, status: 'Available' })).filter(slot => [String(raceOne._id), String(raceTwo._id)].includes(String(slot._id))).length, 1);
   // Identical flexible-assignment requests share the target appointment, but must not share claim ownership.
-  const flexible = await appointments.create({ patientId:patient._id, date:'2026-10-02', reason:'Flexible request' });
+  const flexible = await appointments.create({ patientId:(await makePatient())._id, date:'2026-10-02', reason:'Flexible request' });
   const flexibleSlot = await makeSlot(doctor, '15:30');
   const flexResults = await Promise.allSettled([
     appointments.assignSlot(flexible._id, flexibleSlot._id, doctor._id),
@@ -165,7 +183,7 @@ async function main() {
   assert.equal(flexResults.filter(row => row.status === 'fulfilled').length, 1);
   assert.equal(String((await Slot.findById(flexibleSlot._id)).appointment), String(flexible._id));
   assert.equal(String((await Appointment.findById(flexible._id)).slot), String(flexibleSlot._id));
-  const flexibleNext = await appointments.create({ patientId:patient._id, date:'2026-10-03', reason:'Competing different slots' });
+  const flexibleNext = await appointments.create({ patientId:(await makePatient())._id, date:'2026-10-03', reason:'Competing different slots' });
   const nextOne = await makeSlot(doctor, '13:00', '2026-10-03'), nextTwo = await makeSlot(doctor, '14:00', '2026-10-03');
   const differentFlex = await Promise.allSettled([
     appointments.assignSlot(flexibleNext._id, nextOne._id, doctor._id),
@@ -176,7 +194,7 @@ async function main() {
   assert.equal(nextSlots.length, 1);
   const blockingSlot = await makeSlot(doctor, '11:30');
   const blockingRace = await Promise.allSettled([
-    appointments.create({ ...booking, slotId:blockingSlot._id }),
+    appointments.create({ ...booking, patientId:(await makePatient())._id, slotId:blockingSlot._id }),
     slots.updateStatus(blockingSlot._id, 'Cancelled', doctor),
   ]);
   assert.equal(blockingRace.filter(row => row.status === 'fulfilled').length, 1);
@@ -200,6 +218,7 @@ async function main() {
   assert.equal(String(event.slot._id), String(eventSlot._id));
   assert.equal((await Slot.findById(eventSlot._id)).status, 'Reserved-Confirmed');
   if (!live) {
+    booking.patientId = (await makePatient())._id;
     const g = await makeSlot(doctor, '16:00');
     appFailure = 'before';
     await assert.rejects(appointments.create({ ...booking, slotId:g._id }));
@@ -219,6 +238,7 @@ async function main() {
     assert.equal((await Appointment.find({ slot:g._id })).length, 1);
     appFailure = null;
     finishFailure = true;
+    booking.patientId = (await makePatient())._id;
     const h = await makeSlot(doctor, '16:30');
     await assert.rejects(appointments.create({ ...booking, slotId:h._id }));
     finishFailure = false;
@@ -236,6 +256,43 @@ async function main() {
     const repeated = await slots.generateSlotsForDoctor(doctor._id, '2026-10-06', 30, '09:00', '10:00');
     assert.equal(repeated.filter(row => row.status === 'Cancelled').length, 1, 'Recovery must preserve blocked/booked rows');
   }
+  // Self-booking stops at one month; clinic follow-ups start only after completion.
+  const followPatient = await makePatient();
+  const completed = await Appointment.create({ patient: followPatient._id, doctor: doctor._id, date: parseDateOnly('2026-10-02'),
+    timeSlot: '10:00-10:30', reason: 'Original visit', status: 'Completed', statusHistory: [] });
+  const followSlot = await makeSlot(doctor, '10:00', '2026-12-02');
+  await assert.rejects(appointments.create({ patientId: followPatient._id, slotId: followSlot._id, reason: 'Too far ahead' }), reject(400));
+  const patientActor = { ...followPatient, _id: followPatient._id, role: 'Patient' };
+  await assert.rejects(appointments.bookFollowUp(completed._id, patientActor, { slotId: followSlot._id, reason: 'Not a clinic user' }), reject(403));
+  const foreignDoctor = { _id: new mongoose.Types.ObjectId(), role: 'Doctor' };
+  await assert.rejects(appointments.bookFollowUp(completed._id, foreignDoctor, { slotId: followSlot._id, reason: 'Not assigned' }), reject(403));
+  const followUp = await appointments.bookFollowUp(completed._id, doctor, { slotId: followSlot._id, reason: 'Return visit' });
+  assert.equal(followUp.status, 'Confirmed');
+  assert.equal(String(followUp.followUpOf), String(completed._id));
+  assert.equal((await Slot.findById(followSlot._id)).status, 'Reserved-Confirmed');
+  assert.equal((await Appointment.findById(completed._id)).status, 'Completed');
+  const retry = await appointments.bookFollowUp(completed._id, doctor, { slotId: followSlot._id, reason: 'Retry' });
+  assert.equal(String(retry._id), String(followUp._id), 'Retrying the same follow-up must not create another record');
+  assert.equal((await Appointment.find({ followUpOf: completed._id })).length, 1);
+  await assert.rejects(appointments.bookFollowUp(followUp._id, doctor, { slotId: followSlot._id, reason: 'Not completed yet' }), reject(409));
+  const anotherSlot = await makeSlot(doctor, '11:00', '2026-12-02');
+  await assert.rejects(appointments.bookFollowUp(completed._id, doctor, { slotId: anotherSlot._id, reason: 'Duplicate follow-up' }), reject(409));
+  assert.equal((await Slot.findById(anotherSlot._id)).status, 'Available');
+  const boundary = await appointments.create({ patientId: (await makePatient())._id, date: '2026-11-02', reason: 'One-month boundary' });
+  assert.equal(boundary.status, 'Pending');
+  await assert.rejects(appointments.create({ patientId: (await makePatient())._id, date: '2026-11-03', reason: 'Outside boundary' }), reject(400));
+  const guestSource = await Appointment.create({ patient: null, walkIn: live ? tickets[15]._id : tickets[15], doctor: doctor._id,
+    date: parseDateOnly('2026-10-02'), timeSlot: '10:00-10:30', reason: 'Guest consultation', status: 'Completed', statusHistory: [] });
+  const guestSlot = await makeSlot(doctor, '12:00', '2026-12-02');
+  const guestFollowUp = await appointments.bookFollowUp(guestSource._id, doctor, { slotId: guestSlot._id, reason: 'Guest return visit' });
+  assert.equal(guestFollowUp.patient, null);
+  assert(!guestFollowUp.walkIn, 'A future visit must not reuse the original queue entry');
+  assert.equal(guestFollowUp.followUpContact.email, tickets[15].email);
+  assert.equal(guestFollowUp.status, 'Confirmed');
+  setCustomTime('2026-12-03T09:00:00');
+  await assert.rejects(appointments.bookFollowUp(completed._id, doctor, { slotId: followSlot._id, reason: 'Expired follow-up retry' }), reject(400));
+  setCustomTime('2026-10-02T09:00:00');
+
   const verifiedPatient = await User.create({ firstName: 'Verified', lastName: 'Patient', email: `${randomUUID()}@example.test`,
     password: 'test-password', role: 'Patient', status: 'Active', emailVerifiedAt: new Date() });
   const verifiedWalkIn = await walkIns.addToHoldingList({ name: 'Verified Patient', email: verifiedPatient.email });

@@ -24,6 +24,7 @@ router.use('/:id', appointmentAccess);
 
 // Get single appointment
 router.get('/:id', appointmentController.getById);
+router.post('/:id/follow-up', authorize('Doctor', 'Staff', 'Admin'), appointmentController.bookFollowUp);
 router.get('/:id/comments', appointmentController.listComments);
 router.get('/:id/versions', appointmentController.getVersions);
 router.post('/:id/comments', authorize('Patient', 'Doctor', 'Staff', 'Admin'), appointmentController.addComment);

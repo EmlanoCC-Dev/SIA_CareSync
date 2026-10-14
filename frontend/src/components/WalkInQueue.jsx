@@ -3,6 +3,7 @@ import { api } from '../services/api';
 import { useDialog } from '../context/DialogContext';
 import AddWalkInModal from './AddWalkInModal';
 import AssignSlotModal from './AssignSlotModal';
+import BookAppointmentModal from './BookAppointmentModal';
 import { Users, Plus, RefreshCw, UserCheck, AlertTriangle, CalendarCheck } from 'lucide-react';
 
 export default function WalkInQueue({ isStaff = true, doctorId = null }) {
@@ -20,6 +21,14 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedWalkInForAssignment, setSelectedWalkInForAssignment] = useState(null);
+  const [followUp, setFollowUp] = useState(null);
+
+  const openFollowUp = async walkIn => {
+    const appointmentId = walkIn.appointment?._id || walkIn.appointment;
+    if (!appointmentId) throw new Error('This walk-in has no consultation appointment.');
+    const response = await api.getAppointmentById(appointmentId);
+    setFollowUp(response.data);
+  };
 
   useEffect(() => {
     fetchWalkIns();
@@ -59,6 +68,10 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
     try {
       await api.updateWalkInStatus(id, status);
       await fetchWalkIns();
+      if (status === 'Completed' && await showDialog({ kind: 'confirm', title: 'Schedule a follow-up?', message: 'The visit is complete. Does this patient need a return appointment?', confirmText: 'Schedule follow-up', cancelText: 'No follow-up' })) {
+        try { await openFollowUp(walkIns.find(row => row._id === id)); }
+        catch (err) { await showDialog({ title: 'Visit completed', message: `The visit was completed, but the follow-up form could not be opened. ${err.message}` }); }
+      }
     } catch (err) {
       await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to update status' });
     } finally {
@@ -184,7 +197,7 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
                           Start Session
                         </button>
                       )}
-                      {doctorId && walkIn.status === 'In Progress' && (
+                      {(isStaff || doctorId) && walkIn.status === 'In Progress' && (
                         <button 
                           className="btn btn-success btn-sm"
                           onClick={() => handleUpdateStatus(walkIn._id, 'Completed')}
@@ -192,6 +205,7 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
                           Complete
                         </button>
                       )}
+                      {walkIn.status === 'Completed' && walkIn.appointment && <button className="btn btn-secondary btn-sm" onClick={() => openFollowUp(walkIn).catch(err => showDialog({ title: 'Could not open follow-up', message: err.message }))}>Schedule follow-up</button>}
                       {isStaff && ['Waiting', 'Slot Assigned', 'Checked In'].includes(walkIn.status) && (
                         <button 
                           className="btn btn-danger btn-sm"
@@ -227,6 +241,7 @@ export default function WalkInQueue({ isStaff = true, doctorId = null }) {
         walkIn={selectedWalkInForAssignment}
         onAssigned={fetchWalkIns}
       />
+      <BookAppointmentModal isOpen={!!followUp} followUp={followUp} onlyDoctorId={doctorId} onClose={() => setFollowUp(null)} onSuccess={fetchWalkIns} />
     </div>
   );
 }

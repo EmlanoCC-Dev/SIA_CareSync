@@ -4,7 +4,7 @@ import VersionHistory from './VersionHistory';
 import { useDialog } from '../context/DialogContext';
 import { X, FileText, Plus, Archive, CheckCircle2, Save, User, Calendar, Clock, AlertCircle, Upload, ExternalLink, Paperclip } from 'lucide-react';
 
-export default function ConsultationModal({ isOpen, onClose, appointment, onSuccess }) {
+export default function ConsultationModal({ isOpen, onClose, appointment, onSuccess, onCompleted }) {
   const showDialog = useDialog();
   const [consultationNotes, setConsultationNotes] = useState('');
   const [documents, setDocuments] = useState([]);
@@ -174,10 +174,11 @@ export default function ConsultationModal({ isOpen, onClose, appointment, onSucc
         setHistoryRefresh(value => value + 1);
       }
       // Then mark complete
-      await api.completeAppointment(appointment._id);
+      const completed = await api.completeAppointment(appointment._id);
       if (scope.current !== operation) return;
       onSuccess && onSuccess();
       onClose();
+      onCompleted && onCompleted(completed.data);
     } catch (err) {
       if (scope.current === operation) setError(err.message || 'Failed to complete consultation');
       if (err.status === 409) onSuccess && onSuccess();

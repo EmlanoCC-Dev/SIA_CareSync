@@ -15,7 +15,8 @@ function registerAllHandlers() {
     });
   }
   const visit = app => `${new Date(app.date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}${app.timeSlot ? `, ${app.timeSlot}` : ''}`;
-  const notify = (app, userId, type, title, message) => sendNotification({ userId, appointment: app._id, type, title, message });
+  const notify = (app, userId, type, title, message) => sendNotification({ userId, appointment: app._id, type, title, message,
+    email: !userId ? app.followUpContact?.email : undefined });
   async function deliver(jobs) {
     // One recipient failure must not suppress the other recipients.
     const results = await Promise.allSettled(jobs);

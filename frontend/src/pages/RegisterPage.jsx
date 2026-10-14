@@ -5,6 +5,7 @@ import logoSource from '../assets/caresync-logo.svg';
 import { api } from '../services/api';
 import EmailVerificationCode from '../components/EmailVerificationCode';
 import PasswordInput from '../components/PasswordInput';
+import { isValidPassword, PASSWORD_REQUIREMENTS } from '../utils/password';
 
 export default function RegisterPage({ onSwitchToLogin, onBackToLanding, formOnly = false }) {
   const { register } = useAuth();
@@ -31,7 +32,7 @@ export default function RegisterPage({ onSwitchToLogin, onBackToLanding, formOnl
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
-    if (formData.password.length < 6) { setError('Password must be at least 6 characters'); return; }
+    if (!isValidPassword(formData.password)) { setError(PASSWORD_REQUIREMENTS); return; }
     if (!requested) { await requestCode(); return; }
     setLoading(true);
     try { await register({ ...formData, otp, lastName: formData.lastName || '-' }); }
@@ -55,8 +56,12 @@ export default function RegisterPage({ onSwitchToLogin, onBackToLanding, formOnl
             <label className="form-label" htmlFor="register-email">Email address</label>
             <input id="register-email" type="email" name="email" autoComplete="email" maxLength={254} disabled={loading} className="form-input" placeholder="you@example.com" value={formData.email} onChange={handleChange} required aria-describedby="register-walkin-help" />
             <p id="register-walkin-help" className="care-dialog-message" style={{ marginTop: '8px' }}>Visited as a walk-in? Use the same email you gave reception to link your earlier visits after verification.</p>
+            <label className="form-label" htmlFor="register-contact">Contact number (optional)</label>
+            <input id="register-contact" name="contactNumber" type="tel" autoComplete="tel" maxLength={30} disabled={loading} className="form-input" placeholder="e.g. 0917 123 4567" value={formData.contactNumber} onChange={handleChange} aria-describedby="register-contact-help" />
+            <p id="register-contact-help" className="text-muted">For clinic contact. Verification codes are sent only to your email.</p>
             <label className="form-label" htmlFor="register-password">Password</label>
-            <PasswordInput id="register-password" name="password" autoComplete="new-password" minLength={6} maxLength={72} disabled={loading} className="form-input" placeholder="At least 6 characters" value={formData.password} onChange={handleChange} required />
+            <PasswordInput id="register-password" name="password" autoComplete="new-password" minLength={8} maxLength={72} aria-describedby="register-password-help" disabled={loading} className="form-input" placeholder="At least 8 characters" value={formData.password} onChange={handleChange} required />
+            <p id="register-password-help" className="text-muted">{PASSWORD_REQUIREMENTS}</p>
             </> : <EmailVerificationCode id="register-otp" value={otp} onChange={setOtp} resendAt={resendAt} onResend={requestCode} disabled={loading} />}
             <button type="submit" disabled={loading} className="auth-submit">{loading ? 'Please wait...' : requested ? 'Verify & create account' : 'Send verification code'}</button>
             {requested && <button type="button" className="btn btn-secondary" disabled={loading} onClick={() => { setRequested(false); setOtp(''); setError(''); setNotice(''); }}>Edit account details</button>}

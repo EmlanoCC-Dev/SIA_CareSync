@@ -45,6 +45,11 @@ async function create(req, res, next) {
   }
 }
 
+async function bookFollowUp(req, res, next) {
+  try { res.status(201).json({ success: true, data: await appointmentService.bookFollowUp(req.params.id, req.user, req.body) }); }
+  catch (err) { next(err); }
+}
+
 /**
  * PATCH /api/appointments/:id/approve
  * Approve a pending appointment (staff/admin).
@@ -330,6 +335,7 @@ module.exports = {
   downloadDocument,
   assignSlot,
   create,
+  bookFollowUp,
   approve,
   decline,
   cancel,

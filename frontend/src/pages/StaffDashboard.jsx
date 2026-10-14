@@ -9,6 +9,7 @@ import AppointmentPatientDetails from '../components/AppointmentPatientDetails';
 import SlotManagement from '../components/SlotManagement';
 import WalkInQueue from '../components/WalkInQueue';
 import AssignSlotModal from '../components/AssignSlotModal';
+import BookAppointmentModal from '../components/BookAppointmentModal';
 import ReportsPage from './ReportsPage';
 import { Calendar, Check, X, CheckCircle2, Filter, History, RefreshCw, UserCheck, AlertTriangle, Clock, Users, BarChart3 } from 'lucide-react';
 
@@ -22,6 +23,7 @@ export default function StaffDashboard() {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [assignment, setAssignment] = useState(null);
+  const [followUp, setFollowUp] = useState(null);
   const [activeTab, setActiveTab] = useState('appointments'); // 'appointments' | 'slots' | 'walkins'
 
   const fetchAppointments = async () => {
@@ -83,8 +85,12 @@ export default function StaffDashboard() {
   const handleComplete = async (id) => {
     if (!await showDialog({ kind: 'confirm', title: 'Complete appointment', message: 'Mark this appointment as completed?', confirmText: 'Complete appointment' })) return;
     try {
-      await api.completeAppointment(id);
-      fetchAppointments();
+      const response = await api.completeAppointment(id);
+      await fetchAppointments();
+      if (await showDialog({ kind: 'confirm', title: 'Schedule a follow-up?', message: 'The visit is complete. Does this patient need a return appointment?', confirmText: 'Schedule follow-up', cancelText: 'No follow-up' })) {
+        const previous = appointments.find(visit => visit._id === id);
+        setFollowUp({ ...response.data, patient: previous?.patient || response.data.patient, walkIn: previous?.walkIn || response.data.walkIn });
+      }
     } catch (err) {
       await showDialog({ title: 'Action unsuccessful', danger: true, message: err.message || 'Failed to complete appointment' });
     }
@@ -333,6 +339,7 @@ export default function StaffDashboard() {
                               <span>Complete</span>
                             </button>
                           )}
+                          {apt.status === 'Completed' && <button className="btn btn-secondary btn-sm" onClick={() => setFollowUp(apt)}>Schedule follow-up</button>}
                           {['Pending', 'Needs correction', 'Confirmed', 'Checked In'].includes(apt.status) && (
                             <button
                               onClick={() => handleCancel(apt)}
@@ -363,6 +370,7 @@ export default function StaffDashboard() {
       )}
 
       {activeTab === 'slots' && <SlotManagement />}
+      <BookAppointmentModal isOpen={!!followUp} followUp={followUp} onClose={() => setFollowUp(null)} onSuccess={fetchAppointments} />
       {activeTab === 'reports' && <ReportsPage />}
       <AssignSlotModal isOpen={!!assignment} appointment={assignment} onClose={() => setAssignment(null)} onAssigned={fetchAppointments} />
 

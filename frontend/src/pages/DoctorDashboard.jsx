@@ -8,6 +8,7 @@ import StatusTimelineModal from '../components/StatusTimelineModal';
 import AppointmentPatientDetails from '../components/AppointmentPatientDetails';
 import SlotManagement from '../components/SlotManagement';
 import WalkInQueue from '../components/WalkInQueue';
+import BookAppointmentModal from '../components/BookAppointmentModal';
 import ConsultationModal from '../components/ConsultationModal';
 import ReportsPage from './ReportsPage';
 import {
@@ -27,6 +28,7 @@ import {
 } from 'lucide-react';
 
 export default function DoctorDashboard() {
+  const [followUp, setFollowUp] = useState(null);
   const showDialog = useDialog();
   const { user } = useAuth();
   const [appointments, setAppointments] = useState([]);
@@ -290,6 +292,7 @@ export default function DoctorDashboard() {
                               <span>View Notes</span>
                             </button>
                           )}
+                          {apt.status === 'Completed' && <button className="btn btn-secondary btn-sm" onClick={() => setFollowUp(apt)}>Schedule follow-up</button>}
                           {['Pending', 'Needs correction', 'Confirmed', 'Checked In'].includes(apt.status) && (
                             <button
                               onClick={() => handleCancel(apt)}
@@ -329,7 +332,13 @@ export default function DoctorDashboard() {
         onClose={() => setConsultationOpen(false)}
         appointment={selectedAppointment}
         onSuccess={() => fetchAppointments()}
+        onCompleted={async visit => {
+          if (await showDialog({ kind: 'confirm', title: 'Schedule a follow-up?', message: 'The visit is complete. Does this patient need a return appointment?', confirmText: 'Schedule follow-up', cancelText: 'No follow-up' })) {
+            setFollowUp({ ...visit, patient: selectedAppointment?.patient || visit.patient, walkIn: selectedAppointment?.walkIn || visit.walkIn });
+          }
+        }}
       />
+      <BookAppointmentModal isOpen={!!followUp} followUp={followUp} onlyDoctorId={doctorId} onClose={() => setFollowUp(null)} onSuccess={fetchAppointments} />
 
       <StatusTimelineModal
         isOpen={timelineOpen}

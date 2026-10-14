@@ -7,6 +7,9 @@
 
 function errorHandler(err, _req, res, _next) {
   if (res.headersSent) return _next(err);
+  if (err.code === 11000 && (err.keyPattern?.patient || err.keyPattern?.followUpOf || err.keyPattern?.['followUpContact.email'])) {
+    err = Object.assign(new Error('An active appointment or follow-up already exists. Refresh before booking again.'), { statusCode: 409 });
+  }
   const statusCode = err.code === 'LIMIT_FILE_SIZE' ? 413 : err.name === 'MulterError' ? 400 :
     err.statusCode || err.status || (['CastError', 'ValidationError'].includes(err.name) ? 400 : 500);
   const message = err.code === 'LIMIT_FILE_SIZE' ? 'The file exceeds the 25 MB upload limit.' :

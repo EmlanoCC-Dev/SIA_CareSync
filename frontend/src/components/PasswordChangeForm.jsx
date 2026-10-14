@@ -3,6 +3,7 @@ import { api, getStoredToken } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import EmailVerificationCode from './EmailVerificationCode';
 import PasswordInput from './PasswordInput';
+import { isValidPassword, PASSWORD_REQUIREMENTS } from '../utils/password';
 import { Mail } from 'lucide-react';
 
 export default function PasswordChangeForm({ initialEmail = '', fixedEmail = false, onComplete }) {
@@ -34,6 +35,7 @@ export default function PasswordChangeForm({ initialEmail = '', fixedEmail = fal
     event.preventDefault();
     if (!requested) { await requestCode(); return; }
     if (password !== confirmation) { setError('The passwords do not match.'); return; }
+    if (!isValidPassword(password)) { setError(PASSWORD_REQUIREMENTS); return; }
     setLoading(true); setError('');
     const previousToken = getStoredToken();
     try {
@@ -54,10 +56,11 @@ export default function PasswordChangeForm({ initialEmail = '', fixedEmail = fal
     {requested && <>
       <EmailVerificationCode id="password-change-otp" value={otp} onChange={setOtp} resendAt={resendAt} onResend={requestCode} disabled={loading} />
       <label className="form-label" htmlFor="password-change-new">New password</label>
-      <PasswordInput id="password-change-new" visibilityLabel="new password" className="form-input" autoComplete="new-password" minLength={6} maxLength={72}
+      <PasswordInput id="password-change-new" visibilityLabel="new password" className="form-input" autoComplete="new-password" minLength={8} maxLength={72} aria-describedby="password-change-help"
         value={password} required disabled={loading} onChange={event => setPassword(event.target.value)} />
+      <p id="password-change-help" className="text-muted">{PASSWORD_REQUIREMENTS}</p>
       <label className="form-label" htmlFor="password-change-confirm">Confirm new password</label>
-      <PasswordInput id="password-change-confirm" visibilityLabel="password confirmation" className="form-input" autoComplete="new-password" minLength={6} maxLength={72}
+      <PasswordInput id="password-change-confirm" visibilityLabel="password confirmation" className="form-input" autoComplete="new-password" minLength={8} maxLength={72}
         value={confirmation} required disabled={loading} onChange={event => setConfirmation(event.target.value)} />
     </>}
     <button className="auth-submit" disabled={loading} type="submit">

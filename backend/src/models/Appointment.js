@@ -16,6 +16,7 @@
  */
 
 const mongoose = require('mongoose');
+const { ACTIVE_APPOINTMENT_STATUSES } = require('../utils/booking');
 
 // ── Full status enum ─────────────────────────────────────
 const APPOINTMENT_STATUSES = [
@@ -118,6 +119,11 @@ const appointmentSchema = new mongoose.Schema(
       // Optional for walk-ins; linked when a patient verifies the matching email.
       // Validated at the service layer instead.
     },
+    followUpOf: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment' },
+    followUpContact: {
+      type: new mongoose.Schema({ name: String, email: String, contactNumber: String }, { _id: false }),
+      default: undefined,
+    },
     doctor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -210,7 +216,7 @@ const appointmentSchema = new mongoose.Schema(
 
 // ── Custom validation: must have patient OR walkIn ───────
 appointmentSchema.pre('validate', function (next) {
-  if (!this.patient && !this.walkIn) {
+  if (!this.patient && !this.walkIn && !(this.followUpOf && this.followUpContact?.email)) {
     next(new Error('Appointment must reference either a patient or a walk-in'));
   } else {
     next();
@@ -222,6 +228,15 @@ appointmentSchema.index({ patient: 1, date: -1 });
 appointmentSchema.index({ status: 1, date: 1 });
 appointmentSchema.index({ slot: 1 });
 appointmentSchema.index({ walkIn: 1 });
+appointmentSchema.index({ patient: 1 }, {
+  unique: true, name: 'one_active_appointment_per_patient',
+  partialFilterExpression: { patient: { $type: 'objectId' }, status: { $in: ACTIVE_APPOINTMENT_STATUSES } },
+});
+appointmentSchema.index({ followUpOf: 1 }, { unique: true, sparse: true });
+appointmentSchema.index({ 'followUpContact.email': 1 }, {
+  unique: true, name: 'one_active_guest_followup',
+  partialFilterExpression: { 'followUpContact.email': { $type: 'string' }, status: { $in: ACTIVE_APPOINTMENT_STATUSES } },
+});
 appointmentSchema.index({ queueDay: 1, queueNumber: 1 }, {
   unique: true, name: 'unique_scheduled_daily_ticket', partialFilterExpression: { queueDay: { $type: 'string' } },
 });

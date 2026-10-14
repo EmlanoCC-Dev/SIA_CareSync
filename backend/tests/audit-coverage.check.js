@@ -79,7 +79,7 @@ async function main() {
     assert.equal(response.status, status, `${method} ${route}: expected ${status}, got ${response.status}`); checks++;
     return response.json();
   }
-  const accountData = { firstName: 'Test', lastName: 'Account', email: 'self@example.test', password: 'PRIVATE_PASSWORD', role: 'Admin', actorId: admin._id };
+  const accountData = { firstName: 'Test', lastName: 'Account', email: 'self@example.test', password: 'PRIVATE_PASSWORD1!', role: 'Admin', actorId: admin._id };
   await call('/users', null, 401, 'POST', accountData);
   await call('/users', staff, 403, 'POST', accountData);
   assert.equal(rows.length, 0);
