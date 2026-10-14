@@ -120,6 +120,12 @@ async function main() {
   await call('/register/otp', { email });
   await call('/register', { ...account, otp: oldCode }, 400);
   const currentCode = codeFor(email);
+  for (const field of ['firstName', 'lastName']) {
+    for (const value of ['John1', 'Doe２', 'Doe٣']) {
+      await call('/register', { ...account, [field]: value, otp: currentCode }, 400);
+      assert.equal(row.consumedAt, null, 'Invalid names must not consume the verification code');
+    }
+  }
   for (const password of ['short1!', 'lowercase1!', 'Uppercase!', 'Uppercase1']) {
     await call('/register', { ...account, password, otp: currentCode }, 400);
     assert.equal(row.consumedAt, null, 'Invalid passwords must not consume the registration code');

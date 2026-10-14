@@ -3,12 +3,22 @@ const { pathToFileURL } = require('node:url');
 const path = require('node:path');
 const { isValidPassword, PASSWORD_REQUIREMENTS } = require('../src/utils/password');
 const { validateContactNumber } = require('../src/utils/contactNumber');
+const { isValidName, NAME_REQUIREMENTS } = require('../src/utils/names');
 const { oneMonthAhead, ACTIVE_APPOINTMENT_STATUSES } = require('../src/utils/booking');
 const Appointment = require('../src/models/Appointment');
 
 async function main() {
   const frontendPassword = await import(pathToFileURL(path.resolve(__dirname, '../../frontend/src/utils/password.js')));
   const frontendDates = await import(pathToFileURL(path.resolve(__dirname, '../../frontend/src/utils/dates.js')));
+  const frontendNames = await import(pathToFileURL(path.resolve(__dirname, '../../frontend/src/utils/names.js')));
+  assert.equal(frontendNames.NAME_REQUIREMENTS, NAME_REQUIREMENTS);
+  for (const [value, expected] of [['Maria', true], ['Mary Jane', true], ['Dela Cruz', true], ['Anne-Marie', true],
+    ["O'Connor", true], ['O’Connor', true], ['José', true], ['Jose\u0301', true], ['李', true], ['Jr.', true],
+    ['John1', false], ['1John', false], ['Doe２', false], ['Doe٣', false], ['123', false], ['', false],
+    ['   ', false], ['---', false], ['John\nDoe', false], ['<script>', false], ['A'.repeat(101), false], [null, false]]) {
+    assert.equal(isValidName(value), expected, `Backend name policy: ${value}`);
+    assert.equal(frontendNames.isValidName(value), expected, `Frontend name policy: ${value}`);
+  }
   const passwords = [
     ['Abcde1!x', true], ['A1!aaaaa', true], ['A1!' + 'a'.repeat(69), true],
     ['Abc1!xy', false], ['abcdef1!', false], ['Abcdefg!', false], ['Abcdefg1', false],

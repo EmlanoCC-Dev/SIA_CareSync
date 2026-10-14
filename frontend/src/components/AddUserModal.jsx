@@ -3,6 +3,7 @@ import { api } from '../services/api';
 import { X, UserPlus, AlertCircle } from 'lucide-react';
 import PasswordInput from './PasswordInput';
 import { isValidPassword, PASSWORD_REQUIREMENTS } from '../utils/password';
+import { isValidName, NAME_REQUIREMENTS } from '../utils/names';
 
 export default function AddUserModal({ isOpen, onClose, onUserAdded, user = null }) {
   const dialog = useRef(null);
@@ -35,6 +36,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded, user = null
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (!isValidName(formData.firstName) || !isValidName(formData.lastName)) { setError(NAME_REQUIREMENTS); return; }
 
     if (!user && !isValidPassword(formData.password)) {
       setError(PASSWORD_REQUIREMENTS);

@@ -66,6 +66,8 @@ async function main() {
   await call(`/api/users/${patient._id}`, admin, 400, { status: 'Deleted' });
   await call(`/api/users/${patient._id}`, admin, 400, { email: {} });
   await call(`/api/users/${patient._id}`, admin, 400, { firstName: ' ' });
+  await call(`/api/users/${patient._id}`, admin, 400, { firstName: 'John1' });
+  await call(`/api/users/${patient._id}`, admin, 400, { lastName: 'Doe２' });
   await call(`/api/users/${patient._id}`, admin, 409, { email: 'duplicate@example.test' });
   await call(`/api/users/${admin._id}`, admin, 400, { status: 'Deactivated' });
   await call(`/api/users/${admin._id}`, admin, 400, { role: 'Staff' });

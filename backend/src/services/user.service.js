@@ -21,6 +21,7 @@ const otpService = require('./otp.service');
 const { linkVerifiedPatient } = require('./walkInAccount.service');
 const { isValidPassword, PASSWORD_REQUIREMENTS } = require('../utils/password');
 const { validateContactNumber } = require('../utils/contactNumber');
+const { isValidName, NAME_REQUIREMENTS } = require('../utils/names');
 
 /**
  * Register a new user.
@@ -33,8 +34,8 @@ async function register(userData, actorId = null) {
     throw Object.assign(new Error(`Provide an email. ${PASSWORD_REQUIREMENTS}`), { statusCode: 400 });
   }
   for (const field of ['firstName', 'lastName']) {
-    if (typeof userData[field] !== 'string' || !userData[field].trim() || userData[field].length > 100) {
-      throw Object.assign(new Error('Provide a first and last name of at most 100 characters'), { statusCode: 400 });
+    if (!isValidName(userData[field])) {
+      throw Object.assign(new Error(NAME_REQUIREMENTS), { statusCode: 400 });
     }
   }
   const email = otpService.normalizeEmail(userData.email);
@@ -155,6 +156,11 @@ async function updateUser(userId, actor, data) {
     changes.email = otpService.normalizeEmail(changes.email);
   }
   if (changes.contactNumber !== undefined) changes.contactNumber = validateContactNumber(changes.contactNumber);
+  for (const field of ['firstName', 'lastName']) {
+    if (changes[field] !== undefined && !isValidName(changes[field])) {
+      throw Object.assign(new Error(NAME_REQUIREMENTS), { statusCode: 400 });
+    }
+  }
   if (changes.role && !['Patient', 'Doctor', 'Staff', 'Admin'].includes(changes.role)) throw Object.assign(new Error('Invalid role'), { statusCode: 400 });
   if (changes.status && !['Active', 'Deactivated'].includes(changes.status)) throw Object.assign(new Error('Invalid account status'), { statusCode: 400 });
   if (!Object.keys(changes).length) throw Object.assign(new Error('No account changes provided'), { statusCode: 400 });

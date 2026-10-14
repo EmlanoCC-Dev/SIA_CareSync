@@ -6,6 +6,7 @@ import { api } from '../services/api';
 import EmailVerificationCode from '../components/EmailVerificationCode';
 import PasswordInput from '../components/PasswordInput';
 import { isValidPassword, PASSWORD_REQUIREMENTS } from '../utils/password';
+import { isValidName, NAME_REQUIREMENTS } from '../utils/names';
 
 export default function RegisterPage({ onSwitchToLogin, onBackToLanding, formOnly = false }) {
   const { register } = useAuth();
@@ -18,7 +19,11 @@ export default function RegisterPage({ onSwitchToLogin, onBackToLanding, formOnl
   const [resendAt, setResendAt] = useState(0);
   const active = useRef(true);
   useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
-  const handleChange = (event) => setFormData((previous) => ({ ...previous, [event.target.name]: event.target.value }));
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    if (['firstName', 'lastName'].includes(name)) event.target.setCustomValidity(value && !isValidName(value) ? NAME_REQUIREMENTS : '');
+    setFormData(previous => ({ ...previous, [name]: value }));
+  };
   const requestCode = async () => {
     setError(''); setNotice(''); setLoading(true);
     try {
@@ -32,10 +37,11 @@ export default function RegisterPage({ onSwitchToLogin, onBackToLanding, formOnl
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
+    if (!isValidName(formData.firstName) || !isValidName(formData.lastName)) { setError(NAME_REQUIREMENTS); return; }
     if (!isValidPassword(formData.password)) { setError(PASSWORD_REQUIREMENTS); return; }
     if (!requested) { await requestCode(); return; }
     setLoading(true);
-    try { await register({ ...formData, otp, lastName: formData.lastName || '-' }); }
+    try { await register({ ...formData, otp }); }
     catch (err) { if (active.current) setError(err.message || 'Registration failed'); }
     finally { if (active.current) setLoading(false); }
   };
